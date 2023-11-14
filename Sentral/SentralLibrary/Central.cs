@@ -7,6 +7,20 @@ using System.Threading.Tasks;
 namespace SentralLibrary;
 public class Central
 {
+    private List<CardReader> cardReaders;
+    private List<UserData> userData;
+
+    public Central()
+    {
+        cardReaders = new List<CardReader>();
+        userData = new List<UserData>();
+    }
+
+    public void ValidateCard()
+    {
+
+    }
+
     //TODO hook up database
 
     //TODO hook up card reader access requests
