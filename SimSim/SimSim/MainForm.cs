@@ -13,9 +13,9 @@ namespace SimSim
 
 	public partial class MainForm : Form
 	{
-		public int AutoInterval 
+		public int AutoInterval
 		{
-			get 
+			get
 			{
 				try
 				{
@@ -27,7 +27,7 @@ namespace SimSim
 				}
 			}
 
-			set 
+			set
 			{
 				if (value > 0)
 				{
@@ -44,10 +44,10 @@ namespace SimSim
 
 		public SerialPort comPort = new SerialPort();
 		public string NodeNum
-		{ 
+		{
 			get { return tbNodeNum.Text; }
-			set 
-			{ 
+			set
+			{
 				tbNodeNum.Text = value;
 				nodeNum = int.Parse(value);
 			}
