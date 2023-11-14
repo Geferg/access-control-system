@@ -16,10 +16,12 @@ public class Central
         userData = new List<UserData>();
     }
 
-    public void ValidateCard()
+    public void ValidateCard(int cardID, int cardPin)
     {
 
+        bool result = userData.First(user => user.CardID == cardID).VerifyUser(cardID, cardPin);
     }
+
 
     //TODO hook up database
 
