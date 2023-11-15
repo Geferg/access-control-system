@@ -21,39 +21,42 @@ internal class CardReader
             return false;
         }
 
-        SendCommand($"$N{nodeNumber}");
+        SendCommand($"$N{nodeNumber:D3}");
         return true;
     }
 
     public void ChangeDate(DateOnly date)
     {
-        StringBuilder command = new StringBuilder();
-        command.Append("$D");
-
-        SendCommand(command.ToString());
+        SendCommand($"$D{date:yyyyMMdd}");
     }
 
     public void ChangeTime(TimeOnly time)
     {
-        StringBuilder command = new StringBuilder();
-        command.Append("$");
-
-        SendCommand(command.ToString());
+        SendCommand($"$T{time:HHmmss}");
     }
 
     public bool ChangeInterval(int intervalSeconds)
     {
-        StringBuilder command = new StringBuilder();
-        command.Append("$");
+        if (0 < intervalSeconds || intervalSeconds <= 999)
+        {
+            return false;
+        }
 
-        SendCommand(command.ToString());
+        SendCommand($"$S{intervalSeconds:D3}");
         return true;
     }
 
-    public bool ChangeDigitalValues(int pin, int value)
+    public bool ChangeDigitalOutputs(int pin, bool value)
     {
-        StringBuilder command = new StringBuilder();
-        command.Append("$");
+        if ((0 < pin || pin <= 7) && pin != 9)
+        {
+            return false;
+        }
+
+        StringBuilder command = new();
+        command.Append("$O");
+        command.Append(pin);
+        command.Append(value ? "1" : "0");
 
         SendCommand(command.ToString());
         return true;
@@ -62,7 +65,8 @@ internal class CardReader
     public void ShowMessageOnChanges(bool show)
     {
         StringBuilder command = new StringBuilder();
-        command.Append("$");
+        command.Append("$E");
+        command.Append(show ? "1" : "0");
 
         SendCommand(command.ToString());
     }
