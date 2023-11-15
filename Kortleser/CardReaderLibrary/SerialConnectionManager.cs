@@ -8,6 +8,9 @@ using System.Threading.Tasks;
 namespace CardReaderLibrary;
 public class SerialConnectionManager
 {
+    private const char startChar = '$';
+    private const char endChar = '#';
+
     private SerialPort serialPort;
     private StringBuilder buffer;
 
@@ -28,29 +31,54 @@ public class SerialConnectionManager
 
     public void OpenConnection()
     {
-
+        if (!serialPort.IsOpen)
+        {
+            serialPort.Open();
+            OnLogMessage("Serial port opened.");
+        }
     }
 
     public void CloseConnection()
     {
-
+        if (serialPort.IsOpen)
+        {
+            serialPort.Close();
+            OnLogMessage("Serial port closed.");
+        }
     }
 
     private void OnDataReceived(object sender, SerialDataReceivedEventArgs e)
     {
+        string data = serialPort.ReadExisting();
+        buffer.Append(data);
+
+        if (buffer.ToString().Contains(startChar) && buffer.ToString().Contains(endChar))
+        {
+            //? invoke on raw string and have separate class for extract to data
+            string message = ExtractMessage(buffer.ToString());
+            DataReceived?.Invoke(message);
+
+            buffer.Clear();
+        }
 
     }
 
-    private string ExtractMessage()
+    private string ExtractMessage(string data)
     {
         //? move to separate class
+        int startIndex = data.IndexOf(startChar);
+        int endIndex = data.IndexOf(endChar);
 
-        return "";
+        return data.Substring(startIndex, endIndex - startIndex);
     }
 
     public async Task SendCommandAsync(string command)
     {
-
+        if (serialPort.IsOpen)
+        {
+            byte[] commandBytes = Encoding.ASCII.GetBytes(command);
+            await serialPort.BaseStream.WriteAsync(commandBytes, 0, commandBytes.Length);
+        }
     }
 
     protected virtual void OnLogMessage(string message)
