@@ -7,8 +7,6 @@ using System.Threading.Tasks;
 namespace CardReaderLibrary;
 internal class CardReader
 {
-
-
     public void ForceMessage()
     {
         SendCommand("$R1");
@@ -75,5 +73,4 @@ internal class CardReader
     {
 
     }
-
 }
