@@ -18,7 +18,6 @@ public class Central
 
     public void ValidateCard(int cardID, int cardPin)
     {
-
         bool result = userData.First(user => user.CardID == cardID).VerifyUser(cardID, cardPin);
     }
 
