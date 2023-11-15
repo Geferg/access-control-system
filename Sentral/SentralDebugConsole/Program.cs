@@ -7,6 +7,7 @@ namespace SentralDebugConsole;
 
 internal class Program
 {
+    // Hei Ryan
     static void Main(string[] args)
     {
         Console.WriteLine("\u001b]0;Control Central\u0007");
