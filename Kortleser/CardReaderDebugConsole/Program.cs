@@ -2,8 +2,15 @@
 using System.Text;
 using CardReaderLibrary;
 
-namespace CardReaderDebugConsole;
+/*
+ * Concerns:
+ * - Handling partial messages
+ * - Resource management for tcpclient and networkstream (using or dispose)
+ * - Fixed buffer size
+ * - Testing different network scenarios
+ */
 
+namespace CardReaderDebugConsole;
 internal class Program
 {
     static async Task Main(string[] args)

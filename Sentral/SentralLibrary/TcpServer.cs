@@ -6,6 +6,16 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
 
+/*
+ * Concerns:
+ * - Exception handling in respondtoclient
+ * - Handling partial messages
+ * - Resource management for tcpclient and networkstream (using or dispose)
+ * - Concurrency for multiple clients
+ * - Fixed buffer size
+ * - Testing different network scenarios
+ */
+
 namespace SentralLibrary;
 public class TcpServer
 {
