@@ -1,14 +1,39 @@
 ﻿using System.Net.Sockets;
 using System.Text;
+using CardReaderLibrary;
 
 namespace CardReaderDebugConsole;
 
 internal class Program
 {
-    static void Main(string[] args)
+    static async Task Main(string[] args)
     {
-        ConnectToListener();
-        Console.ReadKey(true);
+        CardReader reader = new("127.0.0.1", 8000);
+
+        reader.LogMessage += OnLogMessageReceived;
+
+        try
+        {
+            await reader.SendRequestAsync("Hello, server");
+
+            string response = await reader.ReceiveResponseAsync();
+            Console.WriteLine($"Response: {response}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error: {ex.Message}");
+        }
+        finally
+        {
+            Console.WriteLine("Press any key to close.");
+            Console.ReadKey(true);
+            reader.CloseConnection();
+        }
+    }
+
+    private static void OnLogMessageReceived(object? sender, string message)
+    {
+        Console.WriteLine($"Log: {message}");
     }
 
     static void ConnectToListener()
