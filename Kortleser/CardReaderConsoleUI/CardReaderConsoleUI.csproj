@@ -7,8 +7,11 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+<<<<<<< HEAD
   <ItemGroup>
     <ProjectReference Include="..\CardReaderLibrary\CardReaderLibrary.csproj" />
   </ItemGroup>
 
+=======
+>>>>>>> f234209637957cc0ac5fe997c59fefce4abfcff3
 </Project>
