@@ -7,7 +7,7 @@ namespace SentralDebugConsole;
 
 internal class Program
 {
-    // Hei Ryan
+    // Hei Ryan, og Tor
     static void Main(string[] args)
     {
         Console.WriteLine("\u001b]0;Control Central\u0007");
@@ -23,7 +23,7 @@ internal class Program
 
         server.Stop();
         server.LogMessage -= OnLogMessageReceived;
-        
+        server.RequestReceived -= HandleRequest;
     }
 
     private static void OnLogMessageReceived(object? sender, string message)
