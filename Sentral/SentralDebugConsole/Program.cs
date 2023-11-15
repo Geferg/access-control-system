@@ -12,7 +12,7 @@ internal class Program
         var server = new TcpServer(8000);
 
         server.LogMessage += OnLogMessageReceived;
-        server.RequestReceived += OnRequestReceived;
+        server.RequestReceived += HandleRequest;
 
         server.Start();
 
@@ -21,7 +21,7 @@ internal class Program
 
         server.Stop();
         server.LogMessage -= OnLogMessageReceived;
-        server.RequestReceived -= OnRequestReceived;
+        server.RequestReceived -= HandleRequest;
     }
 
     private static void OnLogMessageReceived(object? sender, string message)
@@ -29,62 +29,10 @@ internal class Program
         Console.WriteLine($"Log: {message}");
     }
 
-    private static void OnRequestReceived(object? sender, RequestReceivedEventArgs request)
+    private static void HandleRequest(TcpClient client, string request, Action<TcpClient, string> respond)
     {
-        Console.WriteLine($"Request: {request.Message}");
-        HandleRequest(request);
-    }
+        string response = "response";
 
-    private static void HandleRequest(RequestReceivedEventArgs request)
-    {
-        //TODO implement different requests
-    }
-
-    static void HandleClient(object obj)
-    {
-        // Obsolete
-        TcpClient client = (TcpClient)obj;
-        NetworkStream stream = client.GetStream();
-
-        // Gets request
-        byte[] buffer = new byte[1024];
-        int bytesRead = stream.Read(buffer, 0, buffer.Length);
-        string request = Encoding.ASCII.GetString(buffer, 0, bytesRead);
-
-        switch (request)
-        {
-            case "STATUS":
-                Console.WriteLine($"Recieved request {request} from {client.Client.RemoteEndPoint}");
-                int connectedCount = GetConnectedCount();
-                byte[] countResponse = BitConverter.GetBytes(connectedCount);
-                stream.Write(countResponse, 0, countResponse.Length);
-                break;
-
-            case "LAST_IP":
-                Console.WriteLine($"Recieved request {request} from {client.Client.RemoteEndPoint}");
-                string lastIp = GetLastIp();
-                byte[] ipResponse = Encoding.ASCII.GetBytes(lastIp);
-                stream.Write(ipResponse, 0, ipResponse.Length);
-                break;
-
-            case "CLOSE":
-                Console.WriteLine($"Recieved request {request} from {client.Client.RemoteEndPoint}");
-                client.Close();
-                return;
-
-            default:
-                Console.WriteLine("Unknown request");
-                break;
-        }
-    }
-
-    static string GetLastIp()
-    {
-        return "1";
-    }
-
-    static int GetConnectedCount()
-    {
-        return 1;
+        respond(client, response);
     }
 }

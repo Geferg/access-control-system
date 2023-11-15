@@ -1,12 +1,30 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace CardReaderLibrary;
 internal class CardReader
 {
+    private TcpClient client;
+    private NetworkStream stream;
+
+    public CardReader(string serverAddress, int serverPort)
+    {
+        client = new TcpClient(serverAddress, serverPort);
+        stream = client.GetStream();
+    }
+
+    public async Task SendRequestAsync(string request)
+    {
+        byte[] requestBytes = Encoding.ASCII.GetBytes(request);
+        await stream.WriteAsync(requestBytes, 0, requestBytes.Length);
+
+    }
+
+
 
 
     public void ForceMessage()

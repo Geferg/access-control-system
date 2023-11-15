@@ -12,7 +12,8 @@ public class TcpServer
     private TcpListener listener;
     private readonly List<TcpClient> clients;
 
-    public event EventHandler<RequestReceivedEventArgs>? RequestReceived;
+    public delegate void RequestReceivedHandler(TcpClient client, string request, Action<TcpClient, string> respondCallback);
+    public event RequestReceivedHandler? RequestReceived;
     public event EventHandler<string>? LogMessage;
 
     public TcpServer(int port)
@@ -57,7 +58,7 @@ public class TcpServer
                 lock (clients)
                 {
                     clients.Add(client);
-                    OnLogMessage($"Client connected: {client.Client.RemoteEndPoint}");
+                    OnLogMessage($"Client connected - {client.Client.RemoteEndPoint}");
                 }
 
                 _ = HandleClientAsync(client);
@@ -85,12 +86,12 @@ public class TcpServer
                 if (bytesRead == 0) break;
 
                 string request = Encoding.ASCII.GetString(buffer, 0, bytesRead);
-                RequestReceived?.Invoke(this, new RequestReceivedEventArgs(request));
+                RequestReceived?.Invoke(client, request, RespondToClient);
             }
         }
         catch (Exception ex)
         {
-            OnLogMessage($"Error: {ex.Message}");
+            OnLogMessage($"Error - {ex.Message}");
         }
         finally
         {
@@ -98,9 +99,15 @@ public class TcpServer
             lock (clients)
             {
                 clients.Remove(client);
-                OnLogMessage($"Client disconnected: {client.Client.RemoteEndPoint}");
+                OnLogMessage($"Client disconnected - {client.Client.RemoteEndPoint}");
             }
 
         }
+    }
+
+    private void RespondToClient(TcpClient client, string response)
+    {
+        var responseBytes = Encoding.ASCII.GetBytes(response);
+        client.GetStream().WriteAsync(responseBytes, 0, responseBytes.Length);
     }
 }
