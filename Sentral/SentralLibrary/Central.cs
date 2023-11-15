@@ -1,31 +1,34 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace SentralLibrary;
 public class Central
 {
+    public TcpClient Client { get; set; }
     private List<CardReader> cardReaders;
     private List<UserData> userData;
 
     public Central()
     {
+        Client = new TcpClient();
         cardReaders = new List<CardReader>();
         userData = new List<UserData>();
     }
 
-    public void ValidateCard(int cardID, int cardPin)
-    {
+    //TODO hook up card reader access requests
 
-        bool result = userData.First(user => user.CardID == cardID).VerifyUser(cardID, cardPin);
-    }
+
+
+
+
+
 
 
     //TODO hook up database
-
-    //TODO hook up card reader access requests
 
     //TODO report generator
 
