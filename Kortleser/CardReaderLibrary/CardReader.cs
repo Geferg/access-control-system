@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace CardReaderLibrary;
-internal class CardReader
+public class CardReader
 {
     public void ForceMessage()
     {
