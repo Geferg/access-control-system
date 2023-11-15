@@ -49,16 +49,27 @@ public class TcpServer
 
     private async void ListenForClientsAsync()
     {
-        while (true)
+        try
         {
-            TcpClient client = await listener.AcceptTcpClientAsync();
-            lock (clients)
+            while (true)
             {
-                clients.Add(client);
-                OnLogMessage($"Client connected: {client.Client.RemoteEndPoint}");
-            }
+                TcpClient client = await listener.AcceptTcpClientAsync();
+                lock (clients)
+                {
+                    clients.Add(client);
+                    OnLogMessage($"Client connected: {client.Client.RemoteEndPoint}");
+                }
 
-            _ = HandleClientAsync(client);
+                _ = HandleClientAsync(client);
+            }
+        }
+        catch (ObjectDisposedException)
+        {
+            OnLogMessage("Lister has been stopped.");
+        }
+        catch (Exception ex)
+        {
+            OnLogMessage($"Failed to listen {ex}");
         }
     }
 
@@ -87,7 +98,7 @@ public class TcpServer
             lock (clients)
             {
                 clients.Remove(client);
-                OnLogMessage($"$Client disconnected: {client.Client.RemoteEndPoint}");
+                OnLogMessage($"Client disconnected: {client.Client.RemoteEndPoint}");
             }
 
         }
