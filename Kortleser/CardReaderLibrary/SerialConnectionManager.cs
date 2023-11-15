@@ -11,8 +11,8 @@ public class SerialConnectionManager
     private const char startChar = '$';
     private const char endChar = '#';
 
-    private SerialPort serialPort;
-    private StringBuilder buffer;
+    private readonly SerialPort serialPort;
+    private readonly StringBuilder buffer;
 
     public delegate void DataReceivedHandler(string message);
     public event DataReceivedHandler? DataReceived;
@@ -54,7 +54,6 @@ public class SerialConnectionManager
 
         if (buffer.ToString().Contains(startChar) && buffer.ToString().Contains(endChar))
         {
-            //? invoke on raw string and have separate class for extract to data
             string message = ExtractMessage(buffer.ToString());
             DataReceived?.Invoke(message);
 
@@ -65,11 +64,10 @@ public class SerialConnectionManager
 
     private string ExtractMessage(string data)
     {
-        //? move to separate class
         int startIndex = data.IndexOf(startChar);
         int endIndex = data.IndexOf(endChar);
 
-        return data.Substring(startIndex, endIndex - startIndex);
+        return data[startIndex..endIndex];
     }
 
     public async Task SendCommandAsync(string command)
