@@ -23,7 +23,7 @@ internal class Program
 
         server.Stop();
         server.LogMessage -= OnLogMessageReceived;
-        server.RequestReceived -= HandleRequest;
+        
     }
 
     private static void OnLogMessageReceived(object? sender, string message)
