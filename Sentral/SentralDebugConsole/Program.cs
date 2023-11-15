@@ -9,6 +9,7 @@ internal class Program
 {
     static void Main(string[] args)
     {
+        Console.WriteLine("\u001b]0;Control Central\u0007");
         var server = new TcpServer(8000);
 
         server.LogMessage += OnLogMessageReceived;

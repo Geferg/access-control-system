@@ -8,6 +8,7 @@ internal class Program
 {
     static async Task Main(string[] args)
     {
+        Console.WriteLine("\u001b]0;Access Point\u0007");
         TcpConnectionManager tcpConnection = new("127.0.0.1", 8000);
 
         tcpConnection.LogMessage += OnLogMessageReceived;
