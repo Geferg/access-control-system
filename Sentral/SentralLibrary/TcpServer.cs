@@ -12,7 +12,8 @@ public class TcpServer
     private TcpListener listener;
     private readonly List<TcpClient> clients;
 
-    public event EventHandler<MessageReceivedEventArgs> RequestRecieved;
+    public event EventHandler<MessageReceivedEventArgs>? RequestReceived;
+    public event EventHandler<string>? LogMessage;
 
     public TcpServer(int port)
     {
@@ -20,10 +21,28 @@ public class TcpServer
         clients = new();
     }
 
+    protected virtual void OnLogMessage(string message)
+    {
+        LogMessage?.Invoke(this, message);
+    }
+
     public void Start()
     {
         listener.Start();
         ListenForClientsAsync();
+    }
+
+    public void Stop()
+    {
+        listener.Stop();
+        lock (clients)
+        {
+            foreach (var client in clients)
+            {
+                client.Close();
+            }
+            clients.Clear();
+        }
     }
 
     private async void ListenForClientsAsync()
@@ -52,11 +71,20 @@ public class TcpServer
                 if (bytesRead == 0) break;
 
                 string request = Encoding.ASCII.GetString(buffer, 0, bytesRead);
-                RequestRecieved?.Invoke(this, new MessageReceivedEventArgs(request));
+                RequestReceived?.Invoke(this, new MessageReceivedEventArgs(request));
             }
         }
         catch (Exception ex)
         {
+            // Log error
+        }
+        finally
+        {
+            client.Close();
+            lock (clients)
+            {
+                clients.Remove(client);
+            }
 
         }
     }
