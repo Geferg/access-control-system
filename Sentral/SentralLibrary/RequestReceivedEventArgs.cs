@@ -5,11 +5,11 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace SentralLibrary;
-public class MessageReceivedEventArgs
+public class RequestReceivedEventArgs
 {
     public string Message { get; }
 
-    public MessageReceivedEventArgs(string message)
+    public RequestReceivedEventArgs(string message)
     {
         Message = message;
     }

@@ -1,35 +1,48 @@
 ﻿using System.Net.Sockets;
 using System.Net;
 using System.Text;
+using SentralLibrary;
 
 namespace SentralDebugConsole;
 
 internal class Program
 {
-    private static int clientCount = 0;
     static void Main(string[] args)
     {
-        StartTcpServer();
+        var server = new TcpServer(8000);
+
+        server.LogMessage += OnLogMessageReceived;
+        server.RequestReceived += OnRequestReceived;
+
+        server.Start();
+
+        Console.WriteLine("Press any key to exit.");
         Console.ReadKey(true);
+
+        server.Stop();
+        server.LogMessage -= OnLogMessageReceived;
+        server.RequestReceived -= OnRequestReceived;
     }
 
-    static void StartTcpServer()
+    private static void OnLogMessageReceived(object? sender, string message)
     {
-        var listener = new TcpListener(IPAddress.Any, 8000);
-        listener.Start();
+        Console.WriteLine($"Log: {message}");
+    }
 
-        Console.WriteLine("Listener started, waiting for connections...");
+    private static void OnRequestReceived(object? sender, RequestReceivedEventArgs request)
+    {
+        Console.WriteLine($"Request: {request.Message}");
+        HandleRequest(request);
+    }
 
-        while (true)
-        {
-            TcpClient client = listener.AcceptTcpClient();
-            Console.WriteLine($"Client connected: {client.Client.RemoteEndPoint}");
-            ThreadPool.QueueUserWorkItem(HandleClient, client);
-        }
+    private static void HandleRequest(RequestReceivedEventArgs request)
+    {
+        //TODO implement different requests
     }
 
     static void HandleClient(object obj)
     {
+        // Obsolete
         TcpClient client = (TcpClient)obj;
         NetworkStream stream = client.GetStream();
 
@@ -72,13 +85,6 @@ internal class Program
 
     static int GetConnectedCount()
     {
-        return 1;
-    }
-
-    static int TestConnectionMethod(string request)
-    {
-        Console.WriteLine("Performing operation...");
-
         return 1;
     }
 }

@@ -12,7 +12,7 @@ public class TcpServer
     private TcpListener listener;
     private readonly List<TcpClient> clients;
 
-    public event EventHandler<MessageReceivedEventArgs>? RequestReceived;
+    public event EventHandler<RequestReceivedEventArgs>? RequestReceived;
     public event EventHandler<string>? LogMessage;
 
     public TcpServer(int port)
@@ -85,7 +85,7 @@ public class TcpServer
                 if (bytesRead == 0) break;
 
                 string request = Encoding.ASCII.GetString(buffer, 0, bytesRead);
-                RequestReceived?.Invoke(this, new MessageReceivedEventArgs(request));
+                RequestReceived?.Invoke(this, new RequestReceivedEventArgs(request));
             }
         }
         catch (Exception ex)
