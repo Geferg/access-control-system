@@ -13,11 +13,12 @@ using CardReaderLibrary;
 namespace CardReaderDebugConsole;
 internal class Program
 {
+    private static SerialConnectionManager serialConnection = new("COM6");
+    private static TcpConnectionManager tcpConnection = new("127.0.0.1", 8000);
+
     static async Task Main(string[] args)
     {
         Console.WriteLine("\u001b]0;Access Point\u0007");
-        TcpConnectionManager tcpConnection = new("127.0.0.1", 8000);
-        SerialConnectionManager serialConnection = new("COM6");
 
         tcpConnection.LogMessage += OnLogMessageReceived;
         serialConnection.LogMessage += OnLogMessageReceived;
@@ -61,9 +62,13 @@ internal class Program
 
     }
 
-    private static void OnHardwareMessageReceived(string message)
+    private static async void OnHardwareMessageReceived(string message)
     {
-        Console.WriteLine($"Received: {message}");
+        Console.WriteLine($"Received (hardware): {message}");
+        await tcpConnection.SendRequestAsync(message);
+        Console.WriteLine($"Sent (central): {message}");
+        string response = await tcpConnection.ReceiveResponseAsync();
+        Console.WriteLine($"Recieved (central): {response}");
     }
 
     private static void OnLogMessageReceived(object? sender, string message)

@@ -16,6 +16,7 @@ internal class UserData
 
     public UserData(string firstName, string lastName, string email, int cardID, int cardPin, DateTime startTime, DateTime endTime)
     {
+
         FirstName = firstName;
         LastName = lastName;
         Email = email;
