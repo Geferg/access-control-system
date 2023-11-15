@@ -130,7 +130,7 @@ namespace SimSim
             {
                 cbComPort.Items.Add(name);
             }
-            cbComPort.SelectedIndex = 0;
+            //cbComPort.SelectedIndex = 0;
 
             autoSender = new AutoSender();
             cmdReceiver = new CmdReceiver();

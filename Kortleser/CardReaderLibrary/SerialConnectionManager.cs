@@ -10,6 +10,7 @@ public class SerialConnectionManager
 {
     private const char startChar = '$';
     private const char endChar = '#';
+    private const int baudRate = 9600;
 
     private readonly SerialPort serialPort;
     private readonly StringBuilder buffer;
@@ -23,7 +24,7 @@ public class SerialConnectionManager
         buffer = new StringBuilder();
         serialPort = new()
         {
-            BaudRate = 9600,
+            BaudRate = baudRate,
             PortName = port
         };
         serialPort.DataReceived += OnDataReceived;

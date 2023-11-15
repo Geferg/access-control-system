@@ -17,9 +17,29 @@ internal class Program
     {
         Console.WriteLine("\u001b]0;Access Point\u0007");
         TcpConnectionManager tcpConnection = new("127.0.0.1", 8000);
+        SerialConnectionManager serialConnection = new("COM6");
 
         tcpConnection.LogMessage += OnLogMessageReceived;
+        serialConnection.LogMessage += OnLogMessageReceived;
+        serialConnection.DataReceived += OnHardwareMessageReceived;
 
+        try
+        {
+            serialConnection.OpenConnection();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error: {ex.Message}");
+            throw;
+        }
+        finally
+        {
+            Console.WriteLine("Press any key to close.");
+            Console.ReadKey(true);
+            serialConnection.CloseConnection();
+        }
+
+        /* TCP COMM. TESTING
         try
         {
             await tcpConnection.SendRequestAsync("Hello, server");
@@ -36,7 +56,14 @@ internal class Program
             Console.WriteLine("Press any key to close.");
             Console.ReadKey(true);
             tcpConnection.CloseConnection();
-        }
+        }*/
+
+
+    }
+
+    private static void OnHardwareMessageReceived(string message)
+    {
+        Console.WriteLine($"Received: {message}");
     }
 
     private static void OnLogMessageReceived(object? sender, string message)
