@@ -29,12 +29,14 @@ public class TcpServer
     public void Start()
     {
         listener.Start();
+        OnLogMessage("Server started");
         ListenForClientsAsync();
     }
 
     public void Stop()
     {
         listener.Stop();
+        OnLogMessage("Server stopped");
         lock (clients)
         {
             foreach (var client in clients)
@@ -53,6 +55,7 @@ public class TcpServer
             lock (clients)
             {
                 clients.Add(client);
+                OnLogMessage($"Client connected: {client.Client.RemoteEndPoint}");
             }
 
             _ = HandleClientAsync(client);
@@ -76,7 +79,7 @@ public class TcpServer
         }
         catch (Exception ex)
         {
-            // Log error
+            OnLogMessage($"Error: {ex.Message}");
         }
         finally
         {
@@ -84,6 +87,7 @@ public class TcpServer
             lock (clients)
             {
                 clients.Remove(client);
+                OnLogMessage($"$Client disconnected: {client.Client.RemoteEndPoint}");
             }
 
         }
