@@ -131,9 +131,10 @@ internal class Program
 
     private static void ShowUsers()
     {
-        Console.WriteLine("showing users...");
-
-        // Logic
+        foreach(UserData user in mockDB)
+        {
+            Console.WriteLine($"[{user.CardID}] {user.FirstName} {user.LastName}");
+        }
 
         Console.WriteLine("");
     }
@@ -191,13 +192,15 @@ internal class Program
             return;
         }
 
-        if (UserConfirm($"are you sure you want to delete [{cardID}]"))
+        UserData userToRemove = mockDB.First(x => x.CardID == cardID);
+
+        if (UserConfirm($"are you sure you want to delete [{cardID}] {userToRemove.FirstName} {userToRemove.LastName}"))
         {
             //TODO change to DB connection class
-            mockDB.Remove(mockDB.First(x => x.CardID == cardID));
+            mockDB.Remove(userToRemove);
         }
 
-        Console.WriteLine($"remomved user [{cardID}]\n");
+        Console.WriteLine($"remomved user [{cardID}] {userToRemove.FirstName} {userToRemove.LastName}\n");
     }
 
 
@@ -253,13 +256,13 @@ internal class Program
     private static void ListCommands()
     {
         Console.WriteLine("commands:");
-        Console.WriteLine("add - add new user");
-        Console.WriteLine("remove [card ID] - remove existing user");
-        Console.WriteLine("edit [card ID]- change data of existing user");
-        Console.WriteLine("show - lists all users");
-        Console.WriteLine("show [card ID] - details about a specific user");
         Console.WriteLine("clear - clear the console");
         Console.WriteLine("exit - close the program");
+        Console.WriteLine("add - add new user");
+        Console.WriteLine("show - lists all users");
+        Console.WriteLine("show [card ID] - details about a specific user");
+        Console.WriteLine("edit [card ID]- change data of existing user");
+        Console.WriteLine("remove [card ID] - remove existing user");
         Console.WriteLine("");
     }
 }
