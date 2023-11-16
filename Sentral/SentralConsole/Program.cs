@@ -43,6 +43,14 @@ internal class Program
             }
             else if (Regex.IsMatch(command, showPattern))
             {
+                Match match = Regex.Match(command, showPattern);
+                int cardID;
+
+                if (match.Success)
+                {
+
+                }
+
                 ShowSpecificUser();
             }
             else if (Regex.IsMatch(command, editPattern))
@@ -64,25 +72,14 @@ internal class Program
     {
         Console.WriteLine("are you sure you want to exit? (y/n)\n");
 
-        Console.Write("> ");
-        char response = Console.ReadKey(true).KeyChar;
+        bool confirm = UserConfirm();
 
-        while (response != 'y' && response != 'n')
+        if (confirm)
         {
-            response = Console.ReadKey(true).KeyChar;
-        }
-
-        if (response == 'y')
-        {
-            Console.Write("y");
             Console.WriteLine("exiting...");
             // Add propper shutdown
             Environment.Exit(0);
         }
-        Console.Write("n");
-        Console.WriteLine("\ncanceled");
-
-        Console.WriteLine("");
     }
 
     private static void ShowUsers()
@@ -131,6 +128,29 @@ internal class Program
         // Logic
 
         Console.WriteLine("");
+    }
+
+
+    private static bool UserConfirm()
+    {
+        Console.Write("> ");
+        char response = Console.ReadKey(true).KeyChar;
+
+        while (response != 'y' && response != 'n')
+        {
+            response = Console.ReadKey(true).KeyChar;
+        }
+
+        if (response == 'y')
+        {
+            Console.Write("y");
+            return true;
+        }
+        Console.Write("n");
+        Console.WriteLine("\ncanceled");
+
+        Console.WriteLine("");
+        return false;
     }
 
     private static void ListCommands()
