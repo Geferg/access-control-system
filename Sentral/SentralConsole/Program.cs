@@ -198,9 +198,9 @@ internal class Program
         {
             //TODO change to DB connection class
             mockDB.Remove(userToRemove);
+            Console.WriteLine($"removed user [{cardID}] {userToRemove.FirstName} {userToRemove.LastName}\n");
+            return;
         }
-
-        Console.WriteLine($"remomved user [{cardID}] {userToRemove.FirstName} {userToRemove.LastName}\n");
     }
 
 
