@@ -43,23 +43,18 @@ internal class Program
             }
             else if (Regex.IsMatch(command, showPattern))
             {
-                Match match = Regex.Match(command, showPattern);
-                int cardID;
-
-                if (match.Success)
-                {
-
-                }
-
-                ShowSpecificUser();
+                int cardID = GetNumbersFromCommand(command);
+                ShowSpecificUser(cardID);
             }
             else if (Regex.IsMatch(command, editPattern))
             {
-                EditSpecificUser();
+                int cardID = GetNumbersFromCommand(command);
+                EditSpecificUser(cardID);
             }
             else if (Regex.IsMatch(command, removePattern))
             {
-                RemoveSpecificUser();
+                int cardID = GetNumbersFromCommand(command);
+                RemoveSpecificUser(cardID);
             }
             else
             {
@@ -103,33 +98,52 @@ internal class Program
 
 
 
-    private static void ShowSpecificUser()
+    private static void ShowSpecificUser(int cardID)
     {
-        Console.WriteLine("showing user...");
+        Console.WriteLine($"showing user {cardID}...");
 
         // Logic
 
         Console.WriteLine("");
     }
 
-    private static void EditSpecificUser()
+    private static void EditSpecificUser(int cardID)
     {
-        Console.WriteLine("editing user...");
+        Console.WriteLine($"editing user {cardID}...");
 
         // Logic
 
         Console.WriteLine("");
     }
 
-    private static void RemoveSpecificUser()
+    private static void RemoveSpecificUser(int cardID)
     {
-        Console.WriteLine("removing user...");
+        Console.WriteLine($"removing user {cardID}...");
 
         // Logic
 
         Console.WriteLine("");
     }
 
+
+    // Helper methods
+
+    private static int GetNumbersFromCommand(string command)
+    {
+        string pattern = @"\b\w+ (\d{4})\b";
+
+        Match match = Regex.Match(command, pattern);
+
+        if (match.Success)
+        {
+            string digits = match.Groups[1].Value;
+            return int.Parse(digits);
+        }
+        else
+        {
+            return -1;
+        }
+    }
 
     private static bool UserConfirm()
     {
