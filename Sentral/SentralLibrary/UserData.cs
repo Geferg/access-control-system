@@ -34,6 +34,11 @@ public class UserData
         ValidityPeriod = (DateTime.MinValue, DateTime.MaxValue);
     }
 
+    public string GetFormattedPeriod()
+    {
+        return $"{ValidityPeriod.start} - {ValidityPeriod.end}";
+    }
+
     public void UpdateCardID(string id)
     {
         //TODO check format

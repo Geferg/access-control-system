@@ -157,9 +157,21 @@ internal class Program
 
     private static void ShowSpecificUser(string cardID)
     {
-        Console.WriteLine($"showing user {cardID}...");
+        if (!UserExists(cardID))
+        {
+            Console.WriteLine($"Card id [{cardID}] does not exist\n");
+            return;
+        }
 
-        // Logic
+        //TODO link with database handler class
+        UserData selectedUser = mockDB.First(x => x.CardID == cardID);
+
+        Console.WriteLine($"     first name: {selectedUser.FirstName}");
+        Console.WriteLine($"      last name: {selectedUser.LastName}");
+        Console.WriteLine($"          email: {selectedUser.Email}");
+        Console.WriteLine($"        card id: {selectedUser.CardID}");
+        Console.WriteLine($"validity period: {selectedUser.GetFormattedPeriod()}");
+        Console.WriteLine($"       card pin: {selectedUser.CardPin}");
 
         Console.WriteLine("");
     }
@@ -168,7 +180,7 @@ internal class Program
     {
         Console.WriteLine($"editing user {cardID}...");
 
-        // Logic
+
 
         Console.WriteLine("");
     }
@@ -184,6 +196,11 @@ internal class Program
 
 
     // Helper methods
+
+    public static bool UserExists(string cardID)
+    {
+        return mockDB.Any(x => x.CardID == cardID);
+    }
 
     private static string? GetNumbersFromCommand(string command)
     {
@@ -202,7 +219,7 @@ internal class Program
         }
     }
 
-    private static bool UserConfirm()
+    private static bool UserConfirm(string message = "confirm")
     {
         // add string message to be passed like "are you sure you want to exit?" then add (y/n)
         Console.Write("> ");
