@@ -121,11 +121,7 @@ internal class Program
 
     private static void Exit()
     {
-        Console.WriteLine("are you sure you want to exit? (y/n)\n");
-
-        bool confirm = UserConfirm();
-
-        if (confirm)
+        if (UserConfirm("are you sure you want to exit?"))
         {
             Console.WriteLine("exiting...");
             // Add propper shutdown
@@ -221,7 +217,8 @@ internal class Program
 
     private static bool UserConfirm(string message = "confirm")
     {
-        // add string message to be passed like "are you sure you want to exit?" then add (y/n)
+        Console.WriteLine($"{message} (y/n)\n");
+
         Console.Write("> ");
         char response = Console.ReadKey(true).KeyChar;
 
