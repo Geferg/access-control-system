@@ -1,4 +1,5 @@
-﻿using System.Text.RegularExpressions;
+﻿using System.Net.Mail;
+using System.Text.RegularExpressions;
 using SentralLibrary;
 
 namespace SentralConsole;
@@ -8,6 +9,8 @@ internal class Program
     private const string removePattern = @"^remove \d{4}$";
     private const string editPattern = @"^edit \d{4}$";
     private const string showPattern = @"^show \d{4}$";
+    private const string emailPattern = @"^([\w\.\-]+)@([\w\-]+)((\.(\w){2,3})+)$";
+
     private static List<UserData> mockDB = new();
 
     static void Main(string[] args)
@@ -141,13 +144,115 @@ internal class Program
 
     private static void AddUser()
     {
-        Console.WriteLine("adding user, fill in data");
-        Console.WriteLine("press esc to go back\n");
+        Console.WriteLine("adding user, fill in data below\n");
 
-        UserData newUser = new();
-        // generate card id
-        // generate pin?
-        // handle user input
+        string? cardIdInput = "";
+        string? firstNameInput = "";
+        string? lastNameInput = "";
+        string? emailInput = "";
+
+        // Card id
+        //TODO ugly, fix
+        while (true)
+        {
+            Console.Write("> card id: ");
+            cardIdInput = Console.ReadLine();
+
+            if(string.IsNullOrWhiteSpace(cardIdInput) )
+            {
+                Console.WriteLine("card id cannot be empty\n");
+            }
+            else if(!int.TryParse(cardIdInput, out int number))
+            {
+                Console.WriteLine("card id must be a number");
+            }
+            else if(number < 0 || 9999 < number)
+            {
+                Console.WriteLine("card id must be between 0000 and 9999");
+            }
+            else if(cardIdInput.Length != 4)
+            {
+                Console.WriteLine("card id must be of length 4");
+            }
+            else
+            {
+                // input is accepted
+                break;
+            }
+        }
+
+        // Name
+        //TODO ugly, fix
+        while (true)
+        {
+            Console.Write("> first name: ");
+            firstNameInput = Console.ReadLine();
+
+            if (string.IsNullOrWhiteSpace(firstNameInput) )
+            {
+                Console.WriteLine("name cannot be empty\n");
+            }
+            else if (!firstNameInput.All(char.IsLetter))
+            {
+                Console.WriteLine("name can only contain letters\n");
+            }
+            else
+            {
+                // input is accepted
+                break;
+            }
+
+        }
+
+        while (true)
+        {
+            Console.Write("> last name: ");
+            lastNameInput = Console.ReadLine();
+
+            if (string.IsNullOrWhiteSpace(lastNameInput))
+            {
+                Console.WriteLine("name cannot be empty\n");
+            }
+            else if (!lastNameInput.All(char.IsLetter))
+            {
+                Console.WriteLine("name can only contain letters\n");
+            }
+            else
+            {
+                // input is accepted
+                break;
+            }
+        }
+
+        // Email
+        //TODO ugly, fix
+        while (true)
+        {
+            Console.Write("> email: ");
+            emailInput = Console.ReadLine();
+
+            if (string.IsNullOrWhiteSpace(emailInput))
+            {
+                Console.WriteLine("email cannot be empty\n");
+            }
+            else if (!MailAddress.TryCreate(emailInput, out _))
+            {
+                Console.WriteLine("invalid email\n");
+            }
+            else
+            {
+                // input is accepted
+                break;
+            }
+        }
+
+        UserData newUser = new()
+        {
+            FirstName = firstNameInput,
+            LastName = lastNameInput,
+            Email = emailInput,
+            CardID = cardIdInput
+        };
 
         mockDB.Add(newUser);
     }
