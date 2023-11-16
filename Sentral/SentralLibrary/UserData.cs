@@ -5,28 +5,45 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace SentralLibrary;
-internal class UserData
+public class UserData
 {
     public string FirstName { get; set; }
     public string LastName { get; set; }
     public string Email { get; set; }
-    public int CardID { get; private set; }
-    private int cardPin;
-    public (DateTime start, DateTime end) ValidityPeriod { get; private set; }
+    public string CardID { get; set; }
+    public string CardPin { get; set; }
+    public (DateTime start, DateTime end) ValidityPeriod { get; set; }
 
-    public UserData(string firstName, string lastName, string email, int cardID, int cardPin, DateTime startTime, DateTime endTime)
+    public UserData(string firstName, string lastName, string email, string cardID, string cardPin, DateTime startTime, DateTime endTime)
     {
         FirstName = firstName;
         LastName = lastName;
         Email = email;
         CardID = cardID;
-        this.cardPin = cardPin;
+        CardPin = cardPin;
         ValidityPeriod = (startTime, endTime);
     }
 
-    public bool VerifyUser(int cardID, int cardPin)
+    public UserData()
+    {
+        FirstName = "";
+        LastName = "";
+        Email = "";
+        CardID = "";
+        CardPin = "";
+        ValidityPeriod = (DateTime.MinValue, DateTime.MaxValue);
+    }
+
+    public void UpdateCardID(string id)
+    {
+        //TODO check format
+        CardID = id;
+    }
+
+
+    public bool VerifyUser(string cardID, string cardPin)
     {
         //TODO check requirements on this
-        return cardID == CardID && cardPin == this.cardPin;
+        return cardID == CardID && cardPin == this.CardPin;
     }
 }

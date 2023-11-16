@@ -1,4 +1,5 @@
 ﻿using System.Text.RegularExpressions;
+using SentralLibrary;
 
 namespace SentralConsole;
 
@@ -7,10 +8,56 @@ internal class Program
     private const string removePattern = @"^remove \d{4}$";
     private const string editPattern = @"^edit \d{4}$";
     private const string showPattern = @"^show \d{4}$";
-
+    private static List<UserData> mockDB = new();
 
     static void Main(string[] args)
     {
+        // Adding test users
+        UserData kristian = new()
+        {
+            FirstName = "Kristian",
+            LastName = "Klette",
+            Email = "geferg.dev@gmail.com",
+            CardID = "0000",
+            ValidityPeriod = (DateTime.Now, DateTime.Now.AddYears(1)),
+            CardPin = "0000"
+        };
+
+        UserData ryan = new()
+        {
+            FirstName = "Ryan",
+            LastName = "Le",
+            Email = "ryan.le@gmail.com",
+            CardID = "1111",
+            ValidityPeriod = (DateTime.Now, DateTime.Now.AddYears(1)),
+            CardPin = "0001"
+        };
+
+        UserData tor = new()
+        {
+            FirstName = "Tor",
+            LastName = "Haldaas",
+            Email = "tor.h@gmail.com",
+            CardID = "2222",
+            ValidityPeriod = (DateTime.Now, DateTime.Now.AddYears(1)),
+            CardPin = "0010"
+        };
+
+        UserData victor = new()
+        {
+            FirstName = "Victor",
+            LastName = "Newman",
+            Email = "victor.new@gmail.com",
+            CardID = "3333",
+            ValidityPeriod = (DateTime.Now, DateTime.Now.AddYears(1)),
+            CardPin = "0011"
+        };
+
+        mockDB.Add(kristian);
+        mockDB.Add(ryan);
+        mockDB.Add(tor);
+        mockDB.Add(victor);
+
         ListCommands();
 
         while (true)
@@ -43,18 +90,27 @@ internal class Program
             }
             else if (Regex.IsMatch(command, showPattern))
             {
-                int cardID = GetNumbersFromCommand(command);
-                ShowSpecificUser(cardID);
+                string? cardID = GetNumbersFromCommand(command);
+                if (!string.IsNullOrEmpty(cardID))
+                {
+                    ShowSpecificUser(cardID);
+                }
             }
             else if (Regex.IsMatch(command, editPattern))
             {
-                int cardID = GetNumbersFromCommand(command);
-                EditSpecificUser(cardID);
+                string? cardID = GetNumbersFromCommand(command);
+                if (!string.IsNullOrEmpty(cardID))
+                {
+                    EditSpecificUser(cardID);
+                }
             }
             else if (Regex.IsMatch(command, removePattern))
             {
-                int cardID = GetNumbersFromCommand(command);
-                RemoveSpecificUser(cardID);
+                string? cardID = GetNumbersFromCommand(command);
+                if (!string.IsNullOrEmpty(cardID))
+                {
+                    RemoveSpecificUser(cardID);
+                }
             }
             else
             {
@@ -88,17 +144,18 @@ internal class Program
 
     private static void AddUser()
     {
-        Console.WriteLine("adding user...");
+        Console.WriteLine("adding user, fill in data");
+        Console.WriteLine("press esc to go back\n");
 
-        // Logic
+        UserData newUser = new();
+        // generate card id
+        // generate pin?
+        // handle user input
 
-        Console.WriteLine("");
+        mockDB.Add(newUser);
     }
 
-
-
-
-    private static void ShowSpecificUser(int cardID)
+    private static void ShowSpecificUser(string cardID)
     {
         Console.WriteLine($"showing user {cardID}...");
 
@@ -107,7 +164,7 @@ internal class Program
         Console.WriteLine("");
     }
 
-    private static void EditSpecificUser(int cardID)
+    private static void EditSpecificUser(string cardID)
     {
         Console.WriteLine($"editing user {cardID}...");
 
@@ -116,7 +173,7 @@ internal class Program
         Console.WriteLine("");
     }
 
-    private static void RemoveSpecificUser(int cardID)
+    private static void RemoveSpecificUser(string cardID)
     {
         Console.WriteLine($"removing user {cardID}...");
 
@@ -128,7 +185,7 @@ internal class Program
 
     // Helper methods
 
-    private static int GetNumbersFromCommand(string command)
+    private static string? GetNumbersFromCommand(string command)
     {
         string pattern = @"\b\w+ (\d{4})\b";
 
@@ -137,16 +194,17 @@ internal class Program
         if (match.Success)
         {
             string digits = match.Groups[1].Value;
-            return int.Parse(digits);
+            return digits;
         }
         else
         {
-            return -1;
+            return null;
         }
     }
 
     private static bool UserConfirm()
     {
+        // add string message to be passed like "are you sure you want to exit?" then add (y/n)
         Console.Write("> ");
         char response = Console.ReadKey(true).KeyChar;
 
