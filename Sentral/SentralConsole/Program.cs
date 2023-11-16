@@ -114,7 +114,7 @@ internal class Program
             }
             else
             {
-                Console.WriteLine("command not recognized");
+                Console.WriteLine("command not recognized\n");
             }
         }
     }
@@ -185,9 +185,19 @@ internal class Program
     {
         Console.WriteLine($"removing user {cardID}...");
 
-        // Logic
+        if (!UserExists(cardID))
+        {
+            Console.WriteLine($"card id [{cardID}] does not exist\n");
+            return;
+        }
 
-        Console.WriteLine("");
+        if (UserConfirm($"are you sure you want to delete [{cardID}]"))
+        {
+            //TODO change to DB connection class
+            mockDB.Remove(mockDB.First(x => x.CardID == cardID));
+        }
+
+        Console.WriteLine($"remomved user [{cardID}]\n");
     }
 
 
@@ -230,6 +240,7 @@ internal class Program
         if (response == 'y')
         {
             Console.Write("y");
+            Console.WriteLine("");
             return true;
         }
         Console.Write("n");
@@ -247,6 +258,7 @@ internal class Program
         Console.WriteLine("edit [card ID]- change data of existing user");
         Console.WriteLine("show - lists all users");
         Console.WriteLine("show [card ID] - details about a specific user");
+        Console.WriteLine("clear - clear the console");
         Console.WriteLine("exit - close the program");
         Console.WriteLine("");
     }
