@@ -8,11 +8,11 @@ namespace SentralLibrary;
 internal static class DatabaseColumns
 {
     public const string TABLE_NAME = "userdata";
-    public const string FirstNameCol = "fornavn";
-    public const string LastNameCol = "etternavn";
+    public const string FirstNameCol = "firstname";
+    public const string LastNameCol = "lastname";
     public const string EmailCol = "email";
-    public const string IdCol = "kortid";
-    public const string PinCol = "pinkode";
-    public const string ValidStartCol = "?";
-    public const string ValidEndCol = "?";
+    public const string IdCol = "cardid";
+    public const string PinCol = "cardpin";
+    public const string ValidStartCol = "validstart";
+    public const string ValidEndCol = "validend";
 }

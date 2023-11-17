@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.NetworkInformation;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -9,11 +10,37 @@ namespace SentralLibrary;
 public class DatabaseConnection
 {
     private NpgsqlConnection connection;
+    private UILogger? logger;
 
-    public DatabaseConnection(string hostIp, string username, string password, string database)
+    public DatabaseConnection(string hostIp, string port, string username, string password, string database)
     {
-        string connectionString = $"Host={hostIp};Username={username};Password={password};Database={database}";
+        string connectionString = $"Host={hostIp};Port={port};Username={username};Password={password};Database={database}";
         connection = new(connectionString);
+    }
+
+    public void AttachLogger(UILogger logger)
+    {
+        this.logger = logger;
+    }
+
+    protected virtual void TryLogMessage(string message)
+    {
+        logger?.LogMessage(message);
+    }
+
+    public static void AddUser(UserData newUser)
+    {
+        //TODO implement
+    }
+
+    public static void RemoveUser(string cardId)
+    {
+        //TODO implement
+    }
+
+    public static void UpdateUser(string cardId, UserData newUser)
+    {
+        //TODO implement
     }
 
     public UserData? GetUserData(string id)
@@ -41,6 +68,8 @@ public class DatabaseConnection
                 string dbEmail = reader[DatabaseColumns.EmailCol].ToString();
                 string dbPin = reader[DatabaseColumns.PinCol].ToString();
 
+                connection.Close();
+
                 return new UserData(dbFirstName, dbLastName, dbEmail, dbId, dbPin);
             }
         }
@@ -48,6 +77,10 @@ public class DatabaseConnection
         {
 
             throw;
+        }
+        finally
+        {
+            connection.Close();
         }
 
         return new UserData();

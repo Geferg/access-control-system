@@ -1,4 +1,5 @@
-﻿using System.Net.Mail;
+﻿using System.Data;
+using System.Net.Mail;
 using System.Text.RegularExpressions;
 using SentralLibrary;
 
@@ -6,10 +7,22 @@ namespace SentralConsole;
 
 internal class Program
 {
+    // INPUT PATTERN MATCHING
     private const string removePattern = @"^remove \d{4}$";
     private const string editPattern = @"^edit \d{4}$";
     private const string showPattern = @"^show \d{4}$";
     private const string addPattern = @"^add \d{4}";
+
+    // DATABASE CONNECTION STRINGS
+    //? move to static class
+    private const string dbIP = "129.151.221.119";
+    private const string dbPort = "5432";
+    private const string dbUsername = "599146";
+    private const string dbPassword = "Ha1FinDagIDag!";
+    private const string dbDatabase = "599146";
+
+    private static readonly DatabaseConnection database = new(dbIP, dbPort, dbUsername, dbPassword, dbDatabase);
+    private static TcpServer tcpServer = new(8000);
 
     private static List<UserData> mockDB = new();
 
@@ -56,6 +69,7 @@ internal class Program
             CardPin = "0011"
         };
 
+        //TODO replace with real db
         mockDB.Add(kristian);
         mockDB.Add(ryan);
         mockDB.Add(tor);
