@@ -134,7 +134,7 @@ internal class Program
 
     private static void ShowUsers()
     {
-        foreach(UserData user in mockDB)
+        foreach(UserData user in mockDB.OrderBy(u => u.CardID))
         {
             Console.WriteLine($"[{user.CardID}] {user.FirstName} {user.LastName}");
         }
@@ -252,9 +252,15 @@ internal class Program
             CardID = cardIdInput!
         };
 
-        if(!UserConfirm("confirm addition of user?"))
+        Console.WriteLine("");
+        Console.WriteLine($"name: {newUser.FirstName} {newUser.LastName}");
+        Console.WriteLine($"email: {newUser.Email}");
+        Console.WriteLine($"card id: {newUser.CardID}");
+        Console.WriteLine($"card pin: {newUser.CardPin}");
+        Console.WriteLine($"validity period: {newUser.GetFormattedPeriod()}\n");
+
+        if (!UserConfirm("confirm addition of user?"))
         {
-            Console.WriteLine("cancled\n");
             return;
         }
 
