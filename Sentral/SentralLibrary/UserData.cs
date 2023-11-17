@@ -41,18 +41,6 @@ public class UserData
         return $"{ValidityPeriod.start} - {ValidityPeriod.end}";
     }
 
-    public void UpdateCardID(string id)
-    {
-        //TODO check format
-        CardID = id;
-    }
-
-    public bool VerifyUser(string cardID, string cardPin)
-    {
-        //TODO check requirements on this
-        return cardID == CardID && cardPin == this.CardPin;
-    }
-
     private string GeneratePin()
     {
         int number = random.Next(0, 10000);

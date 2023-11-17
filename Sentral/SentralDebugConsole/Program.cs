@@ -7,12 +7,16 @@ namespace SentralDebugConsole;
 
 internal class Program
 {
+    static UILogger logger = new();
+
     static void Main(string[] args)
     {
         Console.WriteLine("\u001b]0;Control Central\u0007");
         var server = new TcpServer(8000);
 
-        server.LogMessage += OnLogMessageReceived;
+        server.AttachLogger(logger);
+
+        logger.LogMessageEvent += OnLogMessageReceived;
         server.RequestReceived += HandleRequest;
 
         server.Start();
@@ -21,7 +25,7 @@ internal class Program
         Console.ReadKey(true);
 
         server.Stop();
-        server.LogMessage -= OnLogMessageReceived;
+        logger.LogMessageEvent -= OnLogMessageReceived;
         server.RequestReceived -= HandleRequest;
     }
 
