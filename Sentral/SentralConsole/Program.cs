@@ -9,6 +9,7 @@ internal class Program
     private const string removePattern = @"^remove \d{4}$";
     private const string editPattern = @"^edit \d{4}$";
     private const string showPattern = @"^show \d{4}$";
+    private const string addPattern = @"^add \d{4}";
 
     private static List<UserData> mockDB = new();
 
@@ -85,9 +86,13 @@ internal class Program
             {
                 ShowUsers();
             }
-            else if (command == "add")
+            else if (Regex.IsMatch(command, addPattern))
             {
-                AddUser();
+                string? cardID = GetNumbersFromCommand(command);
+                if(!string.IsNullOrEmpty(cardID))
+                {
+                    AddSpecificUser(cardID);
+                }
             }
             else if (Regex.IsMatch(command, showPattern))
             {
@@ -134,7 +139,7 @@ internal class Program
 
     private static void ShowUsers()
     {
-        foreach(UserData user in mockDB)
+        foreach(UserData user in mockDB.OrderBy(u => u.CardID))
         {
             Console.WriteLine($"[{user.CardID}] {user.FirstName} {user.LastName}");
         }
@@ -142,119 +147,39 @@ internal class Program
         Console.WriteLine("");
     }
 
-    private static void AddUser()
+    private static void AddSpecificUser(string cardID)
     {
+        if (mockDB.Any(u => u.CardID == cardID))
+        {
+            Console.WriteLine("card id already exists!\n");
+            return;
+        }
+
         Console.WriteLine("adding user, fill in data below\n");
 
-        string? cardIdInput = "";
-        string? firstNameInput = "";
-        string? lastNameInput = "";
-        string? emailInput = "";
+        string firstNameInput = GetNameInput("first name");
+        string lastNameInput = GetNameInput("last name");
+        string emailInput = GetEmailInput("email");
 
-        InputValidation idValidation = InputValidation.NotValidated;
-        InputValidation firstNameValidation = InputValidation.NotValidated;
-        InputValidation lastNameValidation = InputValidation.NotValidated;
-        InputValidation emailValidation = InputValidation.NotValidated;
+        //TODO verify card id does not exist in db
 
-        // Card id
-        while (idValidation != InputValidation.Valid)
-        {
-            Console.Write("> card id: ");
-            cardIdInput = Console.ReadLine();
-
-            idValidation = ValidateFourDigits(cardIdInput);
-
-            switch (idValidation)
-            {
-                case InputValidation.IsEmpty:
-                    Console.WriteLine("card id cannot be empty\n");
-                    break;
-
-                case InputValidation.IncorrectFormat:
-                    Console.WriteLine("card id must be a number\n");
-                    break;
-
-                case InputValidation.OutsideRange:
-                    Console.WriteLine("card id must be between 0000 and 9999\n");
-                    break;
-
-                case InputValidation.IncorrectLength:
-                    Console.WriteLine("card id must be of length 4\n");
-                    break;
-            }
-        }
-
-        // Name
-        while (firstNameValidation != InputValidation.Valid)
-        {
-            Console.Write("> first name: ");
-            firstNameInput = Console.ReadLine();
-
-            firstNameValidation = ValidateName(firstNameInput);
-
-            switch (firstNameValidation)
-            {
-                case InputValidation.IsEmpty:
-                    Console.WriteLine("name cannot be empty\n");
-                    break;
-
-                case InputValidation.IncorrectFormat:
-                    Console.WriteLine("name can only contain letters\n");
-                    break;
-            }
-        }
-
-        while (lastNameValidation != InputValidation.Valid)
-        {
-            Console.Write("> last name: ");
-            lastNameInput = Console.ReadLine();
-
-            lastNameValidation = ValidateName(lastNameInput);
-
-            switch (lastNameValidation)
-            {
-                case InputValidation.IsEmpty:
-                    Console.WriteLine("name cannot be empty\n");
-                    break;
-
-                case InputValidation.IncorrectFormat:
-                    Console.WriteLine("name can only contain letters\n");
-                    break;
-            }
-        }
-
-        // Email
-        while (emailValidation != InputValidation.Valid)
-        {
-            Console.Write("> email: ");
-            emailInput = Console.ReadLine();
-
-            emailValidation = ValidateEmail(emailInput);
-
-            switch (emailValidation)
-            {
-                case InputValidation.IsEmpty:
-                    Console.WriteLine("email cannot be empty\n");
-                    break;
-
-                case InputValidation.IncorrectFormat:
-                    Console.WriteLine("invalid email\n");
-                    break;
-            }
-        }
-
-        // Possible unsafe non-null assertion, but should be fine
         UserData newUser = new()
         {
-            FirstName = firstNameInput!,
-            LastName = lastNameInput!,
-            Email = emailInput!,
-            CardID = cardIdInput!
+            FirstName = firstNameInput,
+            LastName = lastNameInput,
+            Email = emailInput,
+            CardID = cardID
         };
 
-        if(!UserConfirm("confirm addition of user?"))
+        Console.WriteLine("");
+        Console.WriteLine($"name: {newUser.FirstName} {newUser.LastName}");
+        Console.WriteLine($"email: {newUser.Email}");
+        Console.WriteLine($"card id: {newUser.CardID}");
+        Console.WriteLine($"card pin: {newUser.CardPin}");
+        Console.WriteLine($"validity period: {newUser.GetFormattedPeriod()}\n");
+
+        if (!UserConfirm("confirm addition of user?"))
         {
-            Console.WriteLine("cancled\n");
             return;
         }
 
@@ -286,9 +211,82 @@ internal class Program
     {
         Console.WriteLine($"editing user {cardID}...");
 
+        UserData selectedUser = mockDB.First(x => x.CardID == cardID);
 
+        Console.WriteLine($"1. first name: {selectedUser.FirstName}");
+        Console.WriteLine($"2. last name: {selectedUser.LastName}");
+        Console.WriteLine($"3. email: {selectedUser.Email}");
+        Console.WriteLine($"4. card id: {selectedUser.CardID}");
+        Console.WriteLine($"5. validity period: {selectedUser.GetFormattedPeriod()}");
+        Console.WriteLine($"6. card pin: {selectedUser.CardPin}");
+        Console.WriteLine($"7. cancel");
 
-        Console.WriteLine("");
+        Console.WriteLine("press a number 1-7\n");
+        Console.Write("> ");
+
+        bool dialog = true;
+
+        while (dialog)
+        {
+            char response = Console.ReadKey(true).KeyChar;
+
+            switch (response)
+            {
+                case '1':
+                    Console.WriteLine("1");
+                    string newFirstName = GetNameInput("new first name");
+                    selectedUser.FirstName = newFirstName;
+                    dialog = false;
+                    break;
+
+                case '2':
+                    Console.WriteLine("2");
+                    string newLastName = GetNameInput("new last name");
+                    selectedUser.LastName = newLastName;
+                    dialog = false;
+                    break;
+
+                case '3':
+                    Console.WriteLine("3");
+                    string newEmail = GetEmailInput("new email");
+                    selectedUser.Email = newEmail;
+                    dialog = false;
+                    break;
+
+                case '4':
+                    Console.WriteLine("4");
+                    string newCardId = GetFourDigitInput("new card id");
+                    if(mockDB.Any(u => u.CardID == newCardId && selectedUser.CardID != newCardId))
+                    {
+                        Console.WriteLine("card id already exists!\n");
+                    }
+                    else
+                    {
+                        selectedUser.CardID = newCardId;
+                    }
+                    dialog = false;
+                    break;
+
+                case '5':
+                    Console.WriteLine("5");
+                    //TODO add this
+                    Console.WriteLine("NOT IMPLEMENTED\n");
+                    dialog = false;
+                    break;
+
+                case '6':
+                    Console.WriteLine("6");
+                    string newCardPin = GetFourDigitInput("new pin");
+                    selectedUser.CardPin = newCardPin;
+                    dialog = false;
+                    break;
+
+                case '7':
+                    Console.WriteLine("7");
+                    dialog = false;
+                    break;
+            }
+        }
     }
 
     private static void RemoveSpecificUser(string cardID)
@@ -311,6 +309,95 @@ internal class Program
         //TODO change to DB connection class
         mockDB.Remove(userToRemove);
         Console.WriteLine($"removed user [{cardID}] {userToRemove.FirstName} {userToRemove.LastName}\n");
+    }
+
+    private static string GetEmailInput(string prompt)
+    {
+        string? emailInput = "";
+        InputValidation emailValidation = InputValidation.NotValidated;
+
+        while (emailValidation != InputValidation.Valid)
+        {
+            Console.Write($"> {prompt}: ");
+            emailInput = Console.ReadLine();
+
+            emailValidation = ValidateEmail(emailInput);
+
+            switch (emailValidation)
+            {
+                case InputValidation.IsEmpty:
+                    Console.WriteLine("email cannot be empty\n");
+                    break;
+
+                case InputValidation.IncorrectFormat:
+                    Console.WriteLine("invalid email\n");
+                    break;
+            }
+        }
+
+        return emailInput!;
+    }
+
+    private static string GetFourDigitInput(string prompt)
+    {
+        string? cardIdInput = "";
+        InputValidation idValidation = InputValidation.NotValidated;
+
+        while (idValidation != InputValidation.Valid)
+        {
+            Console.Write($"> {prompt}: ");
+            cardIdInput = Console.ReadLine();
+
+            idValidation = ValidateFourDigits(cardIdInput);
+
+            switch (idValidation)
+            {
+                case InputValidation.IsEmpty:
+                    Console.WriteLine("card id cannot be empty\n");
+                    break;
+
+                case InputValidation.IncorrectFormat:
+                    Console.WriteLine("card id must be a number\n");
+                    break;
+
+                case InputValidation.OutsideRange:
+                    Console.WriteLine("card id must be between 0000 and 9999\n");
+                    break;
+
+                case InputValidation.IncorrectLength:
+                    Console.WriteLine("card id must be of length 4\n");
+                    break;
+            }
+        }
+
+        return cardIdInput!;
+    }
+
+    private static string GetNameInput(string prompt)
+    {
+        string? nameInput = "";
+        InputValidation nameValidation = InputValidation.NotValidated;
+
+        while (nameValidation != InputValidation.Valid)
+        {
+            Console.Write($"> {prompt}: ");
+            nameInput = Console.ReadLine();
+
+            nameValidation = ValidateName(nameInput);
+
+            switch (nameValidation)
+            {
+                case InputValidation.IsEmpty:
+                    Console.WriteLine("name cannot be empty\n");
+                    break;
+
+                case InputValidation.IncorrectFormat:
+                    Console.WriteLine("name can only contain letters\n");
+                    break;
+            }
+        }
+
+        return nameInput!;
     }
 
 
@@ -417,11 +504,11 @@ internal class Program
         Console.WriteLine("commands:");
         Console.WriteLine("clear - clear the console");
         Console.WriteLine("exit - close the program");
-        Console.WriteLine("add - add new user");
         Console.WriteLine("show - lists all users");
-        Console.WriteLine("show [card ID] - details about a specific user");
-        Console.WriteLine("edit [card ID]- change data of existing user");
-        Console.WriteLine("remove [card ID] - remove existing user");
+        Console.WriteLine("add [card id] - add new user with a card id");
+        Console.WriteLine("show [card id] - details about a specific user");
+        Console.WriteLine("edit [card id]- change data of existing user");
+        Console.WriteLine("remove [card id] - remove existing user");
         Console.WriteLine("");
     }
 
