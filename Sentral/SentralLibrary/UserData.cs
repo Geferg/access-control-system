@@ -26,6 +26,16 @@ public class UserData
         ValidityPeriod = (startTime, endTime);
     }
 
+    public UserData(string firstName, string lastName, string email, string cardID, string cardPin)
+    {
+        FirstName = firstName;
+        LastName = lastName;
+        Email = email;
+        CardID = cardID;
+        CardPin = cardPin;
+        ValidityPeriod = (DateTime.MinValue, DateTime.MaxValue);
+    }
+
     public UserData()
     {
         FirstName = "";
