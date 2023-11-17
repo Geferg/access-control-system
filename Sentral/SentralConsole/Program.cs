@@ -335,6 +335,7 @@ internal class Program
             }
         }
 
+        //TODO trim
         return emailInput!;
     }
 
