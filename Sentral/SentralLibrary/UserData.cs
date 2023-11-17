@@ -7,6 +7,8 @@ using System.Threading.Tasks;
 namespace SentralLibrary;
 public class UserData
 {
+    private readonly Random random = new Random();
+
     public string FirstName { get; set; }
     public string LastName { get; set; }
     public string Email { get; set; }
@@ -30,7 +32,7 @@ public class UserData
         LastName = "";
         Email = "";
         CardID = "";
-        CardPin = "";
+        CardPin = GeneratePin();
         ValidityPeriod = (DateTime.MinValue, DateTime.MaxValue);
     }
 
@@ -45,10 +47,16 @@ public class UserData
         CardID = id;
     }
 
-
     public bool VerifyUser(string cardID, string cardPin)
     {
         //TODO check requirements on this
         return cardID == CardID && cardPin == this.CardPin;
+    }
+
+    private string GeneratePin()
+    {
+        int number = random.Next(0, 10000);
+
+        return number.ToString("D4");
     }
 }

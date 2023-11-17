@@ -1,4 +1,5 @@
-﻿using System.Text.RegularExpressions;
+﻿using System.Net.Mail;
+using System.Text.RegularExpressions;
 using SentralLibrary;
 
 namespace SentralConsole;
@@ -8,6 +9,7 @@ internal class Program
     private const string removePattern = @"^remove \d{4}$";
     private const string editPattern = @"^edit \d{4}$";
     private const string showPattern = @"^show \d{4}$";
+
     private static List<UserData> mockDB = new();
 
     static void Main(string[] args)
@@ -68,8 +70,7 @@ internal class Program
 
             if (string.IsNullOrEmpty(command))
             {
-                Console.WriteLine("input is empty");
-                ListCommands();
+
             }
             else if (command == "clear")
             {
@@ -121,12 +122,14 @@ internal class Program
 
     private static void Exit()
     {
-        if (UserConfirm("are you sure you want to exit?"))
+        if (!UserConfirm("are you sure you want to exit?"))
         {
-            Console.WriteLine("exiting...");
-            // Add propper shutdown
-            Environment.Exit(0);
+            Console.WriteLine("cancled\n");
+            return;
         }
+        Console.WriteLine("exiting...");
+        // Add propper shutdown
+        Environment.Exit(0);
     }
 
     private static void ShowUsers()
@@ -141,13 +144,119 @@ internal class Program
 
     private static void AddUser()
     {
-        Console.WriteLine("adding user, fill in data");
-        Console.WriteLine("press esc to go back\n");
+        Console.WriteLine("adding user, fill in data below\n");
 
-        UserData newUser = new();
-        // generate card id
-        // generate pin?
-        // handle user input
+        string? cardIdInput = "";
+        string? firstNameInput = "";
+        string? lastNameInput = "";
+        string? emailInput = "";
+
+        InputValidation idValidation = InputValidation.NotValidated;
+        InputValidation firstNameValidation = InputValidation.NotValidated;
+        InputValidation lastNameValidation = InputValidation.NotValidated;
+        InputValidation emailValidation = InputValidation.NotValidated;
+
+        // Card id
+        while (idValidation != InputValidation.Valid)
+        {
+            Console.Write("> card id: ");
+            cardIdInput = Console.ReadLine();
+
+            idValidation = ValidateFourDigits(cardIdInput);
+
+            switch (idValidation)
+            {
+                case InputValidation.IsEmpty:
+                    Console.WriteLine("card id cannot be empty\n");
+                    break;
+
+                case InputValidation.IncorrectFormat:
+                    Console.WriteLine("card id must be a number\n");
+                    break;
+
+                case InputValidation.OutsideRange:
+                    Console.WriteLine("card id must be between 0000 and 9999\n");
+                    break;
+
+                case InputValidation.IncorrectLength:
+                    Console.WriteLine("card id must be of length 4\n");
+                    break;
+            }
+        }
+
+        // Name
+        while (firstNameValidation != InputValidation.Valid)
+        {
+            Console.Write("> first name: ");
+            firstNameInput = Console.ReadLine();
+
+            firstNameValidation = ValidateName(firstNameInput);
+
+            switch (firstNameValidation)
+            {
+                case InputValidation.IsEmpty:
+                    Console.WriteLine("name cannot be empty\n");
+                    break;
+
+                case InputValidation.IncorrectFormat:
+                    Console.WriteLine("name can only contain letters\n");
+                    break;
+            }
+        }
+
+        while (lastNameValidation != InputValidation.Valid)
+        {
+            Console.Write("> last name: ");
+            lastNameInput = Console.ReadLine();
+
+            lastNameValidation = ValidateName(lastNameInput);
+
+            switch (lastNameValidation)
+            {
+                case InputValidation.IsEmpty:
+                    Console.WriteLine("name cannot be empty\n");
+                    break;
+
+                case InputValidation.IncorrectFormat:
+                    Console.WriteLine("name can only contain letters\n");
+                    break;
+            }
+        }
+
+        // Email
+        while (emailValidation != InputValidation.Valid)
+        {
+            Console.Write("> email: ");
+            emailInput = Console.ReadLine();
+
+            emailValidation = ValidateEmail(emailInput);
+
+            switch (emailValidation)
+            {
+                case InputValidation.IsEmpty:
+                    Console.WriteLine("email cannot be empty\n");
+                    break;
+
+                case InputValidation.IncorrectFormat:
+                    Console.WriteLine("invalid email\n");
+                    break;
+            }
+        }
+
+        // Possible unsafe non-null assertion, but should be fine
+        UserData newUser = new()
+        {
+            FirstName = firstNameInput!,
+            LastName = lastNameInput!,
+            Email = emailInput!,
+            CardID = cardIdInput!
+        };
+
+        if(!UserConfirm("confirm addition of user?"))
+        {
+            Console.WriteLine("cancled\n");
+            return;
+        }
 
         mockDB.Add(newUser);
     }
@@ -194,19 +303,69 @@ internal class Program
 
         UserData userToRemove = mockDB.First(x => x.CardID == cardID);
 
-        if (UserConfirm($"are you sure you want to delete [{cardID}] {userToRemove.FirstName} {userToRemove.LastName}"))
+        if (!UserConfirm($"are you sure you want to delete [{cardID}] {userToRemove.FirstName} {userToRemove.LastName}"))
         {
-            //TODO change to DB connection class
-            mockDB.Remove(userToRemove);
-            Console.WriteLine($"removed user [{cardID}] {userToRemove.FirstName} {userToRemove.LastName}\n");
             return;
         }
+
+        //TODO change to DB connection class
+        mockDB.Remove(userToRemove);
+        Console.WriteLine($"removed user [{cardID}] {userToRemove.FirstName} {userToRemove.LastName}\n");
     }
 
 
     // Helper methods
+    private static InputValidation ValidateName(string? input)
+    {
+        if (string.IsNullOrWhiteSpace(input))
+        {
+            return InputValidation.IsEmpty;
+        }
+        else if (!input.All(char.IsLetter))
+        {
+            return InputValidation.IncorrectFormat;
+        }
 
-    public static bool UserExists(string cardID)
+        return InputValidation.Valid;
+    }
+
+    private static InputValidation ValidateEmail(string? input)
+    {
+        if (string.IsNullOrWhiteSpace(input))
+        {
+            return InputValidation.IsEmpty;
+        }
+        else if (!MailAddress.TryCreate(input, out _))
+        {
+            return InputValidation.IncorrectFormat;
+        }
+
+        return InputValidation.Valid;
+    }
+
+    private static InputValidation ValidateFourDigits(string? input)
+    {
+        if (string.IsNullOrWhiteSpace(input))
+        {
+            return InputValidation.IsEmpty;
+        }
+        else if (!int.TryParse(input, out int number))
+        {
+            return InputValidation.IncorrectFormat;
+        }
+        else if (number < 0 || 9999 < number)
+        {
+            return InputValidation.OutsideRange;
+        }
+        else if (input.Length != 4)
+        {
+            return InputValidation.IncorrectLength;
+        }
+
+        return InputValidation.Valid;
+    }
+
+    private static bool UserExists(string cardID)
     {
         return mockDB.Any(x => x.CardID == cardID);
     }
@@ -264,5 +423,15 @@ internal class Program
         Console.WriteLine("edit [card ID]- change data of existing user");
         Console.WriteLine("remove [card ID] - remove existing user");
         Console.WriteLine("");
+    }
+
+    private enum InputValidation
+    {
+        NotValidated,
+        Valid,
+        IsEmpty,
+        OutsideRange,
+        IncorrectLength,
+        IncorrectFormat,
     }
 }
