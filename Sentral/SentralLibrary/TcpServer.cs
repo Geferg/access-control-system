@@ -21,10 +21,10 @@ public class TcpServer
 {
     private TcpListener listener;
     private readonly List<TcpClient> clients;
+    private UILogger? logger;
 
     public delegate void RequestReceivedHandler(TcpClient client, string request, Action<TcpClient, string> respondCallback);
     public event RequestReceivedHandler? RequestReceived;
-    public event EventHandler<string>? LogMessage;
 
     public TcpServer(int port)
     {
@@ -32,22 +32,27 @@ public class TcpServer
         clients = new();
     }
 
-    protected virtual void OnLogMessage(string message)
+    protected virtual void TryLogMessage(string message)
     {
-        LogMessage?.Invoke(this, message);
+        logger?.LogMessage(message);
+    }
+
+    public void AttachLogger(UILogger logger)
+    {
+        this.logger = logger;
     }
 
     public void Start()
     {
         listener.Start();
-        OnLogMessage("Server started");
+        TryLogMessage("Server started");
         ListenForClientsAsync();
     }
 
     public void Stop()
     {
         listener.Stop();
-        OnLogMessage("Server stopped");
+        TryLogMessage("Server stopped");
         lock (clients)
         {
             foreach (var client in clients)
@@ -68,7 +73,7 @@ public class TcpServer
                 lock (clients)
                 {
                     clients.Add(client);
-                    OnLogMessage($"Client connected - {client.Client.RemoteEndPoint}");
+                    TryLogMessage($"Client connected - {client.Client.RemoteEndPoint}");
                 }
 
                 _ = HandleClientAsync(client);
@@ -76,11 +81,11 @@ public class TcpServer
         }
         catch (ObjectDisposedException)
         {
-            OnLogMessage("Lister has been stopped.");
+            TryLogMessage("Lister has been stopped.");
         }
         catch (Exception ex)
         {
-            OnLogMessage($"Failed to listen {ex}");
+            TryLogMessage($"Failed to listen {ex}");
         }
     }
 
@@ -101,7 +106,7 @@ public class TcpServer
         }
         catch (Exception ex)
         {
-            OnLogMessage($"Error - {ex.Message}");
+            TryLogMessage($"Error - {ex.Message}");
         }
         finally
         {
@@ -109,7 +114,7 @@ public class TcpServer
             lock (clients)
             {
                 clients.Remove(client);
-                OnLogMessage($"Client disconnected - {client.Client.RemoteEndPoint}");
+                TryLogMessage($"Client disconnected - {client.Client.RemoteEndPoint}");
             }
 
         }
