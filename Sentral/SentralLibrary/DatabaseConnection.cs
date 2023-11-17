@@ -1,6 +1,7 @@
 ﻿using Npgsql;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Net.NetworkInformation;
 using System.Text;
@@ -9,6 +10,7 @@ using System.Threading.Tasks;
 namespace SentralLibrary;
 public class DatabaseConnection
 {
+    public const string test = "";
     private NpgsqlConnection connection;
     private UILogger? logger;
 
@@ -28,23 +30,31 @@ public class DatabaseConnection
         logger?.LogMessage(message);
     }
 
-    public static void AddUser(UserData newUser)
+    public bool UserExists(string cardId)
+    {
+        //TODO implement
+        return false;
+    }
+
+    public void AddUser(UserData newUser)
     {
         //TODO implement
     }
 
-    public static void RemoveUser(string cardId)
+    public void RemoveUser(string cardId)
     {
         //TODO implement
     }
 
-    public static void UpdateUser(string cardId, UserData newUser)
+    public void UpdateUser(string cardId, UserData newUser)
     {
         //TODO implement
     }
 
     public UserData? GetUserData(string id)
     {
+        //TODO simplify with db function
+        //obsolete
         string query = $"SELECT {DatabaseColumns.IdCol}, " +
             $"{DatabaseColumns.FirstNameCol}, " +
             $"{DatabaseColumns.LastNameCol}, " +
@@ -88,8 +98,40 @@ public class DatabaseConnection
 
     public List<(string id, string firstName, string lastName)> GetUserbase()
     {
-        //TODO implement
-        return new List<(string id, string firstName, string lastName)>();
+        List<(string id, string firstName, string lastName)> result = new();
+        string GetUserbaseSql = @"SELECT * FROM getuserbase()";
+        try
+        {
+            connection.Open();
+            NpgsqlCommand command = new(GetUserbaseSql, connection);
+            DataTable dataTable = new();
+            dataTable.Load(command.ExecuteReader());
+
+            DataRowCollection users = dataTable.Rows;
+
+            foreach (DataRow user in users)
+            {
+                string? cardId = user[DatabaseColumns.IdCol].ToString();
+                string? firstName = user[DatabaseColumns.FirstNameCol].ToString();
+                string? lastName = user[DatabaseColumns.LastNameCol].ToString();
+
+                if(cardId != null && firstName != null && lastName != null)
+                {
+                    result.Add((cardId, firstName, lastName));
+                }
+            }
+
+        }
+        catch (Exception ex)
+        {
+            TryLogMessage(ex.Message);
+            throw;
+        }
+        finally
+        {
+            connection.Close();
+        }
+        return result;
     }
 
 }

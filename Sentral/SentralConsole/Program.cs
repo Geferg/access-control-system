@@ -21,8 +21,8 @@ internal class Program
     private const string dbPassword = "Ha1FinDagIDag!";
     private const string dbDatabase = "599146";
 
-    private static readonly DatabaseConnection database = new(dbIP, dbPort, dbUsername, dbPassword, dbDatabase);
-    private static TcpServer tcpServer = new(8000);
+    private static readonly DatabaseConnection dbConnection = new(dbIP, dbPort, dbUsername, dbPassword, dbDatabase);
+    private static readonly TcpServer tcpServer = new(8000);
 
     private static List<UserData> mockDB = new();
 
@@ -34,7 +34,7 @@ internal class Program
             FirstName = "Kristian",
             LastName = "Klette",
             Email = "geferg.dev@gmail.com",
-            CardID = "0000",
+            CardID = "1234",
             ValidityPeriod = (DateTime.Now, DateTime.Now.AddYears(1)),
             CardPin = "0000"
         };
@@ -69,7 +69,11 @@ internal class Program
             CardPin = "0011"
         };
 
+        UserData testUser = new("test", "user", "test@user.com", "1234", "5050");
+
         //TODO replace with real db
+        dbConnection.AddUser(testUser);
+
         mockDB.Add(kristian);
         mockDB.Add(ryan);
         mockDB.Add(tor);
@@ -153,11 +157,16 @@ internal class Program
 
     private static void ShowUsers()
     {
+        foreach (var user in dbConnection.GetUserbase().OrderBy(u => u.id))
+        {
+            Console.WriteLine($"[{user.id}] {user.firstName} {user.lastName}");
+        }
+        /*
         foreach(UserData user in mockDB.OrderBy(u => u.CardID))
         {
             Console.WriteLine($"[{user.CardID}] {user.FirstName} {user.LastName}");
         }
-
+        */
         Console.WriteLine("");
     }
 
@@ -197,6 +206,7 @@ internal class Program
             return;
         }
 
+        dbConnection.AddUser(newUser);
         mockDB.Add(newUser);
     }
 
