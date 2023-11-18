@@ -9,8 +9,30 @@ public class UserData
 {
     private readonly Random random = new Random();
 
-    public string FirstName { get; set; }
-    public string LastName { get; set; }
+    private string firstName;
+    public string FirstName
+    {
+        get => firstName;
+        set
+        {
+            if (value.Length > 0)
+            {
+                firstName = char.ToUpper(value[0]) + value[1..].ToLower();
+            }
+        }
+    }
+    private string lastName;
+    public string LastName
+    {
+        get => lastName;
+        set
+        {
+            if (value.Length > 0)
+            {
+                lastName = char.ToUpper(value[0]) + value[1..].ToLower();
+            }
+        }
+    }
     public string Email { get; set; }
     public string CardID { get; set; }
     public string CardPin { get; set; }
@@ -24,6 +46,16 @@ public class UserData
         CardID = cardID;
         CardPin = cardPin;
         ValidityPeriod = (startTime, endTime);
+    }
+
+    public UserData(string firstName, string lastName, string email, string cardID, string cardPin)
+    {
+        FirstName = firstName;
+        LastName = lastName;
+        Email = email;
+        CardID = cardID;
+        CardPin = cardPin;
+        ValidityPeriod = (DateTime.MinValue, DateTime.MaxValue);
     }
 
     public UserData()

@@ -1,4 +1,5 @@
-﻿using System.Net.Mail;
+﻿using System.Data;
+using System.Net.Mail;
 using System.Text.RegularExpressions;
 using SentralLibrary;
 
@@ -6,60 +7,33 @@ namespace SentralConsole;
 
 internal class Program
 {
+    // INPUT PATTERN MATCHING
     private const string removePattern = @"^remove \d{4}$";
     private const string editPattern = @"^edit \d{4}$";
     private const string showPattern = @"^show \d{4}$";
     private const string addPattern = @"^add \d{4}";
 
-    private static List<UserData> mockDB = new();
+    // DATABASE CONNECTION STRINGS
+    //? move to static class
+    private const string dbIP = "129.151.221.119";
+    private const string dbPort = "5432";
+    private const string dbUsername = "599146";
+    private const string dbPassword = "Ha1FinDagIDag!";
+    private const string dbDatabase = "599146";
+
+    // UI DIALOG MESSAGES
+    private const string missingInDbMessage = "user not found in database";
+
+    private static readonly DatabaseConnection dbConnection = new(dbIP, dbPort, dbUsername, dbPassword, dbDatabase);
+    private static readonly TcpServer tcpServer = new(8000);
+    private static readonly UILogger uiLogger = new();
 
     static void Main(string[] args)
     {
-        // Adding test users
-        UserData kristian = new()
-        {
-            FirstName = "Kristian",
-            LastName = "Klette",
-            Email = "geferg.dev@gmail.com",
-            CardID = "0000",
-            ValidityPeriod = (DateTime.Now, DateTime.Now.AddYears(1)),
-            CardPin = "0000"
-        };
+        dbConnection.AttachLogger(uiLogger);
+        tcpServer.AttachLogger(uiLogger);
 
-        UserData ryan = new()
-        {
-            FirstName = "Ryan",
-            LastName = "Le",
-            Email = "ryan.le@gmail.com",
-            CardID = "1111",
-            ValidityPeriod = (DateTime.Now, DateTime.Now.AddYears(1)),
-            CardPin = "0001"
-        };
-
-        UserData tor = new()
-        {
-            FirstName = "Tor",
-            LastName = "Haldaas",
-            Email = "tor.h@gmail.com",
-            CardID = "2222",
-            ValidityPeriod = (DateTime.Now, DateTime.Now.AddYears(1)),
-            CardPin = "0010"
-        };
-
-        UserData victor = new()
-        {
-            FirstName = "Victor",
-            LastName = "Newman",
-            Email = "victor.new@gmail.com",
-            CardID = "3333",
-            ValidityPeriod = (DateTime.Now, DateTime.Now.AddYears(1)),
-            CardPin = "0011"
-        };
-
-        mockDB.Add(kristian);
-        mockDB.Add(ryan);
-        mockDB.Add(tor);
-        mockDB.Add(victor);
+        uiLogger.LogMessageEvent += OnLogMessageReceived;
 
         ListCommands();
 
@@ -139,9 +113,9 @@ internal class Program
 
     private static void ShowUsers()
     {
-        foreach(UserData user in mockDB.OrderBy(u => u.CardID))
+        foreach (var (id, firstName, lastName) in dbConnection.GetUserbase().OrderBy(u => u.id))
         {
-            Console.WriteLine($"[{user.CardID}] {user.FirstName} {user.LastName}");
+            Console.WriteLine($"[{id}] {firstName} {lastName}");
         }
 
         Console.WriteLine("");
@@ -149,7 +123,7 @@ internal class Program
 
     private static void AddSpecificUser(string cardID)
     {
-        if (mockDB.Any(u => u.CardID == cardID))
+        if (dbConnection.UserExists(cardID))
         {
             Console.WriteLine("card id already exists!\n");
             return;
@@ -183,19 +157,24 @@ internal class Program
             return;
         }
 
-        mockDB.Add(newUser);
+        dbConnection.AddUser(newUser);
     }
 
     private static void ShowSpecificUser(string cardID)
     {
-        if (!UserExists(cardID))
+        if (!dbConnection.UserExists(cardID))
         {
-            Console.WriteLine($"Card id [{cardID}] does not exist\n");
+            Console.WriteLine(missingInDbMessage + "\n");
             return;
         }
 
-        //TODO link with database handler class
-        UserData selectedUser = mockDB.First(x => x.CardID == cardID);
+        UserData? selectedUser = dbConnection.GetUser(cardID);
+
+        if (selectedUser == null)
+        {
+            Console.WriteLine(missingInDbMessage + "\n");
+            return;
+        }
 
         Console.WriteLine($"     first name: {selectedUser.FirstName}");
         Console.WriteLine($"      last name: {selectedUser.LastName}");
@@ -209,19 +188,26 @@ internal class Program
 
     private static void EditSpecificUser(string cardID)
     {
-        Console.WriteLine($"editing user {cardID}...");
+        UserData? selectedUser = dbConnection.GetUser(cardID);
 
-        UserData selectedUser = mockDB.First(x => x.CardID == cardID);
+        if (selectedUser == null)
+        {
+            Console.WriteLine(missingInDbMessage + "\n");
+            return;
+        }
+
+        Console.WriteLine($"editing user {cardID}...");
 
         Console.WriteLine($"1. first name: {selectedUser.FirstName}");
         Console.WriteLine($"2. last name: {selectedUser.LastName}");
         Console.WriteLine($"3. email: {selectedUser.Email}");
         Console.WriteLine($"4. card id: {selectedUser.CardID}");
-        Console.WriteLine($"5. validity period: {selectedUser.GetFormattedPeriod()}");
-        Console.WriteLine($"6. card pin: {selectedUser.CardPin}");
-        Console.WriteLine($"7. cancel");
+        Console.WriteLine($"5. validity start: {selectedUser.ValidityPeriod.start}");
+        Console.WriteLine($"6. validity end: {selectedUser.ValidityPeriod.end}");
+        Console.WriteLine($"7. card pin: {selectedUser.CardPin}");
+        Console.WriteLine($"8. cancel");
 
-        Console.WriteLine("press a number 1-7\n");
+        Console.WriteLine("press a number 1-8\n");
         Console.Write("> ");
 
         bool dialog = true;
@@ -256,7 +242,7 @@ internal class Program
                 case '4':
                     Console.WriteLine("4");
                     string newCardId = GetFourDigitInput("new card id");
-                    if(mockDB.Any(u => u.CardID == newCardId && selectedUser.CardID != newCardId))
+                    if(dbConnection.UserExists(newCardId) && newCardId != selectedUser.CardID)
                     {
                         Console.WriteLine("card id already exists!\n");
                     }
@@ -269,46 +255,70 @@ internal class Program
 
                 case '5':
                     Console.WriteLine("5");
-                    //TODO add this
-                    Console.WriteLine("NOT IMPLEMENTED\n");
+                    int newStartYear = GetValidatedNumberInput("year", 1900, 2100);
+                    int newStartMonth = GetValidatedNumberInput("month", 1, 12);
+                    int newStartDay = GetValidatedNumberInput("day", 1, DateTime.DaysInMonth(newStartYear, newStartMonth));
+                    int newStartHour = GetValidatedNumberInput("time (hour)", 0, 23);
+                    DateTime newStartTime = new(newStartYear, newStartMonth, newStartDay, newStartHour, 0, 0);
+
+                    selectedUser.ValidityPeriod = (newStartTime, selectedUser.ValidityPeriod.end);
                     dialog = false;
                     break;
 
                 case '6':
                     Console.WriteLine("6");
-                    string newCardPin = GetFourDigitInput("new pin");
-                    selectedUser.CardPin = newCardPin;
+                    int newEndYear = GetValidatedNumberInput("year", 1900, 2100);
+                    int newEndMonth = GetValidatedNumberInput("month", 1, 12);
+                    int newEndDay = GetValidatedNumberInput("day", 1, DateTime.DaysInMonth(newEndYear, newEndMonth));
+                    int newEndHour = GetValidatedNumberInput("time (hour)", 0, 23);
+                    DateTime newEndTime = new(newEndYear, newEndMonth, newEndDay, newEndHour, 0, 0);
+
+                    selectedUser.ValidityPeriod = (selectedUser.ValidityPeriod.start, newEndTime);
                     dialog = false;
                     break;
 
                 case '7':
                     Console.WriteLine("7");
+                    string newCardPin = GetFourDigitInput("new pin");
+                    selectedUser.CardPin = newCardPin;
+                    dialog = false;
+                    break;
+
+                case '8':
+                    Console.WriteLine("8");
                     dialog = false;
                     break;
             }
         }
+
+        dbConnection.UpdateUser(cardID, selectedUser);
     }
 
     private static void RemoveSpecificUser(string cardID)
     {
         Console.WriteLine($"removing user {cardID}...");
 
-        if (!UserExists(cardID))
+        if (!dbConnection.UserExists(cardID))
         {
-            Console.WriteLine($"card id [{cardID}] does not exist\n");
+            Console.WriteLine(missingInDbMessage + "\n");
             return;
         }
 
-        UserData userToRemove = mockDB.First(x => x.CardID == cardID);
+        UserData? userToRemove = dbConnection.GetUser(cardID);
+
+        if (userToRemove == null)
+        {
+            Console.WriteLine(missingInDbMessage + "\n");
+            return;
+        }
 
         if (!UserConfirm($"are you sure you want to delete [{cardID}] {userToRemove.FirstName} {userToRemove.LastName}"))
         {
             return;
         }
 
-        //TODO change to DB connection class
-        mockDB.Remove(userToRemove);
-        Console.WriteLine($"removed user [{cardID}] {userToRemove.FirstName} {userToRemove.LastName}\n");
+        dbConnection.RemoveUser(userToRemove.CardID);
+        Console.WriteLine($"removed user [{userToRemove.CardID}] {userToRemove.FirstName} {userToRemove.LastName}\n");
     }
 
     private static string GetEmailInput(string prompt)
@@ -335,6 +345,7 @@ internal class Program
             }
         }
 
+        //TODO trim
         return emailInput!;
     }
 
@@ -400,6 +411,41 @@ internal class Program
         return nameInput!;
     }
 
+    private static int GetValidatedNumberInput(string prompt, int minValue, int maxValue)
+    {
+        string? input = null;
+        InputValidation validation = InputValidation.NotValidated;
+
+        while (validation != InputValidation.Valid)
+        {
+            Console.Write($"> {prompt}: ");
+            input = Console.ReadLine();
+
+            validation = ValidateNumberInput(input, minValue, maxValue);
+
+            switch (validation)
+            {
+                case InputValidation.IsEmpty:
+                    Console.WriteLine("Input cannot be empty\n");
+                    break;
+
+                case InputValidation.IncorrectFormat:
+                    Console.WriteLine("Input must be a number\n");
+                    break;
+
+                case InputValidation.OutsideRange:
+                    Console.WriteLine($"Input must be between {minValue} and {maxValue}\n");
+                    break;
+
+                case InputValidation.IncorrectLength:
+                    Console.WriteLine("Input has incorrect length\n");
+                    break;
+            }
+        }
+
+        return int.Parse(input!);
+    }
+
 
     // Helper methods
     private static InputValidation ValidateName(string? input)
@@ -452,9 +498,22 @@ internal class Program
         return InputValidation.Valid;
     }
 
-    private static bool UserExists(string cardID)
+    private static InputValidation ValidateNumberInput(string? input, int minValue, int maxValue)
     {
-        return mockDB.Any(x => x.CardID == cardID);
+        if (string.IsNullOrWhiteSpace(input))
+        {
+            return InputValidation.IsEmpty;
+        }
+        else if (!int.TryParse(input, out int number))
+        {
+            return InputValidation.IncorrectFormat;
+        }
+        else if (number < minValue || number > maxValue)
+        {
+            return InputValidation.OutsideRange;
+        }
+
+        return InputValidation.Valid;
     }
 
     private static string? GetNumbersFromCommand(string command)
@@ -476,7 +535,7 @@ internal class Program
 
     private static bool UserConfirm(string message = "confirm")
     {
-        Console.WriteLine($"{message} (y/n)\n");
+        Console.WriteLine($"{message} (y/n)");
 
         Console.Write("> ");
         char response = Console.ReadKey(true).KeyChar;
@@ -510,6 +569,11 @@ internal class Program
         Console.WriteLine("edit [card id]- change data of existing user");
         Console.WriteLine("remove [card id] - remove existing user");
         Console.WriteLine("");
+    }
+
+    private static void OnLogMessageReceived(object? sender, string message)
+    {
+        Console.WriteLine($"Log: {message}");
     }
 
     private enum InputValidation
