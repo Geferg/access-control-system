@@ -37,7 +37,7 @@ public class DatabaseConnection
 
         Dictionary<string, object> parameters = new()
         {
-            {"id", id}
+            {DbUserdataSchema.PARAM_ID, id}
         };
 
 
@@ -83,6 +83,10 @@ public class DatabaseConnection
                 DataRow row = dataTable.Rows[0];
                 result = Convert.ToBoolean(row[0]);
             }
+            else
+            {
+                result = false;
+            }
 
         }
         catch (Exception ex)
@@ -95,13 +99,71 @@ public class DatabaseConnection
 
     public bool RemoveUser(string id)
     {
-        //TODO implement
-        return false;
+        bool result = false;
+
+        Dictionary<string, object> parameters = new()
+        {
+            {DbUserdataSchema.PARAM_ID, id}
+        };
+
+        try
+        {
+            DataTable dataTable = GetDataTable(DbUserdataSchema.FUNCTION_REMOVEUSER, parameters);
+
+            if (dataTable.Rows.Count > 0)
+            {
+                DataRow row = dataTable.Rows[0];
+                result = Convert.ToBoolean(row[0]);
+            }
+            else
+            {
+                result = false;
+            }
+        }
+        catch (Exception ex)
+        {
+            TryLogMessage(ex.Message);
+        }
+
+        return result;
     }
 
-    public bool UpdateUser(string id, UserData newUser)
+    public bool UpdateUser(string previousId, UserData newUserData)
     {
-        return false;
+        bool result = false;
+
+        Dictionary<string, object> parameters = new()
+        {
+            {DbUserdataSchema.PARAM_PREVIOUSID, previousId},
+            {DbUserdataSchema.PARAM_FIRSTNAME, newUserData.FirstName},
+            {DbUserdataSchema.PARAM_LASTNAME, newUserData.LastName},
+            {DbUserdataSchema.PARAM_EMAIL,  newUserData.Email},
+            {DbUserdataSchema.PARAM_ID, newUserData.CardID },
+            {DbUserdataSchema.PARAM_PIN, newUserData.CardPin },
+            {DbUserdataSchema.COLUMN_STARTVALIDITY, newUserData.ValidityPeriod.start },
+            {DbUserdataSchema.COLUMN_ENDVALIDITY,  newUserData.ValidityPeriod.end }
+        };
+
+        try
+        {
+            DataTable dataTable = GetDataTable(DbUserdataSchema.FUNCTION_UPDATEUSER, parameters);
+
+            if (dataTable.Rows.Count > 0)
+            {
+                DataRow row = dataTable.Rows[0];
+                result = Convert.ToBoolean(row[0]);
+            }
+            else
+            {
+                result = false;
+            }
+        }
+        catch (Exception ex)
+        {
+            TryLogMessage(ex.Message);
+        }
+
+        return result;
     }
 
     public UserData? GetUser(string id)

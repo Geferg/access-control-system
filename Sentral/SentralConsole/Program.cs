@@ -81,7 +81,7 @@ internal class Program
         UserData testUser = new("test", "user", "test@user.com", "1234", "5050");
 
         //TODO replace with real db
-        dbConnection.AddUser(testUser);
+        //dbConnection.AddUser(testUser);
 
         ListCommands();
 
@@ -319,7 +319,7 @@ internal class Program
 
                 case '5':
                     Console.WriteLine("5");
-                    //TODO add this
+                    //TODO add this!
                     Console.WriteLine("NOT IMPLEMENTED\n");
                     dialog = false;
                     break;
@@ -337,13 +337,15 @@ internal class Program
                     break;
             }
         }
+
+        dbConnection.UpdateUser(cardID, selectedUser);
     }
 
     private static void RemoveSpecificUser(string cardID)
     {
         Console.WriteLine($"removing user {cardID}...");
 
-        if (!UserExists(cardID))
+        if (!dbConnection.UserExists(cardID))
         {
             Console.WriteLine(missingInDbMessage + "\n");
             return;

@@ -12,7 +12,7 @@ internal static class DbUserdataSchema
     public const string TABLE_NAME = "userdata";
 
     // Columns
-    public const string COLUMN_FIRSTNAME = "firstname";
+    public const string COLUMN_FIRSTNAME = "first_name";
     public const string COLUMN_LASTNAME = "lastname";
     public const string COLUMN_EMAIL = "email";
     public const string COLUMN_ID = "cardid";
@@ -27,6 +27,7 @@ internal static class DbUserdataSchema
     public const string PARAM_PIN = "cardpin";
     public const string PARAM_STARTVALIDITY = "validstart";
     public const string PARAM_ENDVALIDITY = "validend";
+    public const string PARAM_PREVIOUSID = "previouscardid";
 
     // Functions (parameters always in alphabetical order)
     /// <summary>

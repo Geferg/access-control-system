@@ -9,8 +9,24 @@ public class UserData
 {
     private readonly Random random = new Random();
 
-    public string FirstName { get; set; }
-    public string LastName { get; set; }
+    private string firstName;
+    public string FirstName
+    {
+        get => firstName;
+        set
+        {
+            firstName = char.ToUpper(value[0]) + value[1..].ToLower();
+        }
+    }
+    private string lastName;
+    public string LastName
+    {
+        get => lastName;
+        set
+        {
+            lastName = char.ToUpper(value[0]) + value[1..].ToLower();
+        }
+    }
     public string Email { get; set; }
     public string CardID { get; set; }
     public string CardPin { get; set; }
