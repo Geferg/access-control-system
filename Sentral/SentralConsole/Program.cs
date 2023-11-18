@@ -30,8 +30,12 @@ internal class Program
 
     static void Main(string[] args)
     {
+        Console.WriteLine("\u001b]0;Sentral\u0007");
+
         dbConnection.AttachLogger(uiLogger);
         tcpServer.AttachLogger(uiLogger);
+
+        tcpServer.Start();
 
         uiLogger.LogMessageEvent += OnLogMessageReceived;
 
@@ -134,8 +138,6 @@ internal class Program
         string firstNameInput = GetNameInput("first name");
         string lastNameInput = GetNameInput("last name");
         string emailInput = GetEmailInput("email");
-
-        //TODO verify card id does not exist in db
 
         UserData newUser = new()
         {
