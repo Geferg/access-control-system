@@ -26,11 +26,17 @@ internal class Program
 
     private static readonly DatabaseConnection dbConnection = new(dbIP, dbPort, dbUsername, dbPassword, dbDatabase);
     private static readonly TcpServer tcpServer = new(8000);
+    private static UILogger uiLogger = new UILogger();
 
     private static List<UserData> mockDB = new();
 
     static void Main(string[] args)
     {
+        dbConnection.AttachLogger(uiLogger);
+        tcpServer.AttachLogger(uiLogger);
+
+        uiLogger.LogMessageEvent += OnLogMessageReceived;
+
         // Adding test users
         UserData kristian = new()
         {
@@ -76,11 +82,6 @@ internal class Program
 
         //TODO replace with real db
         dbConnection.AddUser(testUser);
-
-        mockDB.Add(kristian);
-        mockDB.Add(ryan);
-        mockDB.Add(tor);
-        mockDB.Add(victor);
 
         ListCommands();
 
@@ -572,6 +573,11 @@ internal class Program
         Console.WriteLine("edit [card id]- change data of existing user");
         Console.WriteLine("remove [card id] - remove existing user");
         Console.WriteLine("");
+    }
+
+    private static void OnLogMessageReceived(object? sender, string message)
+    {
+        Console.WriteLine($"Log: {message}");
     }
 
     private enum InputValidation

@@ -11,7 +11,7 @@ namespace SentralLibrary;
 public class DatabaseConnection
 {
     public const string test = "";
-    private readonly NpgsqlConnection connection_;
+    //private readonly NpgsqlConnection connection_;
     private readonly string connectionString;
     private UILogger? logger;
 
@@ -66,34 +66,36 @@ public class DatabaseConnection
         return result;
     }
 
-    public void AddUser(UserData newUser)
+    public bool AddUser(UserData newUser)
     {
-        bool success = false;
-        string addUserSql = "SELECT * FROM adduser()";
-
+        return false;
     }
 
-    public void RemoveUser(string id)
+    public bool RemoveUser(string id)
     {
         //TODO implement
+        return false;
     }
 
-    public void UpdateUser(string id, UserData newUser)
+    public bool UpdateUser(string id, UserData newUser)
     {
-        //TODO implement
+        return false;
     }
 
     public UserData? GetUser(string id)
     {
-        //UserData result;
-        string getUserSql = $"SELECT * FROM getuser('{id}')";
+        UserData result = new();
 
+        Dictionary<string, object> parameters = new()
+        {
+            {"id", id}
+        };
+
+        //string getUserSql = $"SELECT * FROM getuser('{id}')";
         try
         {
-            connection_.Open();
-            using NpgsqlCommand command = new(getUserSql, connection_);
-            using DataTable dataTable = new();
-            dataTable.Load(command.ExecuteReader());
+            //TODO verify
+            DataTable dataTable = GetDataTable(DbUserdataSchema.FUNCTION_GETUSER, parameters);
 
             DataRow row = dataTable.Rows[0];
 
@@ -105,48 +107,32 @@ public class DatabaseConnection
             DateTime start = (DateTime)row[DatabaseColumns.ValidStartCol];
             DateTime end = (DateTime)row[DatabaseColumns.ValidEndCol];
 
-            if (cardId == null || firstName == null ||
-                lastName == null || email == null || cardPin == null)
+            if (cardId != null && firstName != null &&
+                lastName != null && email != null && cardPin != null)
             {
-                TryLogMessage($"error in database: field is null for user [{id}]");
-                return null;
+                result = new(firstName, lastName, email, cardId, cardPin, start, end);
             }
-
-            UserData userData = new(firstName, lastName, email, cardId, cardPin, start, end);
-            return userData;
         }
         catch (Exception ex)
         {
             TryLogMessage(ex.Message);
         }
-        finally
-        {
-            connection_.Close();
-        }
 
-        return new UserData();
+        return result;
     }
 
     public List<(string id, string firstName, string lastName)> GetUserbase()
     {
         List<(string id, string firstName, string lastName)> result = new();
-        //string GetUserbaseSql = "SELECT * FROM getuserbase()";
         try
         {
-            //connection_.Open();
-            //using NpgsqlCommand command = new(GetUserbaseSql, connection_);
-            //using DataTable dataTable = new();
-            //dataTable.Load(command.ExecuteReader());
-
-            //DataRowCollection users = dataTable.Rows;
-
             DataTable table = GetDataTable(DbUserdataSchema.FUNCTION_GETUSERBASE, new Dictionary<string, object>());
 
             foreach (DataRow user in table.Rows)
             {
-                string? cardId = user[DatabaseColumns.IdCol].ToString();
-                string? firstName = user[DatabaseColumns.FirstNameCol].ToString();
-                string? lastName = user[DatabaseColumns.LastNameCol].ToString();
+                string? cardId = user[DbUserdataSchema.COLUMN_ID].ToString();
+                string? firstName = user[DbUserdataSchema.COLUMN_FIRSTNAME].ToString();
+                string? lastName = user[DbUserdataSchema.COLUMN_LASTNAME].ToString();
 
                 //TODO rework null handling if needed
                 if(cardId != null && firstName != null && lastName != null)
