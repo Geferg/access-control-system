@@ -138,8 +138,8 @@ public class DatabaseConnection
             {DbUserdataSchema.PARAM_EMAIL,  newUserData.Email},
             {DbUserdataSchema.PARAM_ID, newUserData.CardID },
             {DbUserdataSchema.PARAM_PIN, newUserData.CardPin },
-            {DbUserdataSchema.COLUMN_STARTVALIDITY, newUserData.ValidityPeriod.start },
-            {DbUserdataSchema.COLUMN_ENDVALIDITY,  newUserData.ValidityPeriod.end }
+            {DbUserdataSchema.PARAM_STARTVALIDITY, newUserData.ValidityPeriod.start },
+            {DbUserdataSchema.PARAM_ENDVALIDITY,  newUserData.ValidityPeriod.end }
         };
 
         try
@@ -180,13 +180,13 @@ public class DatabaseConnection
 
             DataRow row = dataTable.Rows[0];
 
-            string? cardId = row[DbUserdataSchema.COLUMN_ID].ToString();
-            string? firstName = row[DbUserdataSchema.COLUMN_FIRSTNAME].ToString();
-            string? lastName = row[DbUserdataSchema.COLUMN_LASTNAME].ToString();
-            string? email = row[DbUserdataSchema.COLUMN_EMAIL].ToString();
-            string? cardPin = row[DbUserdataSchema.COLUMN_PIN].ToString();
-            DateTime start = (DateTime)row[DbUserdataSchema.COLUMN_STARTVALIDITY];
-            DateTime end = (DateTime)row[DbUserdataSchema.COLUMN_ENDVALIDITY];
+            string? cardId = row[DbUserdataSchema.RETURN_ID].ToString();
+            string? firstName = row[DbUserdataSchema.RETURN_FIRSTNAME].ToString();
+            string? lastName = row[DbUserdataSchema.RETURN_LASTNAME].ToString();
+            string? email = row[DbUserdataSchema.RETURN_EMAIL].ToString();
+            string? cardPin = row[DbUserdataSchema.RETURN_PIN].ToString();
+            DateTime start = (DateTime)row[DbUserdataSchema.RETURN_STARTVALIDITY];
+            DateTime end = (DateTime)row[DbUserdataSchema.RETURN_ENDVALIDITY];
 
             if (cardId != null && firstName != null &&
                 lastName != null && email != null && cardPin != null)
@@ -216,9 +216,9 @@ public class DatabaseConnection
 
             foreach (DataRow user in table.Rows)
             {
-                string? cardId = user[DbUserdataSchema.COLUMN_ID].ToString();
-                string? firstName = user[DbUserdataSchema.COLUMN_FIRSTNAME].ToString();
-                string? lastName = user[DbUserdataSchema.COLUMN_LASTNAME].ToString();
+                string? cardId = user[DbUserdataSchema.RETURN_ID].ToString();
+                string? firstName = user[DbUserdataSchema.RETURN_FIRSTNAME].ToString();
+                string? lastName = user[DbUserdataSchema.RETURN_LASTNAME].ToString();
 
                 //TODO rework null handling if needed
                 if(cardId != null && firstName != null && lastName != null)

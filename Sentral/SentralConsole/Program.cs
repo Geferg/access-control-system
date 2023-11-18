@@ -113,9 +113,9 @@ internal class Program
 
     private static void ShowUsers()
     {
-        foreach (var user in dbConnection.GetUserbase().OrderBy(u => u.id))
+        foreach (var (id, firstName, lastName) in dbConnection.GetUserbase().OrderBy(u => u.id))
         {
-            Console.WriteLine($"[{user.id}] {user.firstName} {user.lastName}");
+            Console.WriteLine($"[{id}] {firstName} {lastName}");
         }
 
         Console.WriteLine("");
@@ -202,11 +202,12 @@ internal class Program
         Console.WriteLine($"2. last name: {selectedUser.LastName}");
         Console.WriteLine($"3. email: {selectedUser.Email}");
         Console.WriteLine($"4. card id: {selectedUser.CardID}");
-        Console.WriteLine($"5. validity period: {selectedUser.GetFormattedPeriod()}");
-        Console.WriteLine($"6. card pin: {selectedUser.CardPin}");
-        Console.WriteLine($"7. cancel");
+        Console.WriteLine($"5. validity start: {selectedUser.ValidityPeriod.start}");
+        Console.WriteLine($"6. validity end: {selectedUser.ValidityPeriod.end}");
+        Console.WriteLine($"7. card pin: {selectedUser.CardPin}");
+        Console.WriteLine($"8. cancel");
 
-        Console.WriteLine("press a number 1-7\n");
+        Console.WriteLine("press a number 1-8\n");
         Console.Write("> ");
 
         bool dialog = true;
@@ -241,8 +242,7 @@ internal class Program
                 case '4':
                     Console.WriteLine("4");
                     string newCardId = GetFourDigitInput("new card id");
-                    //TODO user is stuck if they dont want to change, can ignore but trash
-                    if(dbConnection.UserExists(newCardId))
+                    if(dbConnection.UserExists(newCardId) && newCardId != selectedUser.CardID)
                     {
                         Console.WriteLine("card id already exists!\n");
                     }
@@ -255,20 +255,37 @@ internal class Program
 
                 case '5':
                     Console.WriteLine("5");
-                    //TODO add this!
-                    Console.WriteLine("NOT IMPLEMENTED\n");
+                    int newStartYear = GetValidatedNumberInput("year: ", 1900, 2100);
+                    int newStartMonth = GetValidatedNumberInput("month: ", 1, 12);
+                    int newStartDay = GetValidatedNumberInput("day: ", 1, DateTime.DaysInMonth(newStartYear, newStartMonth));
+                    int newStartHour = GetValidatedNumberInput("time (hour): ", 0, 23);
+                    DateTime newStartTime = new(newStartYear, newStartMonth, newStartDay, newStartHour, 0, 0);
+
+                    selectedUser.ValidityPeriod = (newStartTime, selectedUser.ValidityPeriod.end);
                     dialog = false;
                     break;
 
                 case '6':
                     Console.WriteLine("6");
-                    string newCardPin = GetFourDigitInput("new pin");
-                    selectedUser.CardPin = newCardPin;
+                    int newEndYear = GetValidatedNumberInput("year: ", 1900, 2100);
+                    int newEndMonth = GetValidatedNumberInput("month: ", 1, 12);
+                    int newEndDay = GetValidatedNumberInput("day: ", 1, DateTime.DaysInMonth(newEndYear, newEndMonth));
+                    int newEndHour = GetValidatedNumberInput("time (hour): ", 0, 23);
+                    DateTime newEndTime = new(newEndYear, newEndMonth, newEndDay, newEndHour, 0, 0);
+
+                    selectedUser.ValidityPeriod = (newEndTime, selectedUser.ValidityPeriod.end);
                     dialog = false;
                     break;
 
                 case '7':
                     Console.WriteLine("7");
+                    string newCardPin = GetFourDigitInput("new pin");
+                    selectedUser.CardPin = newCardPin;
+                    dialog = false;
+                    break;
+
+                case '8':
+                    Console.WriteLine("8");
                     dialog = false;
                     break;
             }
@@ -394,6 +411,41 @@ internal class Program
         return nameInput!;
     }
 
+    private static int GetValidatedNumberInput(string prompt, int minValue, int maxValue)
+    {
+        string? input = null;
+        InputValidation validation = InputValidation.NotValidated;
+
+        while (validation != InputValidation.Valid)
+        {
+            Console.Write($"> {prompt}: ");
+            input = Console.ReadLine();
+
+            validation = ValidateNumberInput(input, minValue, maxValue);
+
+            switch (validation)
+            {
+                case InputValidation.IsEmpty:
+                    Console.WriteLine("Input cannot be empty\n");
+                    break;
+
+                case InputValidation.IncorrectFormat:
+                    Console.WriteLine("Input must be a number\n");
+                    break;
+
+                case InputValidation.OutsideRange:
+                    Console.WriteLine($"Input must be between {minValue} and {maxValue}\n");
+                    break;
+
+                case InputValidation.IncorrectLength:
+                    Console.WriteLine("Input has incorrect length\n");
+                    break;
+            }
+        }
+
+        return int.Parse(input!);
+    }
+
 
     // Helper methods
     private static InputValidation ValidateName(string? input)
@@ -441,6 +493,24 @@ internal class Program
         else if (input.Length != 4)
         {
             return InputValidation.IncorrectLength;
+        }
+
+        return InputValidation.Valid;
+    }
+
+    private static InputValidation ValidateNumberInput(string? input, int minValue, int maxValue)
+    {
+        if (string.IsNullOrEmpty(input))
+        {
+            return InputValidation.IsEmpty;
+        }
+        else if (!int.TryParse(input, out int number))
+        {
+            return InputValidation.IncorrectFormat;
+        }
+        else if (number < minValue || number > maxValue)
+        {
+            return InputValidation.OutsideRange;
         }
 
         return InputValidation.Valid;
