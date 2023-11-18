@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -18,6 +19,14 @@ internal static class DbUserdataSchema
     public const string COLUMN_PIN = "cardpin";
     public const string COLUMN_STARTVALIDITY = "validstart";
     public const string COLUMN_ENDVALIDITY = "validend";
+
+    public const string PARAM_FIRSTNAME = "firstname";
+    public const string PARAM_LASTNAME = "lastname";
+    public const string PARAM_EMAIL = "email";
+    public const string PARAM_ID = "cardid";
+    public const string PARAM_PIN = "cardpin";
+    public const string PARAM_STARTVALIDITY = "validstart";
+    public const string PARAM_ENDVALIDITY = "validend";
 
     // Functions (parameters always in alphabetical order)
     /// <summary>
@@ -50,4 +59,5 @@ internal static class DbUserdataSchema
     public const string FUNCTION_VALIDUSER = "validateuser";
 
     // Parameters?
+
 }

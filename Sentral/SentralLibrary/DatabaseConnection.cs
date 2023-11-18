@@ -34,28 +34,21 @@ public class DatabaseConnection
     public bool UserExists(string id)
     {
         bool result = false;
-        string peekUserSql = $"SELECT * FROM peekuser('{id}')";
+
+        Dictionary<string, object> parameters = new()
+        {
+            {"id", id}
+        };
+
 
         try
         {
-            connection_.Open();
-            using NpgsqlCommand command = new(peekUserSql, connection_);
-            using NpgsqlDataReader reader = command.ExecuteReader();
+            DataTable dataTable = GetDataTable(DbUserdataSchema.FUNCTION_USEREXISTS, parameters);
 
-            if (reader.Read())
+            if (dataTable.Rows.Count > 0)
             {
-                string? exists = reader[0].ToString();
-                if (exists == null)
-                {
-                    result = false;
-                    connection_.Close();
-                }
-                else if(!bool.TryParse(exists.ToLower(), out result))
-                {
-                    result = false;
-                    connection_.Close();
-                }
-                bool peek = result;
+                DataRow row = dataTable.Rows[0];
+                result = Convert.ToBoolean(row[0]);
             }
         }
         catch (Exception ex)
@@ -68,7 +61,36 @@ public class DatabaseConnection
 
     public bool AddUser(UserData newUser)
     {
-        return false;
+        bool result = false;
+
+        Dictionary<string, object> parameters = new()
+        {
+            {DbUserdataSchema.PARAM_FIRSTNAME, newUser.FirstName},
+            {DbUserdataSchema.PARAM_LASTNAME, newUser.LastName},
+            {DbUserdataSchema.PARAM_EMAIL, newUser.Email},
+            {DbUserdataSchema.PARAM_ID, newUser.CardID },
+            {DbUserdataSchema.PARAM_PIN, newUser.CardPin },
+            {DbUserdataSchema.PARAM_STARTVALIDITY, newUser.ValidityPeriod.start },
+            {DbUserdataSchema.PARAM_ENDVALIDITY, newUser.ValidityPeriod.end }
+        };
+
+        try
+        {
+            DataTable dataTable = GetDataTable(DbUserdataSchema.FUNCTION_ADDUSER, parameters);
+
+            if (dataTable.Rows.Count > 0)
+            {
+                DataRow row = dataTable.Rows[0];
+                result = Convert.ToBoolean(row[0]);
+            }
+
+        }
+        catch (Exception ex)
+        {
+            TryLogMessage(ex.Message);
+        }
+
+        return result;
     }
 
     public bool RemoveUser(string id)
@@ -84,14 +106,13 @@ public class DatabaseConnection
 
     public UserData? GetUser(string id)
     {
-        UserData result = new();
+        UserData? result = null;
 
         Dictionary<string, object> parameters = new()
         {
-            {"id", id}
+            {DbUserdataSchema.PARAM_ID, id}
         };
 
-        //string getUserSql = $"SELECT * FROM getuser('{id}')";
         try
         {
             //TODO verify
@@ -99,18 +120,23 @@ public class DatabaseConnection
 
             DataRow row = dataTable.Rows[0];
 
-            string? cardId = row[DatabaseColumns.IdCol].ToString();
-            string? firstName = row[DatabaseColumns.FirstNameCol].ToString();
-            string? lastName = row[DatabaseColumns.LastNameCol].ToString();
-            string? email = row[DatabaseColumns.EmailCol].ToString();
-            string? cardPin = row[DatabaseColumns.PinCol].ToString();
-            DateTime start = (DateTime)row[DatabaseColumns.ValidStartCol];
-            DateTime end = (DateTime)row[DatabaseColumns.ValidEndCol];
+            string? cardId = row[DbUserdataSchema.COLUMN_ID].ToString();
+            string? firstName = row[DbUserdataSchema.COLUMN_FIRSTNAME].ToString();
+            string? lastName = row[DbUserdataSchema.COLUMN_LASTNAME].ToString();
+            string? email = row[DbUserdataSchema.COLUMN_EMAIL].ToString();
+            string? cardPin = row[DbUserdataSchema.COLUMN_PIN].ToString();
+            DateTime start = (DateTime)row[DbUserdataSchema.COLUMN_STARTVALIDITY];
+            DateTime end = (DateTime)row[DbUserdataSchema.COLUMN_ENDVALIDITY];
 
             if (cardId != null && firstName != null &&
                 lastName != null && email != null && cardPin != null)
             {
                 result = new(firstName, lastName, email, cardId, cardPin, start, end);
+            }
+            else
+            {
+                //TODO clean up nullable return, replace with error msg in log
+                result = null;
             }
         }
         catch (Exception ex)

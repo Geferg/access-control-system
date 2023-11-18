@@ -225,12 +225,8 @@ internal class Program
     {
         if (!dbConnection.UserExists(cardID))
         {
-            Console.WriteLine($"Card id [{cardID}] does not exist\n");
-            //return;
-        }
-        else
-        {
-            Console.WriteLine($"Card id [{cardID}] does exist\n");
+            Console.WriteLine(missingInDbMessage + "\n");
+            return;
         }
 
         //TODO link with database handler class
@@ -239,7 +235,7 @@ internal class Program
 
         if (selectedUser == null)
         {
-            Console.WriteLine("user does not exist");
+            Console.WriteLine(missingInDbMessage + "\n");
             return;
         }
 
@@ -260,7 +256,7 @@ internal class Program
 
         if (selectedUser == null)
         {
-            Console.WriteLine(missingInDbMessage);
+            Console.WriteLine(missingInDbMessage + "\n");
             return;
         }
 
@@ -349,7 +345,7 @@ internal class Program
 
         if (!UserExists(cardID))
         {
-            Console.WriteLine($"card id [{cardID}] does not exist\n");
+            Console.WriteLine(missingInDbMessage + "\n");
             return;
         }
 
@@ -358,7 +354,7 @@ internal class Program
 
         if (userToRemove == null)
         {
-            Console.WriteLine(missingInDbMessage);
+            Console.WriteLine(missingInDbMessage + "\n");
             return;
         }
 
@@ -367,10 +363,8 @@ internal class Program
             return;
         }
 
-        //TODO change to DB connection class
         dbConnection.RemoveUser(userToRemove.CardID);
-        //mockDB.Remove(userToRemove);
-        Console.WriteLine($"removed user [{cardID}] {userToRemove.FirstName} {userToRemove.LastName}\n");
+        Console.WriteLine($"removed user [{userToRemove.CardID}] {userToRemove.FirstName} {userToRemove.LastName}\n");
     }
 
     private static string GetEmailInput(string prompt)
