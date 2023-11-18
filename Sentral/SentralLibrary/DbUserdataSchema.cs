@@ -12,22 +12,30 @@ internal static class DbUserdataSchema
     public const string TABLE_NAME = "userdata";
 
     // Columns
-    public const string COLUMN_FIRSTNAME = "firstname";
-    public const string COLUMN_LASTNAME = "lastname";
-    public const string COLUMN_EMAIL = "email";
-    public const string COLUMN_ID = "cardid";
-    public const string COLUMN_PIN = "cardpin";
-    public const string COLUMN_STARTVALIDITY = "validstart";
-    public const string COLUMN_ENDVALIDITY = "validend";
+    public const string COLUMN_FIRSTNAME = "first_name";
+    public const string COLUMN_LASTNAME = "last_name";
+    public const string COLUMN_EMAIL = "email_address";
+    public const string COLUMN_ID = "card_id";
+    public const string COLUMN_PIN = "card_pin";
+    public const string COLUMN_STARTVALIDITY = "valid_start";
+    public const string COLUMN_ENDVALIDITY = "valid_end";
 
-    public const string PARAM_FIRSTNAME = "firstname";
-    public const string PARAM_LASTNAME = "lastname";
-    public const string PARAM_EMAIL = "email";
-    public const string PARAM_ID = "cardid";
-    public const string PARAM_PIN = "cardpin";
-    public const string PARAM_STARTVALIDITY = "validstart";
-    public const string PARAM_ENDVALIDITY = "validend";
-    public const string PARAM_PREVIOUSID = "previouscardid";
+    public const string RETURN_FIRSTNAME = "firstName";
+    public const string RETURN_LASTNAME = "lastName";
+    public const string RETURN_EMAIL = "emailAddress";
+    public const string RETURN_ID = "cardId";
+    public const string RETURN_PIN = "cardPin";
+    public const string RETURN_STARTVALIDITY = "validStart";
+    public const string RETURN_ENDVALIDITY = "validEnd";
+
+    public const string PARAM_FIRSTNAME = "firstName_";
+    public const string PARAM_LASTNAME = "lastName_";
+    public const string PARAM_EMAIL = "emailAddress_";
+    public const string PARAM_ID = "cardId_";
+    public const string PARAM_PIN = "cardPin_";
+    public const string PARAM_STARTVALIDITY = "validStart_";
+    public const string PARAM_ENDVALIDITY = "validEnd_";
+    public const string PARAM_PREVIOUSID = "previousCardId_";
 
     // Functions (parameters always in alphabetical order)
     /// <summary>
@@ -58,7 +66,5 @@ internal static class DbUserdataSchema
     /// Checks if a COLUMN_ID and COLUMN_PIN matches a user.
     /// </summary>
     public const string FUNCTION_VALIDUSER = "validateuser";
-
-    // Parameters?
 
 }
