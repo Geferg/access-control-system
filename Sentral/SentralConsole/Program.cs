@@ -255,10 +255,10 @@ internal class Program
 
                 case '5':
                     Console.WriteLine("5");
-                    int newStartYear = GetValidatedNumberInput("year: ", 1900, 2100);
-                    int newStartMonth = GetValidatedNumberInput("month: ", 1, 12);
-                    int newStartDay = GetValidatedNumberInput("day: ", 1, DateTime.DaysInMonth(newStartYear, newStartMonth));
-                    int newStartHour = GetValidatedNumberInput("time (hour): ", 0, 23);
+                    int newStartYear = GetValidatedNumberInput("year", 1900, 2100);
+                    int newStartMonth = GetValidatedNumberInput("month", 1, 12);
+                    int newStartDay = GetValidatedNumberInput("day", 1, DateTime.DaysInMonth(newStartYear, newStartMonth));
+                    int newStartHour = GetValidatedNumberInput("time (hour)", 0, 23);
                     DateTime newStartTime = new(newStartYear, newStartMonth, newStartDay, newStartHour, 0, 0);
 
                     selectedUser.ValidityPeriod = (newStartTime, selectedUser.ValidityPeriod.end);
@@ -267,13 +267,13 @@ internal class Program
 
                 case '6':
                     Console.WriteLine("6");
-                    int newEndYear = GetValidatedNumberInput("year: ", 1900, 2100);
-                    int newEndMonth = GetValidatedNumberInput("month: ", 1, 12);
-                    int newEndDay = GetValidatedNumberInput("day: ", 1, DateTime.DaysInMonth(newEndYear, newEndMonth));
-                    int newEndHour = GetValidatedNumberInput("time (hour): ", 0, 23);
+                    int newEndYear = GetValidatedNumberInput("year", 1900, 2100);
+                    int newEndMonth = GetValidatedNumberInput("month", 1, 12);
+                    int newEndDay = GetValidatedNumberInput("day", 1, DateTime.DaysInMonth(newEndYear, newEndMonth));
+                    int newEndHour = GetValidatedNumberInput("time (hour)", 0, 23);
                     DateTime newEndTime = new(newEndYear, newEndMonth, newEndDay, newEndHour, 0, 0);
 
-                    selectedUser.ValidityPeriod = (newEndTime, selectedUser.ValidityPeriod.end);
+                    selectedUser.ValidityPeriod = (selectedUser.ValidityPeriod.start, newEndTime);
                     dialog = false;
                     break;
 
@@ -500,7 +500,7 @@ internal class Program
 
     private static InputValidation ValidateNumberInput(string? input, int minValue, int maxValue)
     {
-        if (string.IsNullOrEmpty(input))
+        if (string.IsNullOrWhiteSpace(input))
         {
             return InputValidation.IsEmpty;
         }

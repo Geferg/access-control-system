@@ -7,8 +7,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CardReaderLibrary", "CardRe
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CardReaderDebugConsole", "CardReaderDebugConsole\CardReaderDebugConsole.csproj", "{273D13E5-ACAF-4018-B1D2-855C81687F26}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CardReaderGUI", "CardReaderGUI\CardReaderGUI.csproj", "{0A57AB42-8E03-4A5D-A6EB-FF9DB58CA039}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -23,10 +21,6 @@ Global
 		{273D13E5-ACAF-4018-B1D2-855C81687F26}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{273D13E5-ACAF-4018-B1D2-855C81687F26}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{273D13E5-ACAF-4018-B1D2-855C81687F26}.Release|Any CPU.Build.0 = Release|Any CPU
-		{0A57AB42-8E03-4A5D-A6EB-FF9DB58CA039}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{0A57AB42-8E03-4A5D-A6EB-FF9DB58CA039}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{0A57AB42-8E03-4A5D-A6EB-FF9DB58CA039}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{0A57AB42-8E03-4A5D-A6EB-FF9DB58CA039}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
