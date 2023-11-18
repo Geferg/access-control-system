@@ -15,7 +15,10 @@ public class UserData
         get => firstName;
         set
         {
-            firstName = char.ToUpper(value[0]) + value[1..].ToLower();
+            if (value.Length > 0)
+            {
+                firstName = char.ToUpper(value[0]) + value[1..].ToLower();
+            }
         }
     }
     private string lastName;
@@ -24,7 +27,10 @@ public class UserData
         get => lastName;
         set
         {
-            lastName = char.ToUpper(value[0]) + value[1..].ToLower();
+            if (value.Length > 0)
+            {
+                lastName = char.ToUpper(value[0]) + value[1..].ToLower();
+            }
         }
     }
     public string Email { get; set; }

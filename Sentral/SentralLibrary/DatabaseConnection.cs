@@ -11,14 +11,12 @@ namespace SentralLibrary;
 public class DatabaseConnection
 {
     public const string test = "";
-    //private readonly NpgsqlConnection connection_;
     private readonly string connectionString;
     private UILogger? logger;
 
     public DatabaseConnection(string hostIp, string port, string username, string password, string database)
     {
         connectionString = $"Host={hostIp};Port={port};Username={username};Password={password};Database={database}";
-        //connection_ = new(connectionString);
     }
 
     public void AttachLogger(UILogger logger)
