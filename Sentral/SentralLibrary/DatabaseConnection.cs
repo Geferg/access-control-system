@@ -11,13 +11,14 @@ namespace SentralLibrary;
 public class DatabaseConnection
 {
     public const string test = "";
-    private readonly NpgsqlConnection connection;
+    private readonly NpgsqlConnection connection_;
+    private readonly string connectionString;
     private UILogger? logger;
 
     public DatabaseConnection(string hostIp, string port, string username, string password, string database)
     {
-        string connectionString = $"Host={hostIp};Port={port};Username={username};Password={password};Database={database}";
-        connection = new(connectionString);
+        connectionString = $"Host={hostIp};Port={port};Username={username};Password={password};Database={database}";
+        //connection_ = new(connectionString);
     }
 
     public void AttachLogger(UILogger logger)
@@ -37,8 +38,8 @@ public class DatabaseConnection
 
         try
         {
-            connection.Open();
-            using NpgsqlCommand command = new(peekUserSql, connection);
+            connection_.Open();
+            using NpgsqlCommand command = new(peekUserSql, connection_);
             using NpgsqlDataReader reader = command.ExecuteReader();
 
             if (reader.Read())
@@ -47,12 +48,12 @@ public class DatabaseConnection
                 if (exists == null)
                 {
                     result = false;
-                    connection.Close();
+                    connection_.Close();
                 }
                 else if(!bool.TryParse(exists.ToLower(), out result))
                 {
                     result = false;
-                    connection.Close();
+                    connection_.Close();
                 }
                 bool peek = result;
             }
@@ -89,8 +90,8 @@ public class DatabaseConnection
 
         try
         {
-            connection.Open();
-            using NpgsqlCommand command = new(getUserSql, connection);
+            connection_.Open();
+            using NpgsqlCommand command = new(getUserSql, connection_);
             using DataTable dataTable = new();
             dataTable.Load(command.ExecuteReader());
 
@@ -120,7 +121,7 @@ public class DatabaseConnection
         }
         finally
         {
-            connection.Close();
+            connection_.Close();
         }
 
         return new UserData();
@@ -129,23 +130,25 @@ public class DatabaseConnection
     public List<(string id, string firstName, string lastName)> GetUserbase()
     {
         List<(string id, string firstName, string lastName)> result = new();
-        string GetUserbaseSql = "SELECT * FROM getuserbase()";
+        //string GetUserbaseSql = "SELECT * FROM getuserbase()";
         try
         {
-            connection.Open();
-            using NpgsqlCommand command = new(GetUserbaseSql, connection);
-            using DataTable dataTable = new();
-            dataTable.Load(command.ExecuteReader());
+            //connection_.Open();
+            //using NpgsqlCommand command = new(GetUserbaseSql, connection_);
+            //using DataTable dataTable = new();
+            //dataTable.Load(command.ExecuteReader());
 
-            DataRowCollection users = dataTable.Rows;
+            //DataRowCollection users = dataTable.Rows;
 
-            foreach (DataRow user in users)
+            DataTable table = GetDataTable(DbUserdataSchema.FUNCTION_GETUSERBASE, new Dictionary<string, object>());
+
+            foreach (DataRow user in table.Rows)
             {
                 string? cardId = user[DatabaseColumns.IdCol].ToString();
                 string? firstName = user[DatabaseColumns.FirstNameCol].ToString();
                 string? lastName = user[DatabaseColumns.LastNameCol].ToString();
 
-                //TODO rework null handling
+                //TODO rework null handling if needed
                 if(cardId != null && firstName != null && lastName != null)
                 {
                     result.Add((cardId, firstName, lastName));
@@ -157,11 +160,65 @@ public class DatabaseConnection
         {
             TryLogMessage(ex.Message);
         }
-        finally
-        {
-            connection.Close();
-        }
+
         return result;
     }
+
+    private DataTable GetDataTable(string function, Dictionary<string, object> parameters)
+    {
+        string sql = $"SELECT * FROM {GetValidatedFunctionName(function)}(";
+        if(parameters.Any())
+        {
+            var parameterPlaceholders = parameters.OrderBy(p => p.Key).Select(p => "@" + p.Key);
+            sql += string.Join(", ", parameterPlaceholders);
+        }
+        sql += ")";
+
+        DataTable dataTable = new();
+
+        try
+        {
+            using NpgsqlConnection connection = new(connectionString);
+            using NpgsqlCommand command = new(sql, connection);
+
+            foreach (var parameter in parameters)
+            {
+                command.Parameters.AddWithValue(parameter.Key, parameter.Value);
+            }
+
+            connection.Open();
+            dataTable.Load(command.ExecuteReader());
+        }
+        catch (Exception ex)
+        {
+            TryLogMessage(ex.Message);
+        }
+
+        return dataTable;
+    }
+
+    private static string GetValidatedFunctionName(string function)
+    {
+        var validFunctions = new HashSet<string>
+        {
+            DbUserdataSchema.FUNCTION_GETUSERBASE,
+            DbUserdataSchema.FUNCTION_GETUSER,
+            DbUserdataSchema.FUNCTION_REMOVEUSER,
+            DbUserdataSchema.FUNCTION_UPDATEUSER,
+            DbUserdataSchema.FUNCTION_ADDUSER,
+            DbUserdataSchema.FUNCTION_USEREXISTS,
+            DbUserdataSchema.FUNCTION_VALIDUSER
+        };
+
+        if (validFunctions.Contains(function))
+        {
+            return function;
+        }
+        else
+        {
+            throw new ArgumentException("Invalid function name", nameof(function));
+        }
+    }
+
 
 }

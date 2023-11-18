@@ -19,7 +19,7 @@ internal static class DbUserdataSchema
     public const string COLUMN_STARTVALIDITY = "validstart";
     public const string COLUMN_ENDVALIDITY = "validend";
 
-    // Functions
+    // Functions (parameters always in alphabetical order)
     /// <summary>
     /// Gets the full name and card id of all users.
     /// </summary>
@@ -48,4 +48,6 @@ internal static class DbUserdataSchema
     /// Checks if a COLUMN_ID and COLUMN_PIN matches a user.
     /// </summary>
     public const string FUNCTION_VALIDUSER = "validateuser";
+
+    // Parameters?
 }
