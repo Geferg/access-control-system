@@ -26,9 +26,7 @@ internal class Program
 
     private static readonly DatabaseConnection dbConnection = new(dbIP, dbPort, dbUsername, dbPassword, dbDatabase);
     private static readonly TcpServer tcpServer = new(8000);
-    private static UILogger uiLogger = new UILogger();
-
-    private static List<UserData> mockDB = new();
+    private static readonly UILogger uiLogger = new();
 
     static void Main(string[] args)
     {
@@ -36,52 +34,6 @@ internal class Program
         tcpServer.AttachLogger(uiLogger);
 
         uiLogger.LogMessageEvent += OnLogMessageReceived;
-
-        // Adding test users
-        UserData kristian = new()
-        {
-            FirstName = "Kristian",
-            LastName = "Klette",
-            Email = "geferg.dev@gmail.com",
-            CardID = "1234",
-            ValidityPeriod = (DateTime.Now, DateTime.Now.AddYears(1)),
-            CardPin = "0000"
-        };
-
-        UserData ryan = new()
-        {
-            FirstName = "Ryan",
-            LastName = "Le",
-            Email = "ryan.le@gmail.com",
-            CardID = "1111",
-            ValidityPeriod = (DateTime.Now, DateTime.Now.AddYears(1)),
-            CardPin = "0001"
-        };
-
-        UserData tor = new()
-        {
-            FirstName = "Tor",
-            LastName = "Haldaas",
-            Email = "tor.h@gmail.com",
-            CardID = "2222",
-            ValidityPeriod = (DateTime.Now, DateTime.Now.AddYears(1)),
-            CardPin = "0010"
-        };
-
-        UserData victor = new()
-        {
-            FirstName = "Victor",
-            LastName = "Newman",
-            Email = "victor.new@gmail.com",
-            CardID = "3333",
-            ValidityPeriod = (DateTime.Now, DateTime.Now.AddYears(1)),
-            CardPin = "0011"
-        };
-
-        UserData testUser = new("test", "user", "test@user.com", "1234", "5050");
-
-        //TODO replace with real db
-        //dbConnection.AddUser(testUser);
 
         ListCommands();
 
@@ -165,24 +117,12 @@ internal class Program
         {
             Console.WriteLine($"[{user.id}] {user.firstName} {user.lastName}");
         }
-        /*
-        foreach(UserData user in mockDB.OrderBy(u => u.CardID))
-        {
-            Console.WriteLine($"[{user.CardID}] {user.FirstName} {user.LastName}");
-        }
-        */
+
         Console.WriteLine("");
     }
 
     private static void AddSpecificUser(string cardID)
     {
-        /*
-        if (mockDB.Any(u => u.CardID == cardID))
-        {
-            Console.WriteLine("card id already exists!\n");
-            return;
-        }
-        */
         if (dbConnection.UserExists(cardID))
         {
             Console.WriteLine("card id already exists!\n");
@@ -218,7 +158,6 @@ internal class Program
         }
 
         dbConnection.AddUser(newUser);
-        //mockDB.Add(newUser);
     }
 
     private static void ShowSpecificUser(string cardID)
@@ -229,8 +168,6 @@ internal class Program
             return;
         }
 
-        //TODO link with database handler class
-        //UserData selectedUser = mockDB.First(x => x.CardID == cardID);
         UserData? selectedUser = dbConnection.GetUser(cardID);
 
         if (selectedUser == null)
@@ -251,7 +188,6 @@ internal class Program
 
     private static void EditSpecificUser(string cardID)
     {
-        //UserData selectedUser = mockDB.First(x => x.CardID == cardID);
         UserData? selectedUser = dbConnection.GetUser(cardID);
 
         if (selectedUser == null)
@@ -306,7 +242,7 @@ internal class Program
                     Console.WriteLine("4");
                     string newCardId = GetFourDigitInput("new card id");
                     //TODO user is stuck if they dont want to change, can ignore but trash
-                    if(mockDB.Any(u => u.CardID == newCardId && selectedUser.CardID != newCardId))
+                    if(dbConnection.UserExists(newCardId))
                     {
                         Console.WriteLine("card id already exists!\n");
                     }
@@ -351,7 +287,6 @@ internal class Program
             return;
         }
 
-        //UserData userToRemove = mockDB.First(x => x.CardID == cardID);
         UserData? userToRemove = dbConnection.GetUser(cardID);
 
         if (userToRemove == null)
@@ -511,11 +446,6 @@ internal class Program
         return InputValidation.Valid;
     }
 
-    private static bool UserExists(string cardID)
-    {
-        return mockDB.Any(x => x.CardID == cardID);
-    }
-
     private static string? GetNumbersFromCommand(string command)
     {
         string pattern = @"\b\w+ (\d{4})\b";
@@ -535,7 +465,7 @@ internal class Program
 
     private static bool UserConfirm(string message = "confirm")
     {
-        Console.WriteLine($"{message} (y/n)\n");
+        Console.WriteLine($"{message} (y/n)");
 
         Console.Write("> ");
         char response = Console.ReadKey(true).KeyChar;
