@@ -14,7 +14,7 @@ internal class Program
     {
         connection.AttachLogger(logger);
 
-        UserData? user = connection.GetUserData("1111");
+        UserData? user = connection.GetUser("1111");
 
         if (user != null)
         {

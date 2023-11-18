@@ -11,7 +11,7 @@ namespace SentralLibrary;
 public class DatabaseConnection
 {
     public const string test = "";
-    private NpgsqlConnection connection;
+    private readonly NpgsqlConnection connection;
     private UILogger? logger;
 
     public DatabaseConnection(string hostIp, string port, string username, string password, string database)
@@ -30,63 +30,93 @@ public class DatabaseConnection
         logger?.LogMessage(message);
     }
 
-    public bool UserExists(string cardId)
+    public bool UserExists(string id)
     {
-        //TODO implement
-        return false;
-    }
-
-    public void AddUser(UserData newUser)
-    {
-        //TODO implement
-    }
-
-    public void RemoveUser(string cardId)
-    {
-        //TODO implement
-    }
-
-    public void UpdateUser(string cardId, UserData newUser)
-    {
-        //TODO implement
-    }
-
-    public UserData? GetUserData(string id)
-    {
-        //TODO simplify with db function
-        //obsolete
-        string query = $"SELECT {DatabaseColumns.IdCol}, " +
-            $"{DatabaseColumns.FirstNameCol}, " +
-            $"{DatabaseColumns.LastNameCol}, " +
-            $"{DatabaseColumns.EmailCol}, " +
-            $"{DatabaseColumns.PinCol} " +
-            $"FROM {DatabaseColumns.TABLE_NAME} " +
-            $"WHERE {DatabaseColumns.IdCol} = :id";
+        bool result = false;
+        string peekUserSql = $"SELECT * FROM peekuser('{id}')";
 
         try
         {
             connection.Open();
-            using NpgsqlCommand cmd = new(query, connection);
-            cmd.Parameters.AddWithValue(":id", id);
+            using NpgsqlCommand command = new(peekUserSql, connection);
+            using NpgsqlDataReader reader = command.ExecuteReader();
 
-            using var reader = cmd.ExecuteReader();
             if (reader.Read())
             {
-                string dbId = reader[DatabaseColumns.IdCol].ToString();
-                string dbFirstName = reader[DatabaseColumns.FirstNameCol].ToString();
-                string dbLastName = reader[DatabaseColumns.LastNameCol].ToString();
-                string dbEmail = reader[DatabaseColumns.EmailCol].ToString();
-                string dbPin = reader[DatabaseColumns.PinCol].ToString();
-
-                connection.Close();
-
-                return new UserData(dbFirstName, dbLastName, dbEmail, dbId, dbPin);
+                string? exists = reader[0].ToString();
+                if (exists == null)
+                {
+                    result = false;
+                    connection.Close();
+                }
+                else if(!bool.TryParse(exists.ToLower(), out result))
+                {
+                    result = false;
+                    connection.Close();
+                }
+                bool peek = result;
             }
         }
         catch (Exception ex)
         {
+            TryLogMessage(ex.Message);
+        }
 
-            throw;
+        return result;
+    }
+
+    public void AddUser(UserData newUser)
+    {
+        bool success = false;
+        string addUserSql = "SELECT * FROM adduser()";
+
+    }
+
+    public void RemoveUser(string id)
+    {
+        //TODO implement
+    }
+
+    public void UpdateUser(string id, UserData newUser)
+    {
+        //TODO implement
+    }
+
+    public UserData? GetUser(string id)
+    {
+        //UserData result;
+        string getUserSql = $"SELECT * FROM getuser('{id}')";
+
+        try
+        {
+            connection.Open();
+            using NpgsqlCommand command = new(getUserSql, connection);
+            using DataTable dataTable = new();
+            dataTable.Load(command.ExecuteReader());
+
+            DataRow row = dataTable.Rows[0];
+
+            string? cardId = row[DatabaseColumns.IdCol].ToString();
+            string? firstName = row[DatabaseColumns.FirstNameCol].ToString();
+            string? lastName = row[DatabaseColumns.LastNameCol].ToString();
+            string? email = row[DatabaseColumns.EmailCol].ToString();
+            string? cardPin = row[DatabaseColumns.PinCol].ToString();
+            DateTime start = (DateTime)row[DatabaseColumns.ValidStartCol];
+            DateTime end = (DateTime)row[DatabaseColumns.ValidEndCol];
+
+            if (cardId == null || firstName == null ||
+                lastName == null || email == null || cardPin == null)
+            {
+                TryLogMessage($"error in database: field is null for user [{id}]");
+                return null;
+            }
+
+            UserData userData = new(firstName, lastName, email, cardId, cardPin, start, end);
+            return userData;
+        }
+        catch (Exception ex)
+        {
+            TryLogMessage(ex.Message);
         }
         finally
         {
@@ -99,12 +129,12 @@ public class DatabaseConnection
     public List<(string id, string firstName, string lastName)> GetUserbase()
     {
         List<(string id, string firstName, string lastName)> result = new();
-        string GetUserbaseSql = @"SELECT * FROM getuserbase()";
+        string GetUserbaseSql = "SELECT * FROM getuserbase()";
         try
         {
             connection.Open();
-            NpgsqlCommand command = new(GetUserbaseSql, connection);
-            DataTable dataTable = new();
+            using NpgsqlCommand command = new(GetUserbaseSql, connection);
+            using DataTable dataTable = new();
             dataTable.Load(command.ExecuteReader());
 
             DataRowCollection users = dataTable.Rows;
@@ -115,6 +145,7 @@ public class DatabaseConnection
                 string? firstName = user[DatabaseColumns.FirstNameCol].ToString();
                 string? lastName = user[DatabaseColumns.LastNameCol].ToString();
 
+                //TODO rework null handling
                 if(cardId != null && firstName != null && lastName != null)
                 {
                     result.Add((cardId, firstName, lastName));
@@ -125,7 +156,6 @@ public class DatabaseConnection
         catch (Exception ex)
         {
             TryLogMessage(ex.Message);
-            throw;
         }
         finally
         {

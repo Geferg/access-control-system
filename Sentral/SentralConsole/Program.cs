@@ -21,6 +21,9 @@ internal class Program
     private const string dbPassword = "Ha1FinDagIDag!";
     private const string dbDatabase = "599146";
 
+    // UI DIALOG MESSAGES
+    private const string missingInDbMessage = "user not found in database";
+
     private static readonly DatabaseConnection dbConnection = new(dbIP, dbPort, dbUsername, dbPassword, dbDatabase);
     private static readonly TcpServer tcpServer = new(8000);
 
@@ -172,7 +175,14 @@ internal class Program
 
     private static void AddSpecificUser(string cardID)
     {
+        /*
         if (mockDB.Any(u => u.CardID == cardID))
+        {
+            Console.WriteLine("card id already exists!\n");
+            return;
+        }
+        */
+        if (dbConnection.UserExists(cardID))
         {
             Console.WriteLine("card id already exists!\n");
             return;
@@ -207,19 +217,30 @@ internal class Program
         }
 
         dbConnection.AddUser(newUser);
-        mockDB.Add(newUser);
+        //mockDB.Add(newUser);
     }
 
     private static void ShowSpecificUser(string cardID)
     {
-        if (!UserExists(cardID))
+        if (!dbConnection.UserExists(cardID))
         {
             Console.WriteLine($"Card id [{cardID}] does not exist\n");
-            return;
+            //return;
+        }
+        else
+        {
+            Console.WriteLine($"Card id [{cardID}] does exist\n");
         }
 
         //TODO link with database handler class
-        UserData selectedUser = mockDB.First(x => x.CardID == cardID);
+        //UserData selectedUser = mockDB.First(x => x.CardID == cardID);
+        UserData? selectedUser = dbConnection.GetUser(cardID);
+
+        if (selectedUser == null)
+        {
+            Console.WriteLine("user does not exist");
+            return;
+        }
 
         Console.WriteLine($"     first name: {selectedUser.FirstName}");
         Console.WriteLine($"      last name: {selectedUser.LastName}");
@@ -233,9 +254,16 @@ internal class Program
 
     private static void EditSpecificUser(string cardID)
     {
-        Console.WriteLine($"editing user {cardID}...");
+        //UserData selectedUser = mockDB.First(x => x.CardID == cardID);
+        UserData? selectedUser = dbConnection.GetUser(cardID);
 
-        UserData selectedUser = mockDB.First(x => x.CardID == cardID);
+        if (selectedUser == null)
+        {
+            Console.WriteLine(missingInDbMessage);
+            return;
+        }
+
+        Console.WriteLine($"editing user {cardID}...");
 
         Console.WriteLine($"1. first name: {selectedUser.FirstName}");
         Console.WriteLine($"2. last name: {selectedUser.LastName}");
@@ -280,6 +308,7 @@ internal class Program
                 case '4':
                     Console.WriteLine("4");
                     string newCardId = GetFourDigitInput("new card id");
+                    //TODO user is stuck if they dont want to change, can ignore but trash
                     if(mockDB.Any(u => u.CardID == newCardId && selectedUser.CardID != newCardId))
                     {
                         Console.WriteLine("card id already exists!\n");
@@ -323,7 +352,14 @@ internal class Program
             return;
         }
 
-        UserData userToRemove = mockDB.First(x => x.CardID == cardID);
+        //UserData userToRemove = mockDB.First(x => x.CardID == cardID);
+        UserData? userToRemove = dbConnection.GetUser(cardID);
+
+        if (userToRemove == null)
+        {
+            Console.WriteLine(missingInDbMessage);
+            return;
+        }
 
         if (!UserConfirm($"are you sure you want to delete [{cardID}] {userToRemove.FirstName} {userToRemove.LastName}"))
         {
@@ -331,7 +367,8 @@ internal class Program
         }
 
         //TODO change to DB connection class
-        mockDB.Remove(userToRemove);
+        dbConnection.RemoveUser(userToRemove.CardID);
+        //mockDB.Remove(userToRemove);
         Console.WriteLine($"removed user [{cardID}] {userToRemove.FirstName} {userToRemove.LastName}\n");
     }
 
