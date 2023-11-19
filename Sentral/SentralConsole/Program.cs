@@ -27,10 +27,15 @@ internal class Program
     private static readonly DatabaseConnection dbConnection = new(dbIP, dbPort, dbUsername, dbPassword, dbDatabase);
     private static readonly TcpServer tcpServer = new(8000);
     private static readonly UILogger uiLogger = new();
+    private static readonly UIConnection uiConnection = new();
+    private static readonly UIDialogs dialogs = new(uiConnection);
 
     static void Main(string[] args)
     {
         Console.WriteLine("\u001b]0;Sentral\u0007");
+
+        uiConnection.ClassToUI += OnWriteToUI;
+        uiConnection.UIToClass += OnRecieveFromUI;
 
         dbConnection.AttachLogger(uiLogger);
         tcpServer.AttachLogger(uiLogger);
@@ -101,6 +106,16 @@ internal class Program
                 Console.WriteLine("command not recognized\n");
             }
         }
+    }
+
+    private static void OnWriteToUI(string message)
+    {
+        Console.Write(message);
+    }
+
+    private static string? OnRecieveFromUI()
+    {
+        return Console.ReadLine();
     }
 
     private static void Exit()
