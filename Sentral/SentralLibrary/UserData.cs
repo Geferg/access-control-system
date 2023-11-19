@@ -9,7 +9,7 @@ public class UserData
 {
     private readonly Random random = new Random();
 
-    private string firstName;
+    private string firstName = string.Empty;
     public string FirstName
     {
         get => firstName;
@@ -21,7 +21,7 @@ public class UserData
             }
         }
     }
-    private string lastName;
+    private string lastName = string.Empty;
     public string LastName
     {
         get => lastName;
@@ -48,13 +48,13 @@ public class UserData
         ValidityPeriod = (startTime, endTime);
     }
 
-    public UserData(string firstName, string lastName, string email, string cardID, string cardPin)
+    public UserData(string firstName, string lastName, string email, string cardID)
     {
         FirstName = firstName;
         LastName = lastName;
         Email = email;
         CardID = cardID;
-        CardPin = cardPin;
+        CardPin = GeneratePin();
         ValidityPeriod = (DateTime.MinValue, DateTime.MaxValue);
     }
 

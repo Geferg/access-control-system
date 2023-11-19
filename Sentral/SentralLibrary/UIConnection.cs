@@ -8,15 +8,21 @@ namespace SentralLibrary;
 public class UIConnection
 {
     public event Action<string>? ClassToUI;
-    public event Func<string?>? UIToClass;
+    public event Func<string?>? UIStringToClass;
+    public event Func<ConsoleKeyInfo?>? UIKeyToClass;
 
     public void PutOnUI(string message)
     {
         ClassToUI?.Invoke(message);
     }
 
-    public string? GetFromUI()
+    public string? GetStringFromUI()
     {
-        return UIToClass?.Invoke();
+        return UIStringToClass?.Invoke();
+    }
+
+    public ConsoleKeyInfo? GetKeyFromUI()
+    {
+        return UIKeyToClass?.Invoke();
     }
 }
