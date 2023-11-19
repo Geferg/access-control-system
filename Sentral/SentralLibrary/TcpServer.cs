@@ -113,8 +113,8 @@ public class TcpServer
             client.Close();
             lock (clients)
             {
-                clients.Remove(client);
                 TryLogMessage($"Client disconnected - {client.Client.RemoteEndPoint}");
+                clients.Remove(client);
             }
 
         }

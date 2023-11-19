@@ -12,21 +12,21 @@ public class DatabaseConnection
 {
     public const string test = "";
     private readonly string connectionString;
-    private UILogger? logger;
+    private UIConnection? connection;
 
     public DatabaseConnection(string hostIp, string port, string username, string password, string database)
     {
         connectionString = $"Host={hostIp};Port={port};Username={username};Password={password};Database={database}";
     }
 
-    public void AttachLogger(UILogger logger)
+    public void AttachConnection(UIConnection connection)
     {
-        this.logger = logger;
+        this.connection = connection;
     }
 
     protected virtual void TryLogMessage(string message)
     {
-        logger?.LogMessage(message);
+        connection?.PutOnUI($"Debug (database): {message}");
     }
 
     public bool UserExists(string id)
