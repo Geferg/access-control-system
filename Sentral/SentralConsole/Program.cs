@@ -8,10 +8,10 @@ namespace SentralConsole;
 internal class Program
 {
     // INPUT PATTERN MATCHING
-    private const string removePattern = @"^remove \d{4}$";
-    private const string editPattern = @"^edit \d{4}$";
-    private const string showPattern = @"^show \d{4}$";
-    private const string addPattern = @"^add \d{4}";
+    private static readonly Regex removeRegex = new(@"^add \d{4}");
+    private static readonly Regex editRegex = new(@"^edit \d{4}$");
+    private static readonly Regex showRegex = new(@"^show \d{4}$");
+    private static readonly Regex addRegex = new(@"^add \d{4}");
 
     // DATABASE CONNECTION STRINGS
     //? move to static class
@@ -47,96 +47,136 @@ internal class Program
             Console.Write("> ");
             string? command = Console.ReadLine();
 
-
             if (string.IsNullOrEmpty(command))
             {
+                continue;
+            }
 
-            }
-            else if (command == "clear")
+            switch (command)
             {
-                Console.Clear();
-                dialogs.ListCommands();
-            }
-            else if (command == "exit")
-            {
-                if (dialogs.ExitProgramConfirmation())
-                {
-                    Environment.Exit(0);
-                }
-            }
-            else if (command == "show")
-            {
-                dialogs.ShowUsers(dbConnection.GetUserbase().OrderBy(u => u.id).ToList());
-            }
-            else if (Regex.IsMatch(command, addPattern))
-            {
-                string cardID = GetNumbersFromCommand(command);
+                case "clear":
+                    HandleClearCommand();
+                    break;
 
-                if (dbConnection.UserExists(cardID))
-                {
-                    Console.WriteLine("card id already exists!\n");
-                }
-                else
-                {
-                    UserData? newUser = dialogs.MakeUser(cardID);
+                case "exit":
+                    HandleExitCommand();
+                    break;
 
-                    if (newUser != null)
-                    {
-                        dbConnection.AddUser(newUser);
-                    }
-                }
-            }
-            else if (Regex.IsMatch(command, showPattern))
-            {
-                string cardID = GetNumbersFromCommand(command);
+                case "show":
+                    HandleShowCommand();
+                    break;
 
-                UserData? selectedUser = dbConnection.GetUser(cardID);
+                default:
+                    FindPatternOnCommandAndHandle(command);
+                    break;
+            }
+        }
+    }
 
-                if (selectedUser != null)
-                {
-                    dialogs.ShowUser(selectedUser);
-                }
-                else
-                {
-                    Console.WriteLine(missingInDbMessage + "\n");
-                }
-            }
-            else if (Regex.IsMatch(command, editPattern))
-            {
-                string cardID = GetNumbersFromCommand(command);
-                UserData? selectedUser = dbConnection.GetUser(cardID);
-                if (selectedUser == null)
-                {
-                    Console.WriteLine(missingInDbMessage);
-                }
-                else
-                {
-                    UserData newUser = dialogs.EditUser(selectedUser);
-                    if (!dbConnection.UpdateUser(cardID, newUser))
-                    {
-                        Console.WriteLine(failureInDbMessage);
-                    }
-                }
-            }
-            else if (Regex.IsMatch(command, removePattern))
-            {
-                string cardID = GetNumbersFromCommand(command);
-                UserData? userToRemove = dbConnection.GetUser(cardID);
 
-                if (userToRemove == null)
-                {
-                    Console.WriteLine(missingInDbMessage + "\n");
-                }
-                else if (dialogs.DeleteUserConfirmation(userToRemove))
-                {
-                    dbConnection.RemoveUser(userToRemove.CardID);
-                    Console.WriteLine($"removed user\n");
-                }
-            }
-            else
+    private static void FindPatternOnCommandAndHandle(string command)
+    {
+        string? cardId = GetNumbersFromCommand(command);
+        if (string.IsNullOrEmpty(cardId))
+        {
+            Console.WriteLine("parameter format not accepted\n");
+            return;
+        }
+
+        if (addRegex.IsMatch(command))
+        {
+            HandleAddSpecificCommand(cardId);
+        }
+        else if (showRegex.IsMatch(command))
+        {
+            HandleShowSpecificCommand(cardId);
+        }
+        else if (editRegex.IsMatch(command))
+        {
+            HandleEditSpecificCommand(cardId);
+        }
+        else if (removeRegex.IsMatch(command))
+        {
+            HandleRemoveSpecificCommand(cardId);
+        }
+        else
+        {
+            Console.WriteLine("command not recognized\n");
+        }
+    }
+    private static void HandleClearCommand()
+    {
+        Console.Clear();
+        dialogs.ListCommands();
+    }
+    private static void HandleExitCommand()
+    {
+        if (dialogs.ExitProgramConfirmation())
+        {
+            Environment.Exit(0);
+        }
+    }
+    private static void HandleShowCommand()
+    {
+        dialogs.ShowUsers(dbConnection.GetUserbase().OrderBy(u => u.id).ToList());
+    }
+    private static void HandleShowSpecificCommand(string cardId)
+    {
+        UserData? selectedUser = dbConnection.GetUser(cardId);
+
+        if (selectedUser != null)
+        {
+            dialogs.ShowUser(selectedUser);
+        }
+        else
+        {
+            Console.WriteLine(missingInDbMessage + "\n");
+        }
+    }
+    private static void HandleAddSpecificCommand(string cardId)
+    {
+        if (dbConnection.UserExists(cardId))
+        {
+            Console.WriteLine("card id already exists!\n");
+        }
+        else
+        {
+            UserData? newUser = dialogs.MakeUser(cardId);
+
+            if (newUser != null)
             {
-                Console.WriteLine("command not recognized\n");
+                dbConnection.AddUser(newUser);
             }
+        }
+    }
+    private static void HandleEditSpecificCommand(string cardId)
+    {
+        UserData? selectedUser = dbConnection.GetUser(cardId);
+        if (selectedUser == null)
+        {
+            Console.WriteLine(missingInDbMessage);
+        }
+        else
+        {
+            UserData newUser = dialogs.EditUser(selectedUser);
+            if (!dbConnection.UpdateUser(cardId, newUser))
+            {
+                Console.WriteLine(failureInDbMessage);
+            }
+        }
+    }
+    private static void HandleRemoveSpecificCommand(string cardId)
+    {
+        UserData? userToRemove = dbConnection.GetUser(cardId);
+
+        if (userToRemove == null)
+        {
+            Console.WriteLine(missingInDbMessage + "\n");
+        }
+        else if (dialogs.DeleteUserConfirmation(userToRemove))
+        {
+            dbConnection.RemoveUser(userToRemove.CardID);
+            Console.WriteLine($"removed user\n");
         }
     }
 
@@ -155,7 +195,7 @@ internal class Program
     }
 
     // Helper methods
-    private static string GetNumbersFromCommand(string command)
+    private static string? GetNumbersFromCommand(string command)
     {
         string pattern = @"\b\w+ (\d{4})\b";
 
@@ -168,7 +208,7 @@ internal class Program
         }
         else
         {
-            throw new InvalidOperationException();
+            return null;
         }
     }
 
