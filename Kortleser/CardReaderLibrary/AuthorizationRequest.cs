@@ -14,13 +14,13 @@ public class AuthorizationRequest : BaseRequest
     {
         ClientId = id;
         AdditionalInfo = "";
-        RequestType = TcpConnectionDictionary.authorizationRequestType;
+        RequestType = TcpConnectionDictionary.request_authorization;
     }
 
     public AuthorizationRequest()
     {
         ClientId = -1;
         AdditionalInfo = "";
-        RequestType = TcpConnectionDictionary.authorizationRequestType;
+        RequestType = TcpConnectionDictionary.request_authorization;
     }
 }

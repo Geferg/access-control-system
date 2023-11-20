@@ -37,21 +37,23 @@ public class TcpConnection
         clients = new();
     }
 
-
     protected virtual void TryLogMessage(string message)
     {
         logger?.LogMessage(message);
     }
+
     public void AttachLogger(UILogger logger)
     {
         this.logger = logger;
     }
+
     public void Start()
     {
         listener.Start();
         TryLogMessage("Server started");
         ListenForClientsAsync();
     }
+
     public void Stop()
     {
         listener.Stop();
@@ -65,6 +67,7 @@ public class TcpConnection
             clients.Clear();
         }
     }
+
     public int GetAutorizedClientCount()
     {
         lock (clients)
@@ -72,6 +75,7 @@ public class TcpConnection
             return clients.Where(c => c.IsAuthenticated).Count();
         }
     }
+
     public int GetUnauthorizedClientCount()
     {
         lock (clients)
@@ -80,7 +84,7 @@ public class TcpConnection
         }
     }
 
-    private void DelegateRequests(TcpClient client, string request)
+    private void DelegateRequests(ClientInfo clientInfo, string request)
     {
         try
         {
@@ -90,9 +94,9 @@ public class TcpConnection
             switch (requestDeserialized.RequestType)
             {
                 //TODO Add cases
-                //TODO add generic type handler
-                case TcpConnectionDictionary.authorizationRequestType:
-                    HandleAuthorizationRequest(client, JsonConvert.DeserializeObject<AuthorizationRequest>(request));
+                //TODO add generic type response handler
+                case TcpConnectionDictionary.request_authorization:
+                    HandleAuthorizationRequest(clientInfo, JsonConvert.DeserializeObject<AuthorizationRequest>(request));
                     break;
 
             }
@@ -102,33 +106,36 @@ public class TcpConnection
         {
             //TODO formalize no type
             Response invalidRequestResponse = new("InvalidRequest", "invalid request type", ex.Message);
-            RespondToClient(client, invalidRequestResponse);
+            RespondToClient(clientInfo.TcpClient, invalidRequestResponse);
         }
     }
 
-    private void HandleAuthorizationRequest(TcpClient client, AuthorizationRequest? request)
+    private void HandleAuthorizationRequest(ClientInfo clientInfo, AuthorizationRequest? request)
     {
-        if(request == null)
+        // Fail check
+        if (request == null)
         {
-            Response invalidRequestResponse = new(TcpConnectionDictionary.authorizationRequestType,
-                "failure", "invalid request type");
-            RespondToClient(client, invalidRequestResponse);
+            Response invalidRequestResponse = new(TcpConnectionDictionary.request_authorization,
+                TcpConnectionDictionary.status_fail, "invalid request type");
+            RespondToClient(clientInfo.TcpClient, invalidRequestResponse);
             return;
         }
+
+        // Reject check
         if (request.ClientId < 1 || request.ClientId > 99 || clients.Where(c => c.ClientId == request.ClientId).Any())
         {
-            // Rejected
-            Response NotAuthorizedResponse = new(TcpConnectionDictionary.authorizationRequestType,
+            Response NotAuthorizedResponse = new(TcpConnectionDictionary.request_authorization,
                 TcpConnectionDictionary.status_notAccepted, "id number rejected");
-            RespondToClient(client, NotAuthorizedResponse);
+            RespondToClient(clientInfo.TcpClient, NotAuthorizedResponse);
             return;
         }
 
         // Verify client
-        Response authorizationResponse = new(TcpConnectionDictionary.authorizationRequestType,
+        Response authorizationResponse = new(TcpConnectionDictionary.request_authorization,
             TcpConnectionDictionary.status_accepted, "id number accepted");
-
-        RespondToClient(client, authorizationResponse);
+        clientInfo.IsAuthenticated = true;
+        clientInfo.ClientId = request.ClientId;
+        RespondToClient(clientInfo.TcpClient, authorizationResponse);
     }
 
     private async void ListenForClientsAsync()
@@ -170,7 +177,7 @@ public class TcpConnection
                 if (bytesRead == 0) break;
 
                 string request = Encoding.UTF8.GetString(buffer, 0, bytesRead);
-                DelegateRequests(client.TcpClient, request);
+                DelegateRequests(client, request);
                 //RequestReceived?.Invoke(client.TcpClient, request, RespondToClient);
             }
         }
@@ -191,7 +198,6 @@ public class TcpConnection
 
     private static void RespondToClient(TcpClient client, Response response)
     {
-        //string jsonResponse = JsonSerializer.Serialize(response);
         string jsonResponse = JsonConvert.SerializeObject(response);
         var responseBytes = Encoding.UTF8.GetBytes(jsonResponse);
         client.GetStream().WriteAsync(responseBytes, 0, responseBytes.Length);

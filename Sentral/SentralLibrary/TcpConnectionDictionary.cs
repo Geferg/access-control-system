@@ -7,9 +7,9 @@ using System.Threading.Tasks;
 namespace SentralLibrary;
 public static class TcpConnectionDictionary
 {
-    public const string authorizationRequestType = "Authorization";
+    public const string request_authorization = "Authorization";
 
     public const string status_fail = "failure";
-    public const string status_notAccepted = "not accepted";
+    public const string status_notAccepted = "rejected";
     public const string status_accepted = "accepted";
 }

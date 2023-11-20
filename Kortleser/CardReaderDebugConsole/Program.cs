@@ -16,11 +16,6 @@ internal class Program
 {
     private static SerialConnectionManager? serialConnection;
     private static TcpConnectionManager? tcpConnection;
-    private static readonly JsonSerializerSettings serializerSettings = new()
-    {
-        TypeNameHandling = TypeNameHandling.Auto
-    };
-
 
     private static int accessPointNumber;
 
@@ -58,36 +53,40 @@ internal class Program
         Console.WriteLine($"connected to server {tcpConnection.ServerAddress}");
 
         serialConnection.DataReceived += OnHardwareMessageReceived;
-        //tcpConnection.LogMessage += OnLogMessageReceived;
-        //serialConnection.LogMessage += OnLogMessageReceived;
 
         // Add to central
         Response? authorizationResponse = null;
         while (authorizationResponse == null || authorizationResponse.Status != TcpConnectionDictionary.status_accepted)
         {
-            try
-            {
-                int id = GetValidatedNumberInput("access point number", 1, 99);
-                AuthorizationRequest requestObject = new(id);
-                string requestJson = JsonConvert.SerializeObject(requestObject);
-                string responseJson = await tcpConnection.SendRequestAsync(requestJson);
-                object? deserializedResponse = JsonConvert.DeserializeObject<Response>(responseJson);
-                authorizationResponse = (Response?)deserializedResponse;
-                Console.WriteLine(authorizationResponse?.Message);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error: {ex.Message}");
-            }
+            int id = GetValidatedNumberInput("access point number", 1, 99);
+            authorizationResponse = await SendAuthorizationRequestAsync(id);
+
+            Console.WriteLine(authorizationResponse?.Message ?? "failed to get response");
         }
 
         // Communicate with hardware
-        serialConnection.OpenConnection();
+        //serialConnection.OpenConnection();
 
 
         Console.WriteLine("Press any key to close.");
         Console.ReadKey(true);
         serialConnection.CloseConnection();
+    }
+
+    private static async Task<Response?> SendAuthorizationRequestAsync(int id)
+    {
+        try
+        {
+            AuthorizationRequest requestObject = new(id);
+            string requestJson = JsonConvert.SerializeObject(requestObject);
+            string responseJson = await tcpConnection.SendRequestAsync(requestJson);
+            return JsonConvert.DeserializeObject<Response>(responseJson);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error: {ex.Message}");
+            return null;
+        }
     }
 
     private static int GetValidatedNumberInput(string prompt, int minValue, int maxValue)

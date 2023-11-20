@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 namespace CardReaderLibrary;
 public static class TcpConnectionDictionary
 {
-    public const string authorizationRequestType = "Authorization";
+    public const string request_authorization = "Authorization";
 
     public const string status_fail = "failure";
     public const string status_notAccepted = "rejected";
