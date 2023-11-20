@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO.Ports;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace CardReaderLibrary;
@@ -77,6 +79,32 @@ public class SerialConnectionManager
         int endIndex = data.IndexOf(endChar);
 
         return data[startIndex..endIndex];
+    }
+
+    public static (bool locked, bool open, bool alarm, int breachState, DateTime time) ExtractState(string message)
+    {
+        const string pattern = @"([A-Z])(\d+)";
+        const string dateFormat = "yyyyMMdd";
+        const string timeFormat = "HHmmss";
+        MatchCollection matches = Regex.Matches(message, pattern);
+        var dataBetweenLetters = new Dictionary<char, string>();
+
+        foreach (Match match in matches)
+        {
+            char letters = match.Groups[1].Value[0];
+            string number = match.Groups[2].Value;
+            dataBetweenLetters[letters] = number;
+        }
+
+        bool isLocked = dataBetweenLetters['D'][5] == '1';
+        bool isOpen = dataBetweenLetters['D'][6] == '1';
+        bool isAlarm = dataBetweenLetters['D'][7] == '1';
+        int isBreachState = int.Parse(dataBetweenLetters['F']);
+        string date = dataBetweenLetters['B'];
+        string time = dataBetweenLetters['C'];
+        DateTime isDateTime = DateTime.ParseExact(date + time, dateFormat + timeFormat, CultureInfo.InvariantCulture);
+
+        return (isLocked, isOpen, isAlarm, isBreachState, isDateTime);
     }
 
     public async Task SendCommandAsync(string command)

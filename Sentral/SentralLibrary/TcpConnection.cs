@@ -21,15 +21,15 @@ namespace SentralLibrary;
 public class TcpConnection
 {
     private readonly TcpListener listener;
-    private readonly List<ClientInfo> clients;
+    private List<ClientInfo> clients;
     private UILogger? logger;
     private static readonly JsonSerializerSettings serializerSettings = new()
     {
         TypeNameHandling = TypeNameHandling.Auto
     };
 
-    public delegate void RequestReceivedHandler(TcpClient client, string request, Action<TcpClient, string> respondCallback);
-    public event RequestReceivedHandler? RequestReceived;
+    public delegate void AlarmReportHandler(ClientInfo clientInfo, AlarmReportRequest request);
+    public event AlarmReportHandler? AlarmReport;
 
     public TcpConnection(int port)
     {
@@ -84,6 +84,19 @@ public class TcpConnection
         }
     }
 
+    public List<int> GetClientIds()
+    {
+        List<int> ids = new();
+        lock (clients)
+        {
+            foreach(var client in clients.Where(c => c.IsAuthenticated))
+            {
+                ids.Add(client.ClientId);
+            }
+        }
+        return ids;
+    }
+
     private void DelegateRequests(ClientInfo clientInfo, string request)
     {
         try
@@ -99,6 +112,10 @@ public class TcpConnection
                     HandleAuthorizationRequest(clientInfo, JsonConvert.DeserializeObject<AuthorizationRequest>(request));
                     break;
 
+                case TcpConnectionDictionary.request_alarmReport:
+                    HandleAlarmReportRequest(clientInfo, JsonConvert.DeserializeObject<AlarmReportRequest>(request));
+                    break;
+
             }
 
         }
@@ -108,6 +125,33 @@ public class TcpConnection
             Response invalidRequestResponse = new("InvalidRequest", "invalid request type", ex.Message);
             RespondToClient(clientInfo.TcpClient, invalidRequestResponse);
         }
+    }
+
+    private void HandleAlarmReportRequest(ClientInfo clientInfo, AlarmReportRequest? request)
+    {
+        string actionType = TcpConnectionDictionary.request_alarmReport;
+        string message;
+        string status;
+
+        if (request == null)
+        {
+            status = TcpConnectionDictionary.status_fail;
+            message = "invalid request type";
+        }
+        else if (request.AlarmType != TcpConnectionDictionary.alarm_breach &&
+            request.AlarmType != TcpConnectionDictionary.alarm_timeout)
+        {
+            status = TcpConnectionDictionary.status_notAccepted;
+            message = "invalid alarm type";
+        }
+        else
+        {
+            status = TcpConnectionDictionary.status_accepted;
+            message = "report is logged";
+            AlarmReport?.Invoke(this, request);
+        }
+
+        SendResponseToClient(clientInfo, actionType, status, message);
     }
 
     private void HandleAuthorizationRequest(ClientInfo clientInfo, AuthorizationRequest? request)

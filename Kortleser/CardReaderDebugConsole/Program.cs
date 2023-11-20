@@ -16,8 +16,10 @@ internal class Program
 {
     private static SerialConnectionManager? serialConnection;
     private static TcpConnectionManager? tcpConnection;
-
     private static int accessPointNumber;
+
+    private static DateTime lastTimeClosed = DateTime.Now;
+    private static DateTime lastTimeLocked = DateTime.Now;
 
     static async Task Main(string[] args)
     {
@@ -61,6 +63,51 @@ internal class Program
     private static async void OnHardwareMessageReceived(string message)
     {
         Console.WriteLine($"Received (hardware): {message}");
+        var state = SerialConnectionManager.ExtractState(message);
+
+        Console.WriteLine($"Locked: {state.locked}");
+        Console.WriteLine($"Open: {state.open}");
+        Console.WriteLine($"Alarm: {state.alarm}");
+        Console.WriteLine($"Breach State: {state.breachState}");
+        Console.WriteLine($"Time: {state.time}");
+
+        if (!state.open)
+        {
+            lastTimeClosed = state.time;
+        }
+
+        if (!state.locked)
+        {
+            lastTimeLocked = state.time;
+        }
+
+        if (state.breachState > 500)
+        {
+            Response? breachResponse = await SendAlarmReportRequestAsync(state.time, TcpConnectionDictionary.alarm_breach);
+
+            if (breachResponse == null)
+            {
+                Console.WriteLine("failed to get a response from the server.");
+            }
+            else
+            {
+                Console.WriteLine(breachResponse.Message);
+            }
+        }
+
+        if (state.open && lastTimeClosed.AddSeconds(30) < state.time)
+        {
+            Response? timeoutResponse = await SendAlarmReportRequestAsync(state.time, TcpConnectionDictionary.alarm_timeout);
+
+            if (timeoutResponse == null)
+            {
+                Console.WriteLine("failed to get a response from the server.");
+            }
+            else
+            {
+                Console.WriteLine(timeoutResponse.Message);
+            }
+        }
 
         //await tcpConnection!.SendRequestAsync(message);
         //Console.WriteLine($"Sent (central): {message}");
@@ -123,8 +170,24 @@ internal class Program
         {
             AuthorizationRequest requestObject = new(id);
             string requestJson = JsonConvert.SerializeObject(requestObject);
-            string responseJson = await tcpConnection.SendRequestAsync(requestJson);
+            string responseJson = await tcpConnection!.SendRequestAsync(requestJson);
             return JsonConvert.DeserializeObject<Response>(responseJson);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error: {ex.Message}");
+            return null;
+        }
+    }
+
+    private static async Task<Response?> SendAlarmReportRequestAsync(DateTime time, string alarmType)
+    {
+        try
+        {
+            AlarmReportRequest requestObject = new(time, alarmType);
+            string requestJson = JsonConvert.SerializeObject(requestObject);
+            string responseJson = await tcpConnection!.SendRequestAsync(requestJson);
+            return JsonConvert.DeserializeObject<Response?>(responseJson);
         }
         catch (Exception ex)
         {

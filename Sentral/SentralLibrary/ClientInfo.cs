@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace SentralLibrary;
-internal class ClientInfo
+public class ClientInfo
 {
     public TcpClient TcpClient { get; set; }
     public int ClientId { get; set; }

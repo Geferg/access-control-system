@@ -40,7 +40,7 @@ internal class Program
         uiConnection.ClassToUI += OnWriteToUI;
         uiConnection.UIStringToClass += OnRecieveFromUI;
         uiConnection.UIKeyToClass += OnGetKeypress;
-        //tcpServer.RequestReceived += OnTcpRequest;
+        tcpServer.AlarmReport += OnLogAlarmReport;
 
         // Database connection
         while (!dbConnection.TestConnection())
@@ -118,7 +118,10 @@ internal class Program
         Console.WriteLine("tcp system details");
         Console.WriteLine($"  autorized connections: {connection.GetAutorizedClientCount()}");
         Console.WriteLine($"unauthorized connetions: {connection.GetUnauthorizedClientCount()}");
-
+        foreach (var id in connection.GetClientIds())
+        {
+            Console.WriteLine($"      connected with id: {id}");
+        }
         Console.WriteLine("");
     }
 
@@ -229,6 +232,10 @@ internal class Program
             Console.WriteLine($"removed user\n");
         }
     }
+    private static void HandleLogAlarm(DateTime timeOfAlarm, int doorNumber, string alarmType)
+    {
+
+    }
 
     // EVENT HANDLERS
     private static void OnWriteToUI(string message)
@@ -243,12 +250,9 @@ internal class Program
     {
         return Console.ReadKey(true);
     }
-
-    // Deprecated? handle all on tcp class unless need for user interaction
-    private static void OnTcpRequest(TcpClient client, string request, Action<TcpClient, string> respondCallback)
+    private static void OnLogAlarmReport(ClientInfo clientInfo, AlarmReportRequest request)
     {
-        //var requestObject = JsonSerializer.Deserialize<TcpClient>(request);
-        //respondCallback(client, "my response");
+        HandleLogAlarm(request.Time, clientInfo.ClientId, request.AlarmType);
     }
 
     // Helper methods
