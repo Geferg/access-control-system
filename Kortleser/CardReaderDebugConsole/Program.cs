@@ -1,5 +1,7 @@
 ﻿using System.Net.Sockets;
 using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using CardReaderLibrary;
 
 /*
@@ -13,28 +15,60 @@ using CardReaderLibrary;
 namespace CardReaderDebugConsole;
 internal class Program
 {
-    private static SerialConnectionManager serialConnection = new("COM6");
-    private static TcpConnectionManager tcpConnection = new("127.0.0.1", 8000);
-    int accessPointNumber;
+    private static SerialConnectionManager? serialConnection;
+    private static TcpConnectionManager? tcpConnection;
+    private static int accessPointNumber;
 
     static async Task Main(string[] args)
     {
         Console.WriteLine("\u001b]0;Kortleser\u0007");
+        Console.Clear();
 
-        GetValidatedNumberInput("card reader number", 1, 99);
+        while (serialConnection == null)
+        {
+            try
+            {
+                serialConnection = new("COM6");
+            }
+            catch (Exception)
+            {
+                Console.WriteLine("could not connect to serial port");
+                Thread.Sleep(2000);
+            }
+        }
+        Console.WriteLine($"connected to serial port {serialConnection.Port}");
 
-        tcpConnection.LogMessage += OnLogMessageReceived;
-        serialConnection.LogMessage += OnLogMessageReceived;
+        while (tcpConnection == null)
+        {
+            try
+            {
+                tcpConnection = new("127.0.0.1", 8000);
+            }
+            catch (Exception)
+            {
+                Console.WriteLine("could not connect to central");
+                Thread.Sleep(2000);
+            }
+        }
+        Console.WriteLine($"connected to server {tcpConnection.ServerAddress}");
+
         serialConnection.DataReceived += OnHardwareMessageReceived;
+        //tcpConnection.LogMessage += OnLogMessageReceived;
+        //serialConnection.LogMessage += OnLogMessageReceived;
 
         try
         {
             serialConnection.OpenConnection();
+            int id = GetValidatedNumberInput("access point number", 1, 99);
+
+            AuthorizationRequest requestObject = new(id);
+            string requestJson = JsonSerializer.Serialize(requestObject);
+            string responseJson = await tcpConnection.SendRequestAsync(requestJson);
+            Response? responseObject = JsonSerializer.Deserialize<Response>(responseJson);
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Error: {ex.Message}");
-            throw;
         }
         finally
         {
@@ -63,6 +97,15 @@ internal class Program
         }*/
 
 
+    }
+
+    private static async Task<bool> Validate(int id)
+    {
+        var requestObject = new { action = "authorize", clientId = id, aditionalInfo = "" };
+        string requestJson = JsonSerializer.Serialize(requestObject);
+        string responseJson = await tcpConnection.SendRequestAsync(requestJson);
+        Response? responseObject = JsonSerializer.Deserialize<Response>(responseJson);
+        return false;
     }
 
     private static int GetValidatedNumberInput(string prompt, int minValue, int maxValue)

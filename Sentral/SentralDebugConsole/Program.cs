@@ -39,11 +39,13 @@ internal class Program
         server.RequestReceived -= HandleRequest;
     }
 
+    // Deprecated
     private static void OnLogMessageReceived(object? sender, string message)
     {
         Console.WriteLine($"Log: {message}");
     }
 
+    // Deprecated
     private static void HandleRequest(TcpClient client, string request, Action<TcpClient, string> respond)
     {
         string response = "response";

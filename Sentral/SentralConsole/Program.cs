@@ -1,6 +1,7 @@
 ﻿using System.Data;
 using System.Net.Mail;
 using System.Net.Sockets;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using SentralLibrary;
 
@@ -34,6 +35,7 @@ internal class Program
     static async Task Main(string[] args)
     {
         Console.WriteLine("\u001b]0;Sentral\u0007");
+        Console.Clear();
 
         uiConnection.ClassToUI += OnWriteToUI;
         uiConnection.UIStringToClass += OnRecieveFromUI;
@@ -46,8 +48,6 @@ internal class Program
             Console.WriteLine("failed to connect to database, retrying...");
             Thread.Sleep(1000);
         }
-
-        Console.WriteLine("established connection to database.\n");
 
         // TCP connection
         tcpServer.Start();
@@ -116,7 +116,10 @@ internal class Program
     private static void HandleSystemDetailsCommand(TcpConnection connection)
     {
         Console.WriteLine("tcp system details");
-        Console.WriteLine($"active connections: {connection.GetActiveClientcount()}");
+        Console.WriteLine($"  autorized connections: {connection.GetAutorizedClientCount()}");
+        Console.WriteLine($"unauthorized connetions: {connection.GetUnauthorizedClientCount()}");
+
+        Console.WriteLine("");
     }
 
     // DATABASE INTERRACTION COMMANDS
@@ -240,9 +243,12 @@ internal class Program
     {
         return Console.ReadKey(true);
     }
+
+    // Deprecated? handle all on tcp class unless need for user interaction
     private static void OnTcpRequest(TcpClient client, string request, Action<TcpClient, string> respondCallback)
     {
-
+        var requestObject = JsonSerializer.Deserialize<TcpClient>(request);
+        respondCallback(client, "my response");
     }
 
     // Helper methods

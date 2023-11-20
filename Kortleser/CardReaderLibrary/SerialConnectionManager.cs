@@ -8,6 +8,8 @@ using System.Threading.Tasks;
 namespace CardReaderLibrary;
 public class SerialConnectionManager
 {
+    public string Port;
+
     private const char startChar = '$';
     private const char endChar = '#';
     private const int baudRate = 9600;
@@ -21,6 +23,7 @@ public class SerialConnectionManager
 
     public SerialConnectionManager(string port)
     {
+        Port = port;
         buffer = new StringBuilder();
         serialPort = new()
         {
@@ -76,7 +79,7 @@ public class SerialConnectionManager
         if (serialPort.IsOpen)
         {
             byte[] commandBytes = Encoding.ASCII.GetBytes(command);
-            await serialPort.BaseStream.WriteAsync(commandBytes, 0, commandBytes.Length);
+            await serialPort.BaseStream.WriteAsync(commandBytes);
         }
     }
 

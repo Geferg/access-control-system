@@ -4,6 +4,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 /*
@@ -20,7 +21,7 @@ namespace SentralLibrary;
 public class TcpConnection
 {
     private readonly TcpListener listener;
-    private readonly List<TcpClient> clients;
+    private readonly List<ClientInfo> clients;
     private UILogger? logger;
 
     public delegate void RequestReceivedHandler(TcpClient client, string request, Action<TcpClient, string> respondCallback);
@@ -32,23 +33,21 @@ public class TcpConnection
         clients = new();
     }
 
+
     protected virtual void TryLogMessage(string message)
     {
         logger?.LogMessage(message);
     }
-
     public void AttachLogger(UILogger logger)
     {
         this.logger = logger;
     }
-
     public void Start()
     {
         listener.Start();
         TryLogMessage("Server started");
         ListenForClientsAsync();
     }
-
     public void Stop()
     {
         listener.Stop();
@@ -57,18 +56,47 @@ public class TcpConnection
         {
             foreach (var client in clients)
             {
-                client.Close();
+                client.TcpClient.Close();
             }
             clients.Clear();
         }
     }
-
-    public int GetActiveClientcount()
+    public int GetAutorizedClientCount()
     {
         lock (clients)
         {
-            return clients.Count;
+            return clients.Where(c => c.IsAuthenticated).Count();
         }
+    }
+    public int GetUnauthorizedClientCount()
+    {
+        lock (clients)
+        {
+            return clients.Where(c => !c.IsAuthenticated).Count();
+        }
+    }
+
+    private static void DelegateRequests(TcpClient client, string request)
+    {
+        BaseRequest? requestDeserialized = JsonSerializer.Deserialize<BaseRequest>(request);
+        //TODO RETURNS HERE???
+        if (requestDeserialized == null)
+        {
+            return;
+        }
+        switch (requestDeserialized.RequestType)
+        {
+            case TcpConnectionDictionary.authorizationRequestType:
+                HandleAuthorizationRequest(client, request);
+                break;
+        }
+    }
+
+    private static void HandleAuthorizationRequest(TcpClient client, string request)
+    {
+        //TODO deserialize, check if id exists, add and respond with ok if not, respond with not ok otherwise
+        AuthorizationRequest? requestDeserialized = JsonSerializer.Deserialize<AuthorizationRequest>(request);
+        RespondToClient(client, "");
     }
 
     private async void ListenForClientsAsync()
@@ -77,11 +105,12 @@ public class TcpConnection
         {
             while (true)
             {
-                TcpClient client = await listener.AcceptTcpClientAsync();
+                TcpClient newClient = await listener.AcceptTcpClientAsync();
+                ClientInfo client = new(newClient);
                 lock (clients)
                 {
                     clients.Add(client);
-                    TryLogMessage($"Client connected - {client.Client.RemoteEndPoint}");
+                    TryLogMessage($"Client connected - {client.TcpClient.Client.RemoteEndPoint}");
                 }
 
                 _ = HandleClientAsync(client);
@@ -93,23 +122,24 @@ public class TcpConnection
         }
         catch (Exception ex)
         {
-            TryLogMessage($"Failed to listen {ex}");
+            TryLogMessage($"Failed to listen: {ex}");
         }
     }
 
-    private async Task HandleClientAsync(TcpClient client)
+    private async Task HandleClientAsync(ClientInfo client)
     {
         try
         {
-            NetworkStream stream = client.GetStream();
+            NetworkStream stream = client.TcpClient.GetStream();
             byte[] buffer = new byte[1024];
-            while (client.Connected)
+            while (client.TcpClient.Connected)
             {
                 int bytesRead = await stream.ReadAsync(buffer);
                 if (bytesRead == 0) break;
 
-                string request = Encoding.ASCII.GetString(buffer, 0, bytesRead);
-                RequestReceived?.Invoke(client, request, RespondToClient);
+                string request = Encoding.UTF8.GetString(buffer, 0, bytesRead);
+                DelegateRequests(client.TcpClient, request);
+                //RequestReceived?.Invoke(client.TcpClient, request, RespondToClient);
             }
         }
         catch (Exception ex)
@@ -118,19 +148,18 @@ public class TcpConnection
         }
         finally
         {
-            client.Close();
+            client.TcpClient.Close();
             lock (clients)
             {
-                TryLogMessage($"Client disconnected - {client.Client.RemoteEndPoint}");
                 clients.Remove(client);
             }
 
         }
     }
 
-    private void RespondToClient(TcpClient client, string response)
+    private static void RespondToClient(TcpClient client, string jsonResponse)
     {
-        var responseBytes = Encoding.ASCII.GetBytes(response);
+        var responseBytes = Encoding.UTF8.GetBytes(jsonResponse);
         client.GetStream().WriteAsync(responseBytes, 0, responseBytes.Length);
     }
 }
