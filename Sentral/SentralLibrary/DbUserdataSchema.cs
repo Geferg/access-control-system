@@ -8,9 +8,6 @@ using System.Threading.Tasks;
 namespace SentralLibrary;
 internal static class DbUserdataSchema
 {
-    // Table
-    public const string TABLE_NAME = "userdata";
-
     // Columns
     public const string COLUMN_FIRSTNAME = "first_name";
     public const string COLUMN_LASTNAME = "last_name";
@@ -58,7 +55,7 @@ internal static class DbUserdataSchema
     public const string FUNCTION_VALIDUSER = "validateuser";
     public const string FUNCTION_LOGALARM = "addalarmlog";
     public const string FUNCTION_LOGACCESS = "addaccesslog";
-    public const string FUNCTION_GETACCESSLOGS = "accessreport";
+    public const string FUNCTION_GETACCESSLOGS = "AccessReport";
     public const string FUNCTION_GETDOORACCESSLOGS = "doorreport";
     public const string FUNCTION_GETALARMLOG = "alarmreport";
     public const string FUNCTION_GETSUSPICIOUSUSERS = "suspicioususers";

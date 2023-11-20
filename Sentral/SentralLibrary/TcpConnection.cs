@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
@@ -22,7 +23,6 @@ public class TcpConnection
 {
     private readonly TcpListener listener;
     private List<ClientInfo> clients;
-    private UILogger? logger;
     private static readonly JsonSerializerSettings serializerSettings = new()
     {
         TypeNameHandling = TypeNameHandling.Auto
@@ -32,6 +32,8 @@ public class TcpConnection
     public event AlarmReportHandler? AlarmReport;
     public delegate void AccessReportHandler(ClientInfo clientInfo, AccessReportRequest request);
     public event AccessReportHandler? AccessReport;
+    public delegate void AccessHandler(ClientInfo clientInfo, AccessRequest request);
+    public event AccessHandler? Access;
 
     public TcpConnection(int port)
     {
@@ -39,27 +41,17 @@ public class TcpConnection
         clients = new();
     }
 
-    protected virtual void TryLogMessage(string message)
-    {
-        logger?.LogMessage(message);
-    }
-
-    public void AttachLogger(UILogger logger)
-    {
-        this.logger = logger;
-    }
-
     public void Start()
     {
         listener.Start();
-        TryLogMessage("Server started");
+        //TryLogMessage("Server started");
         ListenForClientsAsync();
     }
 
     public void Stop()
     {
         listener.Stop();
-        TryLogMessage("Server stopped");
+        //TryLogMessage("Server stopped");
         lock (clients)
         {
             foreach (var client in clients)
@@ -118,6 +110,9 @@ public class TcpConnection
                     HandleAlarmReportRequest(clientInfo, JsonConvert.DeserializeObject<AlarmReportRequest>(request));
                     break;
 
+                case TcpConnectionDictionary.request_access:
+                    HandleAccessRequest(clientInfo, JsonConvert.DeserializeObject<AccessRequest>(request));
+                    break;
             }
 
         }
@@ -127,6 +122,31 @@ public class TcpConnection
             Response invalidRequestResponse = new("InvalidRequest", "invalid request type", ex.Message);
             RespondToClient(clientInfo.TcpClient, invalidRequestResponse);
         }
+    }
+
+    private void HandleAccessRequest(ClientInfo clientInfo, AccessRequest? request)
+    {
+        string actionType = TcpConnectionDictionary.request_access;
+        string message;
+        string status;
+
+        if (request == null)
+        {
+            status = TcpConnectionDictionary.status_fail;
+            message = "invalid request type";
+        }
+        else if(true)
+        {
+            status = TcpConnectionDictionary.status_notAccepted;
+            message = "invalid credentials";
+        }
+        else
+        {
+            status= TcpConnectionDictionary.status_accepted;
+            message = "access granted";
+        }
+
+        SendResponseToClient(clientInfo, actionType, status, message);
     }
 
     private void HandleAlarmReportRequest(ClientInfo clientInfo, AlarmReportRequest? request)
@@ -194,7 +214,7 @@ public class TcpConnection
                 lock (clients)
                 {
                     clients.Add(client);
-                    TryLogMessage($"Client connected - {client.TcpClient.Client.RemoteEndPoint}");
+                    //TryLogMessage($"Client connected - {client.TcpClient.Client.RemoteEndPoint}");
                 }
 
                 _ = HandleClientAsync(client);
@@ -202,11 +222,11 @@ public class TcpConnection
         }
         catch (ObjectDisposedException)
         {
-            TryLogMessage("Lister has been stopped.");
+            //TryLogMessage("Lister has been stopped.");
         }
         catch (Exception ex)
         {
-            TryLogMessage($"Failed to listen: {ex}");
+            //TryLogMessage($"Failed to listen: {ex}");
         }
     }
 
@@ -228,7 +248,7 @@ public class TcpConnection
         }
         catch (Exception ex)
         {
-            TryLogMessage($"Error - {ex.Message}");
+            //TryLogMessage($"Error - {ex.Message}");
         }
         finally
         {

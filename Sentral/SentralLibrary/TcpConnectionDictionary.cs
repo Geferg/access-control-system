@@ -10,6 +10,7 @@ public static class TcpConnectionDictionary
     public const string request_authorization = "Authorization";
     public const string request_alarmReport = "AlarmReport";
     public const string request_accessReport = "AccessReport";
+    public const string request_access = "Access";
 
     public const string alarm_breach = "breach";
     public const string alarm_timeout = "timeout";

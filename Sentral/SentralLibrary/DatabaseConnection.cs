@@ -147,6 +147,42 @@ public class DatabaseConnection
         return result;
     }
 
+    public List<(string id, bool approved, DateTime time, int doorNumber)> GetDoorLogs(DateTime start, DateTime end, int doorNumber)
+    {
+        List<(string id, bool approved, DateTime time, int doorNumber)> result = new();
+
+        Dictionary<string, object> parameters = new()
+        {
+            {DbUserdataSchema.PARAM_STARTDATE, start },
+            {DbUserdataSchema.PARAM_ENDDATE, end },
+            {DbUserdataSchema.PARAM_DOORNUMBER, doorNumber}
+        };
+
+        try
+        {
+            DataTable dataTable = GetDataTable(DbUserdataSchema.FUNCTION_GETDOORACCESSLOGS, parameters);
+
+            foreach (DataRow log in dataTable.Rows)
+            {
+                string? id = log[DbUserdataSchema.RETURN_ID].ToString();
+                bool approved = Convert.ToBoolean(log[DbUserdataSchema.RETURN_APPROVED].ToString());
+                DateTime time = (DateTime)log[DbUserdataSchema.RETURN_TIMEOFENTRY];
+
+                if (id != null)
+                {
+                    result.Add((id, approved, time, doorNumber));
+                }
+            }
+
+        }
+        catch (Exception ex)
+        {
+            TryLogMessage(ex.Message);
+        }
+
+        return result;
+    }
+
     public bool LogAccess(DateTime timeOfEntry, string cardId, bool approvedEntry, int doorNumber)
     {
         bool result = false;
@@ -162,6 +198,34 @@ public class DatabaseConnection
         try
         {
             DataTable dataTable = GetDataTable(DbUserdataSchema.FUNCTION_LOGACCESS, parameters);
+
+            if (dataTable.Rows.Count > 0)
+            {
+                DataRow row = dataTable.Rows[0];
+                result = Convert.ToBoolean(row[0]);
+            }
+        }
+        catch (Exception ex)
+        {
+            TryLogMessage(ex.Message);
+        }
+
+        return result;
+    }
+
+    public bool ValidateUser(string id, string pin)
+    {
+        bool result = false;
+
+        Dictionary<string, object> parameters = new()
+        {
+            {DbUserdataSchema.PARAM_ID, id},
+            {DbUserdataSchema.PARAM_PIN, pin }
+        };
+
+        try
+        {
+            DataTable dataTable = GetDataTable(DbUserdataSchema.FUNCTION_USEREXISTS, parameters);
 
             if (dataTable.Rows.Count > 0)
             {
@@ -419,7 +483,7 @@ public class DatabaseConnection
 
     private static string GetValidatedFunctionName(string function)
     {
-    var validFunctions = new HashSet<string>
+        var validFunctions = new HashSet<string>
         {
             DbUserdataSchema.FUNCTION_GETUSERBASE,
             DbUserdataSchema.FUNCTION_GETUSER,

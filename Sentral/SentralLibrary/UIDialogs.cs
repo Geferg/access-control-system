@@ -186,10 +186,7 @@ public class UIDialogs
         }
         WriteLine("");
     }
-    public void ShowDoorLogs()
-    {
 
-    }
     public void ShowAlarmLogs(List<(DateTime time, int doorNumber, string alarmType)> logs)
     {
         if (logs.Count == 0)

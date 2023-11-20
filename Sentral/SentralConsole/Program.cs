@@ -96,6 +96,10 @@ internal class Program
                     HandleAlarmLogDetailsCommand();
                     break;
 
+                case "doorlog":
+                    HandleDoorLogDetailsCommand(command);
+                    break;
+
                 default:
                     FindPatternOnCommandAndHandle(command);
                     break;
@@ -122,6 +126,7 @@ internal class Program
         }
         Console.WriteLine("");
     }
+
     private static void HandleSystemDetailsCommand(TcpConnection connection)
     {
         Console.WriteLine("tcp system details");
@@ -165,11 +170,13 @@ internal class Program
             Console.WriteLine("command not recognized\n");
         }
     }
+
     private static void HandleClearCommand()
     {
         Console.Clear();
         dialogs.ListCommands();
     }
+
     private static void HandleExitCommand()
     {
         if (dialogs.ExitProgramConfirmation())
@@ -178,10 +185,12 @@ internal class Program
             Environment.Exit(0);
         }
     }
+
     private static void HandleShowCommand()
     {
         dialogs.ShowUsers(dbConnection.GetUserbase().OrderBy(u => u.id).ToList());
     }
+
     private static void HandleShowSpecificCommand(string cardId)
     {
         UserData? selectedUser = dbConnection.GetUser(cardId);
@@ -195,6 +204,7 @@ internal class Program
             Console.WriteLine(missingInDbMessage + "\n");
         }
     }
+
     private static void HandleAddSpecificCommand(string cardId)
     {
         if (dbConnection.UserExists(cardId))
@@ -211,6 +221,7 @@ internal class Program
             }
         }
     }
+
     private static void HandleEditSpecificCommand(string cardId)
     {
         UserData? selectedUser = dbConnection.GetUser(cardId);
@@ -227,6 +238,7 @@ internal class Program
             }
         }
     }
+
     private static void HandleRemoveSpecificCommand(string cardId)
     {
         UserData? userToRemove = dbConnection.GetUser(cardId);
@@ -241,6 +253,7 @@ internal class Program
             Console.WriteLine($"removed user\n");
         }
     }
+
     private static void HandleAccessLogDetailsCommand()
     {
         Console.WriteLine("start date");
@@ -277,6 +290,33 @@ internal class Program
         dialogs.ShowAlarmLogs(logs);
     }
 
+    private static void HandleDoorLogDetailsCommand(string command)
+    {
+        string? number = GetNumbersFromCommand(command);
+
+        if (number == null)
+        {
+            Console.WriteLine(missingInDbMessage + "\n");
+            return;
+        }
+        int doorNumber = Convert.ToInt32(number);
+
+        Console.WriteLine("start date");
+        DateTime start = dialogs.GetDateTime(0, 9999);
+        Console.WriteLine("\nend date");
+        DateTime end = dialogs.GetDateTime(0, 9999);
+
+        if (start > end)
+        {
+            Console.WriteLine("start date cannot be after end date");
+            return;
+        }
+
+        //List<(string id, bool approved, DateTime time, int doorNumber)> logs = dbConnection.GetDoorLogs(start, end);
+
+        //dialogs.ShowAccessLogs(logs);
+    }
+
     private static void HandleLogAlarm(DateTime timeOfAlarm, int doorNumber, string alarmType)
     {
         dbConnection.LogAlarm(timeOfAlarm, doorNumber, alarmType);
@@ -292,18 +332,22 @@ internal class Program
     {
         Console.Write(message);
     }
+
     private static string? OnRecieveFromUI()
     {
         return Console.ReadLine();
     }
+
     private static ConsoleKeyInfo? OnGetKeypress()
     {
         return Console.ReadKey(true);
     }
+
     private static void OnLogAlarmReport(ClientInfo clientInfo, AlarmReportRequest request)
     {
         HandleLogAlarm(request.Time, clientInfo.ClientId, request.AlarmType);
     }
+
     private static void OnLogAccessReport(ClientInfo clientInfo, AccessReportRequest request)
     {
         HandleLogAccess(request.CardId, request.Approved, request.Time, request.DoorNumber);
