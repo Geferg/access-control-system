@@ -112,30 +112,29 @@ public class TcpConnection
 
     private void HandleAuthorizationRequest(ClientInfo clientInfo, AuthorizationRequest? request)
     {
-        // Fail check
+        string actionType = TcpConnectionDictionary.request_authorization;
+        string message;
+        string status;
+
         if (request == null)
         {
-            Response invalidRequestResponse = new(TcpConnectionDictionary.request_authorization,
-                TcpConnectionDictionary.status_fail, "invalid request type");
-            RespondToClient(clientInfo.TcpClient, invalidRequestResponse);
-            return;
+            status = TcpConnectionDictionary.status_fail;
+            message = "invalid request type";
         }
-
-        // Reject check
-        if (request.ClientId < 1 || request.ClientId > 99 || clients.Where(c => c.ClientId == request.ClientId).Any())
+        else if (request.ClientId < 1 || request.ClientId > 99 || clients.Any(c => c.ClientId == request.ClientId))
         {
-            Response NotAuthorizedResponse = new(TcpConnectionDictionary.request_authorization,
-                TcpConnectionDictionary.status_notAccepted, "id number rejected");
-            RespondToClient(clientInfo.TcpClient, NotAuthorizedResponse);
-            return;
+            status = TcpConnectionDictionary.status_notAccepted;
+            message = "id number rejected";
+        }
+        else
+        {
+            status = TcpConnectionDictionary.status_accepted;
+            message = "id number accepted";
+            clientInfo.IsAuthenticated = true;
+            clientInfo.ClientId = request.ClientId;
         }
 
-        // Verify client
-        Response authorizationResponse = new(TcpConnectionDictionary.request_authorization,
-            TcpConnectionDictionary.status_accepted, "id number accepted");
-        clientInfo.IsAuthenticated = true;
-        clientInfo.ClientId = request.ClientId;
-        RespondToClient(clientInfo.TcpClient, authorizationResponse);
+        SendResponseToClient(clientInfo, actionType, status, message);
     }
 
     private async void ListenForClientsAsync()
@@ -194,6 +193,12 @@ public class TcpConnection
             }
 
         }
+    }
+
+    private static void SendResponseToClient(ClientInfo clientInfo, string actionType, string status, string message)
+    {
+        Response response = new(actionType, status, message);
+        RespondToClient(clientInfo.TcpClient, response);
     }
 
     private static void RespondToClient(TcpClient client, Response response)

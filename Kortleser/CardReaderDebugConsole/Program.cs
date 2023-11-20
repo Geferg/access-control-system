@@ -24,53 +24,87 @@ internal class Program
         Console.WriteLine("\u001b]0;Kortleser\u0007");
         Console.Clear();
 
+        InitializeSerialConnection("COM6");
+        Console.WriteLine($"initialized serial port {serialConnection!.Port}");
+
+        OpenSerialConnection(serialConnection);
+        Console.WriteLine($"Connected to serial port {serialConnection.Port}");
+
+        serialConnection.DataReceived += OnHardwareMessageReceived;
+
+        InitializeTcpConnection("127.0.0.1", 8000);
+        Console.WriteLine($"connected to server {tcpConnection!.ServerAddress}");
+
+        // Authorize connection with central
+        bool isAuthorized = false;
+        while (!isAuthorized)
+        {
+            int id = GetValidatedNumberInput("access point number", 1, 99);
+            Response? authorizationResponse = await SendAuthorizationRequestAsync(id);
+
+            if (authorizationResponse == null)
+            {
+                Console.WriteLine("failed to get a response from the server.");
+            }
+            else
+            {
+                Console.WriteLine(authorizationResponse.Message);
+                isAuthorized = authorizationResponse.Status == TcpConnectionDictionary.status_accepted;
+            }
+        }
+
+        Console.WriteLine("Press escape to close.");
+        while (Console.ReadKey(true).Key != ConsoleKey.Escape);
+        serialConnection.CloseConnection();
+    }
+
+    private static void InitializeSerialConnection(string portName)
+    {
         while (serialConnection == null)
         {
             try
             {
-                serialConnection = new("COM6");
+                serialConnection = new SerialConnectionManager(portName);
             }
             catch (Exception)
             {
-                Console.WriteLine("could not connect to serial port");
+                Console.WriteLine("Could not initialize serial port");
                 Thread.Sleep(2000);
             }
         }
-        Console.WriteLine($"connected to serial port {serialConnection.Port}");
+    }
 
+    private static void OpenSerialConnection(SerialConnectionManager connection)
+    {
+        while (connection.IsOpen())
+        {
+            try
+            {
+                // Uncomment before shipping
+                // serialConnection.OpenConnection();
+            }
+            catch (Exception)
+            {
+                Console.WriteLine($"Could not connect to serial port {serialConnection.Port}");
+                Thread.Sleep(2000);
+            }
+        }
+    }
+
+    private static void InitializeTcpConnection(string ipAddress, int port)
+    {
         while (tcpConnection == null)
         {
             try
             {
-                tcpConnection = new("127.0.0.1", 8000);
+                tcpConnection = new TcpConnectionManager(ipAddress, port);
             }
             catch (Exception)
             {
-                Console.WriteLine("could not connect to central");
+                Console.WriteLine("Could not connect to central");
                 Thread.Sleep(2000);
             }
         }
-        Console.WriteLine($"connected to server {tcpConnection.ServerAddress}");
-
-        serialConnection.DataReceived += OnHardwareMessageReceived;
-
-        // Add to central
-        Response? authorizationResponse = null;
-        while (authorizationResponse == null || authorizationResponse.Status != TcpConnectionDictionary.status_accepted)
-        {
-            int id = GetValidatedNumberInput("access point number", 1, 99);
-            authorizationResponse = await SendAuthorizationRequestAsync(id);
-
-            Console.WriteLine(authorizationResponse?.Message ?? "failed to get response");
-        }
-
-        // Communicate with hardware
-        //serialConnection.OpenConnection();
-
-
-        Console.WriteLine("Press any key to close.");
-        Console.ReadKey(true);
-        serialConnection.CloseConnection();
     }
 
     private static async Task<Response?> SendAuthorizationRequestAsync(int id)

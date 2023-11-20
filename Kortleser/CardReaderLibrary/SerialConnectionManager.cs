@@ -33,6 +33,11 @@ public class SerialConnectionManager
         serialPort.DataReceived += OnDataReceived;
     }
 
+    public bool IsOpen()
+    {
+        return serialPort.IsOpen;
+    }
+
     public void OpenConnection()
     {
         if (!serialPort.IsOpen)
