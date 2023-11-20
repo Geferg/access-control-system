@@ -49,6 +49,63 @@ public class DatabaseConnection
         uiConnection?.PutOnUI($"Debug (database): {message}");
     }
 
+    public bool LogAlarm(DateTime timeOfAlarm, int doorNumber, string alarmType)
+    {
+        bool result = false;
+        Dictionary<string, object> parameters = new()
+        {
+            {DbUserdataSchema.PARAM_TIMEOFALARM, timeOfAlarm },
+            {DbUserdataSchema.PARAM_DOORNUMBER, doorNumber },
+            {DbUserdataSchema.PARAM_ALARMTYPE, alarmType }
+        };
+
+        try
+        {
+            DataTable dataTable = GetDataTable(DbUserdataSchema.FUNCTION_LOGALARM, parameters);
+
+            if (dataTable.Rows.Count > 0)
+            {
+                DataRow row = dataTable.Rows[0];
+                result = Convert.ToBoolean(row[0]);
+            }
+        }
+        catch (Exception ex)
+        {
+            TryLogMessage(ex.Message);
+        }
+        return result;
+    }
+
+    public bool LogAccess(DateTime timeOfEntry, string cardId, bool approvedEntry, int doorNumber)
+    {
+        bool result = false;
+
+        Dictionary<string, object> parameters = new()
+        {
+            {DbUserdataSchema.PARAM_TIMEOFENTRY, timeOfEntry },
+            {DbUserdataSchema.PARAM_DOORNUMBER, doorNumber },
+            {DbUserdataSchema.PARAM_APPROVEDENTRY, approvedEntry },
+            {DbUserdataSchema.PARAM_ID , cardId }
+        };
+
+        try
+        {
+            DataTable dataTable = GetDataTable(DbUserdataSchema.FUNCTION_LOGACCESS, parameters);
+
+            if (dataTable.Rows.Count > 0)
+            {
+                DataRow row = dataTable.Rows[0];
+                result = Convert.ToBoolean(row[0]);
+            }
+        }
+        catch (Exception ex)
+        {
+            TryLogMessage(ex.Message);
+        }
+
+        return result;
+    }
+
     public bool UserExists(string id)
     {
         bool result = false;

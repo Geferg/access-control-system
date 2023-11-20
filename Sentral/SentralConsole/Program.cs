@@ -234,7 +234,7 @@ internal class Program
     }
     private static void HandleLogAlarm(DateTime timeOfAlarm, int doorNumber, string alarmType)
     {
-
+        dbConnection.LogAlarm(timeOfAlarm, doorNumber, alarmType);
     }
 
     // EVENT HANDLERS

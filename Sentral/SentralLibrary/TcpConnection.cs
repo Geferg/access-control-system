@@ -148,7 +148,7 @@ public class TcpConnection
         {
             status = TcpConnectionDictionary.status_accepted;
             message = "report is logged";
-            AlarmReport?.Invoke(this, request);
+            AlarmReport?.Invoke(clientInfo, request);
         }
 
         SendResponseToClient(clientInfo, actionType, status, message);

@@ -36,6 +36,11 @@ internal static class DbUserdataSchema
     public const string PARAM_STARTVALIDITY = "validStart_";
     public const string PARAM_ENDVALIDITY = "validEnd_";
     public const string PARAM_PREVIOUSID = "previousCardId_";
+    public const string PARAM_TIMEOFALARM = "TimeOfAlarm_";
+    public const string PARAM_DOORNUMBER = "DoorNumber_";
+    public const string PARAM_ALARMTYPE = "AlarmType_";
+    public const string PARAM_TIMEOFENTRY = "TimeOfEntry_";
+    public const string PARAM_APPROVEDENTRY = "ApprovedEntry_";
 
     // Functions (parameters always in alphabetical order)
     /// <summary>
@@ -67,4 +72,6 @@ internal static class DbUserdataSchema
     /// </summary>
     public const string FUNCTION_VALIDUSER = "validateuser";
 
+    public const string FUNCTION_LOGALARM = "";
+    public const string FUNCTION_LOGACCESS = "";
 }
