@@ -85,6 +85,10 @@ public class UIDialogs
         WriteLine("show [card id] - details about a specific user");
         WriteLine("edit [card id]- change data of existing user");
         WriteLine("remove [card id] - remove existing user");
+        WriteLine("accesslog - lists all access attempts between two dates");
+        WriteLine("suspicious - lists all suspicious users...");
+        WriteLine("door log...");
+        WriteLine("alarm log...");
         WriteLine("");
     }
     public UserData EditUser(UserData user)
@@ -133,11 +137,7 @@ public class UIDialogs
 
                 case '4':
                     Console.WriteLine("4");
-                    int newStartYear = GetValidatedNumberInput("year", 1900, 2100);
-                    int newStartMonth = GetValidatedNumberInput("month", 1, 12);
-                    int newStartDay = GetValidatedNumberInput("day", 1, DateTime.DaysInMonth(newStartYear, newStartMonth));
-                    int newStartHour = GetValidatedNumberInput("time (hour)", 0, 23);
-                    DateTime newStartTime = new(newStartYear, newStartMonth, newStartDay, newStartHour, 0, 0);
+                    DateTime newStartTime = GetDateTime(1900, 2100);
 
                     user.ValidityPeriod = (newStartTime, user.ValidityPeriod.end);
                     ongoingDialog = false;
@@ -145,11 +145,7 @@ public class UIDialogs
 
                 case '5':
                     Console.WriteLine("5");
-                    int newEndYear = GetValidatedNumberInput("year", 1900, 2100);
-                    int newEndMonth = GetValidatedNumberInput("month", 1, 12);
-                    int newEndDay = GetValidatedNumberInput("day", 1, DateTime.DaysInMonth(newEndYear, newEndMonth));
-                    int newEndHour = GetValidatedNumberInput("time (hour)", 0, 23);
-                    DateTime newEndTime = new(newEndYear, newEndMonth, newEndDay, newEndHour, 0, 0);
+                    DateTime newEndTime = GetDateTime(1900, 2100);
 
                     user.ValidityPeriod = (user.ValidityPeriod.start, newEndTime);
                     ongoingDialog = false;
@@ -170,6 +166,43 @@ public class UIDialogs
         }
 
         return user;
+    }
+    public void ShowAccessLogs(List<(string id, bool approved, DateTime time, int doorNumber)> logs)
+    {
+        if(logs.Count == 0)
+        {
+            WriteLine("no logs found");
+            return;
+        }
+        WriteLine("access logs:");
+        foreach (var (id, approved, time, doorNumber) in logs)
+        {
+            string approvedMessage = "not approved";
+            if (approved)
+            {
+                approvedMessage = "approved";
+            }
+            WriteLine($"[{id}] was {approvedMessage} at door {doorNumber} {time}");
+        }
+        WriteLine("");
+    }
+    public void ShowDoorLogs()
+    {
+
+    }
+    public void ShowAlarmLogs(List<(DateTime time, int doorNumber, string alarmType)> logs)
+    {
+        if (logs.Count == 0)
+        {
+            WriteLine("no logs found");
+            return;
+        }
+        WriteLine("alarm logs:");
+        foreach (var (time, doorNumber, alarmType) in logs)
+        {
+            WriteLine($"{alarmType} at door {doorNumber} {time}");
+        }
+        WriteLine("");
     }
 
     // SPECIAL
@@ -227,6 +260,16 @@ public class UIDialogs
     }
 
     // INPUT JANITORS
+    public DateTime GetDateTime(int minYear, int maxYear)
+    {
+        int year = GetValidatedNumberInput("year", minYear, maxYear);
+        int month = GetValidatedNumberInput("month", 1, 12);
+        int day = GetValidatedNumberInput("day", 1, DateTime.DaysInMonth(year, month));
+        int hour = GetValidatedNumberInput("time (hour)", 0, 23);
+        DateTime newStartTime = new(year, month, day, hour, 0, 0);
+
+        return newStartTime;
+    }
     private int GetValidatedNumberInput(string prompt, int minValue, int maxValue)
     {
         string input = "";

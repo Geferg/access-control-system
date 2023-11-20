@@ -27,6 +27,11 @@ internal static class DbUserdataSchema
     public const string RETURN_PIN = "cardPin";
     public const string RETURN_STARTVALIDITY = "validStart";
     public const string RETURN_ENDVALIDITY = "validEnd";
+    public const string RETURN_APPROVED = "approved";
+    public const string RETURN_TIMEOFALARM = "timeOfAlarm";
+    public const string RETURN_TIMEOFENTRY = "timeOfEntry";
+    public const string RETURN_DOORNUMBER = "doorNumber";
+    public const string RETURN_ALARMTYPE = "alarmType";
 
     public const string PARAM_FIRSTNAME = "firstName_";
     public const string PARAM_LASTNAME = "lastName_";
@@ -41,37 +46,20 @@ internal static class DbUserdataSchema
     public const string PARAM_ALARMTYPE = "AlarmType_";
     public const string PARAM_TIMEOFENTRY = "TimeOfEntry_";
     public const string PARAM_APPROVEDENTRY = "ApprovedEntry_";
+    public const string PARAM_STARTDATE = "startDate_";
+    public const string PARAM_ENDDATE = "endDate_";
 
-    // Functions (parameters always in alphabetical order)
-    /// <summary>
-    /// Gets the full name and card id of all users.
-    /// </summary>
     public const string FUNCTION_GETUSERBASE = "getuserbase";
-    /// <summary>
-    /// Gets detailed information about one user based on COLUMN_ID.
-    /// </summary>
     public const string FUNCTION_GETUSER = "getuser";
-    /// <summary>
-    /// Removes one user based on COLUMN_ID.
-    /// </summary>
     public const string FUNCTION_REMOVEUSER = "removeuser";
-    /// <summary>
-    /// Updates one user based on COLUMN_ID.
-    /// </summary>
     public const string FUNCTION_UPDATEUSER = "updateuser";
-    /// <summary>
-    /// Adds one new user if the given COLUMN_ID does not exist.
-    /// </summary>
     public const string FUNCTION_ADDUSER = "adduser";
-    /// <summary>
-    /// Checks if user exists based on COLUMN_ID.
-    /// </summary>
     public const string FUNCTION_USEREXISTS = "peekuser";
-    /// <summary>
-    /// Checks if a COLUMN_ID and COLUMN_PIN matches a user.
-    /// </summary>
     public const string FUNCTION_VALIDUSER = "validateuser";
-
-    public const string FUNCTION_LOGALARM = "";
-    public const string FUNCTION_LOGACCESS = "";
+    public const string FUNCTION_LOGALARM = "addalarmlog";
+    public const string FUNCTION_LOGACCESS = "addaccesslog";
+    public const string FUNCTION_GETACCESSLOGS = "accessreport";
+    public const string FUNCTION_GETDOORACCESSLOGS = "doorreport";
+    public const string FUNCTION_GETALARMLOG = "alarmreport";
+    public const string FUNCTION_GETSUSPICIOUSUSERS = "suspicioususers";
 }

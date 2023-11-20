@@ -30,6 +30,8 @@ public class TcpConnection
 
     public delegate void AlarmReportHandler(ClientInfo clientInfo, AlarmReportRequest request);
     public event AlarmReportHandler? AlarmReport;
+    public delegate void AccessReportHandler(ClientInfo clientInfo, AccessReportRequest request);
+    public event AccessReportHandler? AccessReport;
 
     public TcpConnection(int port)
     {

@@ -1,5 +1,6 @@
 ﻿using System.Data;
 using System.Net.Mail;
+using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -41,6 +42,7 @@ internal class Program
         uiConnection.UIStringToClass += OnRecieveFromUI;
         uiConnection.UIKeyToClass += OnGetKeypress;
         tcpServer.AlarmReport += OnLogAlarmReport;
+        tcpServer.AccessReport += OnLogAccessReport;
 
         // Database connection
         while (!dbConnection.TestConnection())
@@ -86,6 +88,14 @@ internal class Program
                     HandleSystemDetailsCommand(tcpServer);
                     break;
 
+                case "accesslog":
+                    HandleAccessLogDetailsCommand();
+                    break;
+
+                case "alarmlog":
+                    HandleAlarmLogDetailsCommand();
+                    break;
+
                 default:
                     FindPatternOnCommandAndHandle(command);
                     break;
@@ -112,7 +122,6 @@ internal class Program
         }
         Console.WriteLine("");
     }
-
     private static void HandleSystemDetailsCommand(TcpConnection connection)
     {
         Console.WriteLine("tcp system details");
@@ -232,9 +241,50 @@ internal class Program
             Console.WriteLine($"removed user\n");
         }
     }
+    private static void HandleAccessLogDetailsCommand()
+    {
+        Console.WriteLine("start date");
+        DateTime start = dialogs.GetDateTime(0, 9999);
+        Console.WriteLine("\nend date");
+        DateTime end = dialogs.GetDateTime(0, 9999);
+
+        if (start > end)
+        {
+            Console.WriteLine("start date cannot be after end date");
+            return;
+        }
+
+        List<(string id, bool approved, DateTime time, int doorNumber)> logs = dbConnection.GetAccessLogs(start, end);
+
+        dialogs.ShowAccessLogs(logs);
+    }
+
+    private static void HandleAlarmLogDetailsCommand()
+    {
+        Console.WriteLine("start date");
+        DateTime start = dialogs.GetDateTime(0, 9999);
+        Console.WriteLine("\nend date");
+        DateTime end = dialogs.GetDateTime(0, 9999);
+
+        if (start > end)
+        {
+            Console.WriteLine("start date cannot be after end date");
+            return;
+        }
+
+        List<(DateTime time, int doorNumber, string alarmType)> logs = dbConnection.GetAlarmLogs(start, end);
+
+        dialogs.ShowAlarmLogs(logs);
+    }
+
     private static void HandleLogAlarm(DateTime timeOfAlarm, int doorNumber, string alarmType)
     {
         dbConnection.LogAlarm(timeOfAlarm, doorNumber, alarmType);
+    }
+
+    private static void HandleLogAccess(string cardId, bool approvedEntry, DateTime timeOfEntry, int doorNumber)
+    {
+        dbConnection.LogAccess(timeOfEntry, cardId, approvedEntry, doorNumber);
     }
 
     // EVENT HANDLERS
@@ -253,6 +303,10 @@ internal class Program
     private static void OnLogAlarmReport(ClientInfo clientInfo, AlarmReportRequest request)
     {
         HandleLogAlarm(request.Time, clientInfo.ClientId, request.AlarmType);
+    }
+    private static void OnLogAccessReport(ClientInfo clientInfo, AccessReportRequest request)
+    {
+        HandleLogAccess(request.CardId, request.Approved, request.Time, request.DoorNumber);
     }
 
     // Helper methods

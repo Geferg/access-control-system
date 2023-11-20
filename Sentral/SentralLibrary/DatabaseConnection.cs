@@ -76,6 +76,77 @@ public class DatabaseConnection
         return result;
     }
 
+    public List<(DateTime time, int doorNumber, string alarmType)> GetAlarmLogs(DateTime start, DateTime end)
+    {
+        List<(DateTime time, int doorNumber, string alarmType)> result = new();
+
+        Dictionary<string, object> parameters = new()
+        {
+            {DbUserdataSchema.PARAM_STARTDATE, start },
+            {DbUserdataSchema.PARAM_ENDDATE, end }
+        };
+
+        try
+        {
+            DataTable dataTable = GetDataTable(DbUserdataSchema.FUNCTION_GETDOORACCESSLOGS, parameters);
+
+            foreach (DataRow log in dataTable.Rows)
+            {
+                DateTime time = (DateTime)log[DbUserdataSchema.RETURN_TIMEOFALARM];
+                int doorNumber = Convert.ToInt32(log[DbUserdataSchema.RETURN_DOORNUMBER].ToString());
+                string? alarmType = log[DbUserdataSchema.RETURN_ALARMTYPE].ToString();
+
+                if(alarmType != null)
+                {
+                    result.Add((time, doorNumber, alarmType));
+                }
+            }
+
+        }
+        catch (Exception ex)
+        {
+            TryLogMessage(ex.Message);
+        }
+
+        return result;
+    }
+
+    public List<(string id, bool approved, DateTime time, int doorNumber)> GetAccessLogs(DateTime start, DateTime end)
+    {
+        List<(string id, bool approved, DateTime time, int doorNumber)> result = new();
+
+        Dictionary<string, object> parameters = new()
+        {
+            {DbUserdataSchema.PARAM_STARTDATE, start },
+            {DbUserdataSchema.PARAM_ENDDATE, end }
+        };
+
+        try
+        {
+            DataTable dataTable = GetDataTable(DbUserdataSchema.FUNCTION_GETACCESSLOGS, parameters);
+
+            foreach (DataRow log in dataTable.Rows)
+            {
+                string? id = log[DbUserdataSchema.RETURN_ID].ToString();
+                bool approved = Convert.ToBoolean(log[DbUserdataSchema.RETURN_APPROVED].ToString());
+                DateTime time = (DateTime)log[DbUserdataSchema.RETURN_TIMEOFENTRY];
+                int doorNumber = Convert.ToInt32(log[DbUserdataSchema.RETURN_DOORNUMBER].ToString());
+
+                if(id != null)
+                {
+                    result.Add((id, approved, time, doorNumber));
+                }
+            }
+
+        }
+        catch (Exception ex)
+        {
+            TryLogMessage(ex.Message);
+        }
+
+        return result;
+    }
+
     public bool LogAccess(DateTime timeOfEntry, string cardId, bool approvedEntry, int doorNumber)
     {
         bool result = false;
@@ -348,7 +419,7 @@ public class DatabaseConnection
 
     private static string GetValidatedFunctionName(string function)
     {
-        var validFunctions = new HashSet<string>
+    var validFunctions = new HashSet<string>
         {
             DbUserdataSchema.FUNCTION_GETUSERBASE,
             DbUserdataSchema.FUNCTION_GETUSER,
@@ -356,7 +427,14 @@ public class DatabaseConnection
             DbUserdataSchema.FUNCTION_UPDATEUSER,
             DbUserdataSchema.FUNCTION_ADDUSER,
             DbUserdataSchema.FUNCTION_USEREXISTS,
-            DbUserdataSchema.FUNCTION_VALIDUSER
+            DbUserdataSchema.FUNCTION_VALIDUSER,
+            DbUserdataSchema.FUNCTION_LOGALARM,
+            DbUserdataSchema.FUNCTION_LOGACCESS,
+            DbUserdataSchema.FUNCTION_GETACCESSLOGS,
+            DbUserdataSchema.FUNCTION_GETDOORACCESSLOGS,
+            DbUserdataSchema.FUNCTION_GETALARMLOG,
+            DbUserdataSchema.FUNCTION_GETSUSPICIOUSUSERS
+
         };
 
         if (validFunctions.Contains(function))
