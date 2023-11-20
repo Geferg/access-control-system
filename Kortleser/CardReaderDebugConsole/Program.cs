@@ -58,6 +58,15 @@ internal class Program
         serialConnection.CloseConnection();
     }
 
+    private static async void OnHardwareMessageReceived(string message)
+    {
+        Console.WriteLine($"Received (hardware): {message}");
+        await tcpConnection!.SendRequestAsync(message);
+        Console.WriteLine($"Sent (central): {message}");
+        string response = await tcpConnection.ReceiveResponseAsync();
+        Console.WriteLine($"Recieved (central): {response}");
+    }
+
     private static void InitializeSerialConnection(string portName)
     {
         while (serialConnection == null)
@@ -85,7 +94,7 @@ internal class Program
             }
             catch (Exception)
             {
-                Console.WriteLine($"Could not connect to serial port {serialConnection.Port}");
+                Console.WriteLine($"Could not connect to serial port {serialConnection!.Port}");
                 Thread.Sleep(2000);
             }
         }
@@ -125,79 +134,30 @@ internal class Program
 
     private static int GetValidatedNumberInput(string prompt, int minValue, int maxValue)
     {
-        string? input = null;
-        InputValidation validation = InputValidation.NotValidated;
-
-        while (validation != InputValidation.Valid)
+        while (true)
         {
             Console.Write($"> {prompt}: ");
-            input = Console.ReadLine();
+            string? input = Console.ReadLine();
 
-            validation = ValidateNumberInput(input, minValue, maxValue);
-
-            switch (validation)
+            if (string.IsNullOrWhiteSpace(input))
             {
-                case InputValidation.IsEmpty:
-                    Console.WriteLine("Input cannot be empty\n");
-                    break;
-
-                case InputValidation.IncorrectFormat:
-                    Console.WriteLine("Input must be a number\n");
-                    break;
-
-                case InputValidation.OutsideRange:
-                    Console.WriteLine($"Input must be between {minValue} and {maxValue}\n");
-                    break;
-
-                case InputValidation.IncorrectLength:
-                    Console.WriteLine("Input has incorrect length\n");
-                    break;
+                Console.WriteLine("Input cannot be empty\n");
+                continue;
             }
+
+            if (!int.TryParse(input, out int number))
+            {
+                Console.WriteLine("Input must be a number\n");
+                continue;
+            }
+
+            if (number < minValue || number > maxValue)
+            {
+                Console.WriteLine($"Input must be between {minValue} and {maxValue}\n");
+                continue;
+            }
+
+            return number;
         }
-
-        return int.Parse(input!);
-    }
-
-    private static InputValidation ValidateNumberInput(string? input, int minValue, int maxValue)
-    {
-        if (string.IsNullOrWhiteSpace(input))
-        {
-            return InputValidation.IsEmpty;
-        }
-        else if (!int.TryParse(input, out int number))
-        {
-            return InputValidation.IncorrectFormat;
-        }
-        else if (number < minValue || number > maxValue)
-        {
-            return InputValidation.OutsideRange;
-        }
-
-        return InputValidation.Valid;
-    }
-
-    private static async void OnHardwareMessageReceived(string message)
-    {
-        Console.WriteLine($"Received (hardware): {message}");
-        await tcpConnection.SendRequestAsync(message);
-        Console.WriteLine($"Sent (central): {message}");
-        string response = await tcpConnection.ReceiveResponseAsync();
-        Console.WriteLine($"Recieved (central): {response}");
-    }
-
-    private static void OnLogMessageReceived(object? sender, string message)
-    {
-        Console.WriteLine($"Log: {message}");
-    }
-
-
-    private enum InputValidation
-    {
-        NotValidated,
-        Valid,
-        IsEmpty,
-        OutsideRange,
-        IncorrectLength,
-        IncorrectFormat,
     }
 }
