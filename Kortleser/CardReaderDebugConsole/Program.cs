@@ -61,10 +61,11 @@ internal class Program
     private static async void OnHardwareMessageReceived(string message)
     {
         Console.WriteLine($"Received (hardware): {message}");
-        await tcpConnection!.SendRequestAsync(message);
-        Console.WriteLine($"Sent (central): {message}");
-        string response = await tcpConnection.ReceiveResponseAsync();
-        Console.WriteLine($"Recieved (central): {response}");
+
+        //await tcpConnection!.SendRequestAsync(message);
+        //Console.WriteLine($"Sent (central): {message}");
+        //string response = await tcpConnection.ReceiveResponseAsync();
+        //Console.WriteLine($"Recieved (central): {response}");
     }
 
     private static void InitializeSerialConnection(string portName)
@@ -85,12 +86,12 @@ internal class Program
 
     private static void OpenSerialConnection(SerialConnectionManager connection)
     {
-        while (connection.IsOpen())
+        while (!connection.IsOpen())
         {
             try
             {
                 // Uncomment before shipping
-                // serialConnection.OpenConnection();
+                serialConnection!.OpenConnection();
             }
             catch (Exception)
             {
