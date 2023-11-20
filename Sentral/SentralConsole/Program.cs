@@ -1,5 +1,6 @@
 ﻿using System.Data;
 using System.Net.Mail;
+using System.Net.Sockets;
 using System.Text.RegularExpressions;
 using SentralLibrary;
 
@@ -26,20 +27,31 @@ internal class Program
     private const string failureInDbMessage = "could not perform operation in database";
 
     private static readonly DatabaseConnection dbConnection = new(dbIP, dbPort, dbUsername, dbPassword, dbDatabase);
-    private static readonly TcpServer tcpServer = new(8000);
+    private static readonly TcpConnection tcpServer = new(8000);
     private static readonly UIConnection uiConnection = new();
     private static readonly UIDialogs dialogs = new(uiConnection);
 
-    static void Main(string[] args)
+    static async Task Main(string[] args)
     {
         Console.WriteLine("\u001b]0;Sentral\u0007");
 
         uiConnection.ClassToUI += OnWriteToUI;
         uiConnection.UIStringToClass += OnRecieveFromUI;
         uiConnection.UIKeyToClass += OnGetKeypress;
+        tcpServer.RequestReceived += OnTcpRequest;
 
+        // Database connection
+        while (!dbConnection.TestConnection())
+        {
+            Console.WriteLine("failed to connect to database, retrying...");
+            Thread.Sleep(1000);
+        }
 
+        Console.WriteLine("established connection to database.\n");
+
+        // TCP connection
         tcpServer.Start();
+
         dialogs.ListCommands();
 
         while (true)
@@ -66,6 +78,14 @@ internal class Program
                     HandleShowCommand();
                     break;
 
+                case "database":
+                    HandleDatabaseDetailsCommand(dbConnection);
+                    break;
+
+                case "system":
+                    HandleSystemDetailsCommand(tcpServer);
+                    break;
+
                 default:
                     FindPatternOnCommandAndHandle(command);
                     break;
@@ -73,7 +93,33 @@ internal class Program
         }
     }
 
+    // CONNECTION COMMANDS
+    private static void HandleDatabaseDetailsCommand(DatabaseConnection connection)
+    {
+        if(connection.TestConnection())
+        {
+            Console.WriteLine("connected to database");
+            Console.WriteLine($"  Database: {connection.DatabaseName}");
+            Console.WriteLine($"IP address: {connection.HostIp}");
+            Console.WriteLine($"      Port: {connection.HostPort}");
+        }
+        else
+        {
+            Console.WriteLine("failed to connect to database");
+            Console.WriteLine($"  Database: {connection.DatabaseName}");
+            Console.WriteLine($"IP address: {connection.HostIp}");
+            Console.WriteLine($"      Port: {connection.HostPort}");
+        }
+        Console.WriteLine("");
+    }
 
+    private static void HandleSystemDetailsCommand(TcpConnection connection)
+    {
+        Console.WriteLine("tcp system details");
+        Console.WriteLine($"active connections: {connection.GetActiveClientcount()}");
+    }
+
+    // DATABASE INTERRACTION COMMANDS
     private static void FindPatternOnCommandAndHandle(string command)
     {
         string? cardId = GetNumbersFromCommand(command);
@@ -113,6 +159,7 @@ internal class Program
     {
         if (dialogs.ExitProgramConfirmation())
         {
+            tcpServer.Stop();
             Environment.Exit(0);
         }
     }
@@ -192,6 +239,10 @@ internal class Program
     private static ConsoleKeyInfo? OnGetKeypress()
     {
         return Console.ReadKey(true);
+    }
+    private static void OnTcpRequest(TcpClient client, string request, Action<TcpClient, string> respondCallback)
+    {
+
     }
 
     // Helper methods

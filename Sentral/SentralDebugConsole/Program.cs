@@ -22,7 +22,7 @@ internal class Program
         }
 
         Console.WriteLine("\u001b]0;Control Central\u0007");
-        var server = new TcpServer(8000);
+        var server = new TcpConnection(8000);
 
         server.AttachLogger(logger);
 

@@ -17,16 +17,16 @@ using System.Threading.Tasks;
  */
 
 namespace SentralLibrary;
-public class TcpServer
+public class TcpConnection
 {
-    private TcpListener listener;
+    private readonly TcpListener listener;
     private readonly List<TcpClient> clients;
     private UILogger? logger;
 
     public delegate void RequestReceivedHandler(TcpClient client, string request, Action<TcpClient, string> respondCallback);
     public event RequestReceivedHandler? RequestReceived;
 
-    public TcpServer(int port)
+    public TcpConnection(int port)
     {
         listener = new(IPAddress.Any, port);
         clients = new();
@@ -60,6 +60,14 @@ public class TcpServer
                 client.Close();
             }
             clients.Clear();
+        }
+    }
+
+    public int GetActiveClientcount()
+    {
+        lock (clients)
+        {
+            return clients.Count;
         }
     }
 
@@ -97,7 +105,7 @@ public class TcpServer
             byte[] buffer = new byte[1024];
             while (client.Connected)
             {
-                int bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length);
+                int bytesRead = await stream.ReadAsync(buffer);
                 if (bytesRead == 0) break;
 
                 string request = Encoding.ASCII.GetString(buffer, 0, bytesRead);

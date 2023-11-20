@@ -10,23 +10,43 @@ using System.Threading.Tasks;
 namespace SentralLibrary;
 public class DatabaseConnection
 {
-    public const string test = "";
+    public readonly string HostIp;
+    public readonly string HostPort;
+    public readonly string DatabaseName;
     private readonly string connectionString;
-    private UIConnection? connection;
+    private UIConnection? uiConnection;
+
 
     public DatabaseConnection(string hostIp, string port, string username, string password, string database)
     {
+        HostIp = hostIp;
+        HostPort = port;
+        DatabaseName = username;
         connectionString = $"Host={hostIp};Port={port};Username={username};Password={password};Database={database}";
     }
 
-    public void AttachConnection(UIConnection connection)
+    public void AttachUIConnection(UIConnection uiConnection)
     {
-        this.connection = connection;
+        this.uiConnection = uiConnection;
+    }
+
+    public bool TestConnection()
+    {
+        try
+        {
+            using var connection = new NpgsqlConnection(connectionString);
+            connection.Open();
+            return true;
+        }
+        catch (Exception)
+        {
+            return false;
+        }
     }
 
     protected virtual void TryLogMessage(string message)
     {
-        connection?.PutOnUI($"Debug (database): {message}");
+        uiConnection?.PutOnUI($"Debug (database): {message}");
     }
 
     public bool UserExists(string id)
