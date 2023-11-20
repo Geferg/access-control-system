@@ -1,10 +1,10 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
-using System.Text.Json;
 using System.Threading.Tasks;
 
 /*
@@ -23,6 +23,10 @@ public class TcpConnection
     private readonly TcpListener listener;
     private readonly List<ClientInfo> clients;
     private UILogger? logger;
+    private static readonly JsonSerializerSettings serializerSettings = new()
+    {
+        TypeNameHandling = TypeNameHandling.Auto
+    };
 
     public delegate void RequestReceivedHandler(TcpClient client, string request, Action<TcpClient, string> respondCallback);
     public event RequestReceivedHandler? RequestReceived;
@@ -76,27 +80,55 @@ public class TcpConnection
         }
     }
 
-    private static void DelegateRequests(TcpClient client, string request)
+    private void DelegateRequests(TcpClient client, string request)
     {
-        BaseRequest? requestDeserialized = JsonSerializer.Deserialize<BaseRequest>(request);
-        //TODO RETURNS HERE???
-        if (requestDeserialized == null)
+        try
         {
-            return;
+
+            BaseRequest? requestDeserialized = JsonConvert.DeserializeObject<BaseRequest>(request) ?? throw new Exception();
+
+            switch (requestDeserialized.RequestType)
+            {
+                //TODO Add cases
+                //TODO add generic type handler
+                case TcpConnectionDictionary.authorizationRequestType:
+                    HandleAuthorizationRequest(client, JsonConvert.DeserializeObject<AuthorizationRequest>(request));
+                    break;
+
+            }
+
         }
-        switch (requestDeserialized.RequestType)
+        catch (Exception ex)
         {
-            case TcpConnectionDictionary.authorizationRequestType:
-                HandleAuthorizationRequest(client, request);
-                break;
+            //TODO formalize no type
+            Response invalidRequestResponse = new("InvalidRequest", "invalid request type", ex.Message);
+            RespondToClient(client, invalidRequestResponse);
         }
     }
 
-    private static void HandleAuthorizationRequest(TcpClient client, string request)
+    private void HandleAuthorizationRequest(TcpClient client, AuthorizationRequest? request)
     {
-        //TODO deserialize, check if id exists, add and respond with ok if not, respond with not ok otherwise
-        AuthorizationRequest? requestDeserialized = JsonSerializer.Deserialize<AuthorizationRequest>(request);
-        RespondToClient(client, "");
+        if(request == null)
+        {
+            Response invalidRequestResponse = new(TcpConnectionDictionary.authorizationRequestType,
+                "failure", "invalid request type");
+            RespondToClient(client, invalidRequestResponse);
+            return;
+        }
+        if (request.ClientId < 1 || request.ClientId > 99 || clients.Where(c => c.ClientId == request.ClientId).Any())
+        {
+            // Rejected
+            Response NotAuthorizedResponse = new(TcpConnectionDictionary.authorizationRequestType,
+                TcpConnectionDictionary.status_notAccepted, "id number rejected");
+            RespondToClient(client, NotAuthorizedResponse);
+            return;
+        }
+
+        // Verify client
+        Response authorizationResponse = new(TcpConnectionDictionary.authorizationRequestType,
+            TcpConnectionDictionary.status_accepted, "id number accepted");
+
+        RespondToClient(client, authorizationResponse);
     }
 
     private async void ListenForClientsAsync()
@@ -157,8 +189,10 @@ public class TcpConnection
         }
     }
 
-    private static void RespondToClient(TcpClient client, string jsonResponse)
+    private static void RespondToClient(TcpClient client, Response response)
     {
+        //string jsonResponse = JsonSerializer.Serialize(response);
+        string jsonResponse = JsonConvert.SerializeObject(response);
         var responseBytes = Encoding.UTF8.GetBytes(jsonResponse);
         client.GetStream().WriteAsync(responseBytes, 0, responseBytes.Length);
     }

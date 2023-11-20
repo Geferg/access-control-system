@@ -13,7 +13,14 @@ internal class AuthorizationRequest : BaseRequest
     public AuthorizationRequest(int id)
     {
         ClientId = id;
-        AdditionalInfo = string.Empty;
+        AdditionalInfo = "";
+        RequestType = TcpConnectionDictionary.authorizationRequestType;
+    }
+
+    public AuthorizationRequest()
+    {
+        ClientId = -1;
+        AdditionalInfo = "";
         RequestType = TcpConnectionDictionary.authorizationRequestType;
     }
 }

@@ -5,7 +5,12 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace CardReaderLibrary;
-public abstract class BaseRequest
+public class BaseRequest
 {
-    public string RequestType { get; set; } = string.Empty;
+    public string RequestType { get; set; } = "";
+
+    public BaseRequest()
+    {
+
+    }
 }

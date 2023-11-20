@@ -5,7 +5,12 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace SentralLibrary;
-public abstract class BaseRequest
+public class BaseRequest
 {
     public string RequestType { get; set; } = string.Empty;
+
+    public BaseRequest()
+    {
+
+    }
 }

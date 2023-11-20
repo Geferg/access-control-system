@@ -40,7 +40,7 @@ internal class Program
         uiConnection.ClassToUI += OnWriteToUI;
         uiConnection.UIStringToClass += OnRecieveFromUI;
         uiConnection.UIKeyToClass += OnGetKeypress;
-        tcpServer.RequestReceived += OnTcpRequest;
+        //tcpServer.RequestReceived += OnTcpRequest;
 
         // Database connection
         while (!dbConnection.TestConnection())
@@ -247,8 +247,8 @@ internal class Program
     // Deprecated? handle all on tcp class unless need for user interaction
     private static void OnTcpRequest(TcpClient client, string request, Action<TcpClient, string> respondCallback)
     {
-        var requestObject = JsonSerializer.Deserialize<TcpClient>(request);
-        respondCallback(client, "my response");
+        //var requestObject = JsonSerializer.Deserialize<TcpClient>(request);
+        //respondCallback(client, "my response");
     }
 
     // Helper methods
