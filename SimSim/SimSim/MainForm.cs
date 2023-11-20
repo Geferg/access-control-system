@@ -213,6 +213,7 @@ namespace SimSim
         public void SendStatus()
         {
             StringBuilder sb = new StringBuilder();
+            SimDateTime = DateTime.Now;
 
             sb.AppendFormat("{0}{1}$A{2:D3}B{3}C{4}D{5}E{6}F{7:D4}G{8:D4}H{9:D4}I{10:D3}J{11:D3}#",
                 Convert.ToChar(10), Convert.ToChar(13), nodeNum, SimDateTime.ToString("yyyyMMdd"),
@@ -220,7 +221,7 @@ namespace SimSim
                 Potm1, Potm2, TempSens1, TempSens2);
 
             string s = sb.ToString();
-            comPort.Write(s); 
+            comPort.Write(s);
         }
     }
 }
