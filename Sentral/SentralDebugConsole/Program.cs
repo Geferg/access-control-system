@@ -22,7 +22,7 @@ internal class Program
         }
 
         Console.WriteLine("\u001b]0;Control Central\u0007");
-        var server = new TcpServer(8000);
+        var server = new TcpConnection(8000);
 
         server.AttachLogger(logger);
 
@@ -39,11 +39,13 @@ internal class Program
         server.RequestReceived -= HandleRequest;
     }
 
+    // Deprecated
     private static void OnLogMessageReceived(object? sender, string message)
     {
         Console.WriteLine($"Log: {message}");
     }
 
+    // Deprecated
     private static void HandleRequest(TcpClient client, string request, Action<TcpClient, string> respond)
     {
         string response = "response";

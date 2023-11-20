@@ -220,7 +220,7 @@ namespace SimSim
                 Potm1, Potm2, TempSens1, TempSens2);
 
             string s = sb.ToString();
-            comPort.Write(s);
+            comPort.Write(s); 
         }
     }
 }

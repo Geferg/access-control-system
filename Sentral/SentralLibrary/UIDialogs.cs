@@ -78,6 +78,8 @@ public class UIDialogs
         WriteLine("commands:");
         WriteLine("clear - clear the console");
         WriteLine("exit - close the program");
+        WriteLine("database - shows status of database");
+        WriteLine("system - shows status of card readers");
         WriteLine("show - lists all users");
         WriteLine("add [card id] - add new user with a card id");
         WriteLine("show [card id] - details about a specific user");
