@@ -4,11 +4,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SentralLibrary;
+namespace SentralLibrary.DataClasses;
 public class AccessLogData
 {
-    public string? Id { get; set; }
+    public string? CardId { get; set; }
     public DateTime Time { get; set; }
-    public int DoorNumber { get; set;}
+    public int DoorNumber { get; set; }
     public bool AccessGranted { get; set; }
 }

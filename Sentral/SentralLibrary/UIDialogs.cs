@@ -5,6 +5,7 @@ using System.Linq;
 using System.Net.Mail;
 using System.Text;
 using System.Threading.Tasks;
+using SentralLibrary.DataClasses;
 
 namespace SentralLibrary;
 public class UIDialogs
@@ -25,7 +26,7 @@ public class UIDialogs
         }
         WriteLine("");
     }
-    public UserData? MakeUser(string cardId)
+    public UserDetailedData? MakeUser(string cardId)
     {
         WriteLine("adding user, fill in data below\n");
 
@@ -33,7 +34,7 @@ public class UIDialogs
         string lastName = GetNameInput("last name");
         string email = GetEmailInput("email");
 
-        UserData newUser = new(firstName, lastName, email, cardId);
+        UserDetailedData newUser = new(firstName, lastName, email, cardId);
 
         Console.WriteLine("");
         Console.WriteLine($"name: {newUser.FirstName} {newUser.LastName}");
@@ -49,7 +50,7 @@ public class UIDialogs
 
         return newUser;
     }
-    public void ShowUser(UserData user)
+    public void ShowUser(UserDetailedData user)
     {
         WriteLine($"     first name: {user.FirstName}");
         WriteLine($"      last name: {user.LastName}");
@@ -60,7 +61,7 @@ public class UIDialogs
 
         WriteLine("");
     }
-    public bool DeleteUserConfirmation(UserData user)
+    public bool DeleteUserConfirmation(UserDetailedData user)
     {
         return UserConfirm($"are you sure you want to delete [{user.CardID}] {user.FirstName} {user.LastName}");
     }
@@ -91,7 +92,7 @@ public class UIDialogs
         WriteLine("alarm log...");
         WriteLine("");
     }
-    public UserData EditUser(UserData user)
+    public UserDetailedData EditUser(UserDetailedData user)
     {
         WriteLine($"editing user {user.CardID}...");
 

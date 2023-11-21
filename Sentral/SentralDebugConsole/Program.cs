@@ -2,6 +2,7 @@
 using System.Net;
 using System.Text;
 using SentralLibrary;
+using SentralLibrary.DataClasses;
 
 namespace SentralDebugConsole;
 
@@ -14,7 +15,7 @@ internal class Program
     {
         connection.AttachLogger(logger);
 
-        UserData? user = connection.GetUser("1111");
+        UserDetailedData? user = connection.GetUser("1111");
 
         if (user != null)
         {

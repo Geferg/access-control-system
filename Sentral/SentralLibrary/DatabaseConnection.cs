@@ -1,4 +1,5 @@
 ﻿using Npgsql;
+using SentralLibrary.DataClasses;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -41,9 +42,10 @@ public class DatabaseConnection
     // ========================= USER DATA ========================= //
 
     // Get
-    public UserData? GetUser(string id)
+    //refactor 1
+    public UserDetailedData? GetUser(string id)
     {
-        UserData? result = null;
+        UserDetailedData? result = new();
 
         Dictionary<string, object> parameters = new()
         {
@@ -52,29 +54,16 @@ public class DatabaseConnection
 
         try
         {
-            //TODO verify
             DataTable dataTable = GetDataTable(DbUserdataSchema.FUNCTION_GETUSER, parameters);
-
             DataRow row = dataTable.Rows[0];
 
-            string? cardId = row[DbUserdataSchema.RETURN_ID].ToString();
-            string? firstName = row[DbUserdataSchema.RETURN_FIRSTNAME].ToString();
-            string? lastName = row[DbUserdataSchema.RETURN_LASTNAME].ToString();
-            string? email = row[DbUserdataSchema.RETURN_EMAIL].ToString();
-            string? cardPin = row[DbUserdataSchema.RETURN_PIN].ToString();
-            DateTime start = (DateTime)row[DbUserdataSchema.RETURN_STARTVALIDITY];
-            DateTime end = (DateTime)row[DbUserdataSchema.RETURN_ENDVALIDITY];
-
-            if (cardId != null && firstName != null &&
-                lastName != null && email != null && cardPin != null)
-            {
-                result = new(firstName, lastName, email, cardId, cardPin, start, end);
-            }
-            else
-            {
-                //TODO clean up nullable return, replace with error msg in log
-                result = null;
-            }
+            result.CardID = row[DbUserdataSchema.RETURN_ID].ToString();
+            result.FirstName = row[DbUserdataSchema.RETURN_FIRSTNAME].ToString();
+            result.LastName = row[DbUserdataSchema.RETURN_LASTNAME].ToString(); ;
+            result.Email = row[DbUserdataSchema.RETURN_EMAIL].ToString();
+            result.CardPin = row[DbUserdataSchema.RETURN_PIN].ToString();
+            result.StartValidityTime = (DateTime)row[DbUserdataSchema.RETURN_STARTVALIDITY];
+            result.EndValidityTime = (DateTime)row[DbUserdataSchema.RETURN_ENDVALIDITY];
         }
         catch (Exception ex)
         {
@@ -84,24 +73,24 @@ public class DatabaseConnection
         return result;
     }
 
-    public List<(string id, string firstName, string lastName)> GetUserbase()
+    //refactor 1
+    public List<UserSimpleData> GetUserbase()
     {
-        List<(string id, string firstName, string lastName)> result = new();
+        List<UserSimpleData> result = new();
         try
         {
             DataTable table = GetDataTable(DbUserdataSchema.FUNCTION_GETUSERBASE, new Dictionary<string, object>());
 
             foreach (DataRow user in table.Rows)
             {
-                string? cardId = user[DbUserdataSchema.RETURN_ID].ToString();
-                string? firstName = user[DbUserdataSchema.RETURN_FIRSTNAME].ToString();
-                string? lastName = user[DbUserdataSchema.RETURN_LASTNAME].ToString();
-
-                //TODO rework null handling if needed
-                if (cardId != null && firstName != null && lastName != null)
+                UserSimpleData newData = new()
                 {
-                    result.Add((cardId, firstName, lastName));
-                }
+                    CardID = user[DbUserdataSchema.RETURN_ID].ToString(),
+                    FirstName = user[DbUserdataSchema.RETURN_FIRSTNAME].ToString(),
+                    LastName = user[DbUserdataSchema.RETURN_LASTNAME].ToString()
+                };
+
+                result.Add(newData);
             }
 
         }
@@ -113,6 +102,7 @@ public class DatabaseConnection
         return result;
     }
 
+    //refactor 0
     public bool UserExists(string id)
     {
         bool result = false;
@@ -142,6 +132,7 @@ public class DatabaseConnection
     }
 
     // Set
+    //refactor 0
     public bool RemoveUser(string id)
     {
         bool result = false;
@@ -173,7 +164,8 @@ public class DatabaseConnection
         return result;
     }
 
-    public bool AddUser(UserData newUser)
+    //refactor 0
+    public bool AddUser(UserDetailedData newUser)
     {
         bool result = false;
 
@@ -211,7 +203,8 @@ public class DatabaseConnection
         return result;
     }
 
-    public bool EditUser(string previousId, UserData newUserData)
+    //refactor 0
+    public bool EditUser(string previousId, UserDetailedData newUserData)
     {
         bool result = false;
 
@@ -249,152 +242,10 @@ public class DatabaseConnection
         return result;
     }
 
-    // ======================== ACCESS LOG ======================== //
-
-    //Get
-    //refactor 1
-    public List<AccessLogData> GetAccessLogs(DateTime start, DateTime end)
-    {
-        List<AccessLogData> result = new();
-
-        Dictionary<string, object> parameters = new()
-        {
-            {DbUserdataSchema.PARAM_STARTDATE, start },
-            {DbUserdataSchema.PARAM_ENDDATE, end }
-        };
-
-        try
-        {
-            DataTable dataTable = GetDataTable(DbUserdataSchema.FUNCTION_GETACCESSLOGS, parameters);
-
-            foreach (DataRow log in dataTable.Rows)
-            {
-                AccessLogData newData = new()
-                {
-                    Id = log[DbUserdataSchema.RETURN_ID].ToString(),
-                    AccessGranted = Convert.ToBoolean(log[DbUserdataSchema.RETURN_APPROVED].ToString()),
-                    Time = (DateTime)log[DbUserdataSchema.RETURN_TIMEOFENTRY],
-                    DoorNumber = Convert.ToInt32(log[DbUserdataSchema.RETURN_DOORNUMBER].ToString())
-                };
-
-                result.Add(newData);
-            }
-
-        }
-        catch (Exception ex)
-        {
-            TryLogMessage(ex.Message);
-        }
-
-        return result;
-    }
-
-    //refactor 0
-    public List<AccessLogData> GetDoorLogs(DateTime start, DateTime end, int doorNumber)
-    {
-        List<(string id, bool approved, DateTime time, int doorNumber)> result = new();
-
-        Dictionary<string, object> parameters = new()
-        {
-            {DbUserdataSchema.PARAM_STARTDATE, start },
-            {DbUserdataSchema.PARAM_ENDDATE, end },
-            {DbUserdataSchema.PARAM_DOORNUMBER, doorNumber}
-        };
-
-        try
-        {
-            DataTable dataTable = GetDataTable(DbUserdataSchema.FUNCTION_GETDOORACCESSLOGS, parameters);
-
-            foreach (DataRow log in dataTable.Rows)
-            {
-                string? id = log[DbUserdataSchema.RETURN_ID].ToString();
-                bool approved = Convert.ToBoolean(log[DbUserdataSchema.RETURN_APPROVED].ToString());
-                DateTime time = (DateTime)log[DbUserdataSchema.RETURN_TIMEOFENTRY];
-
-                if (id != null)
-                {
-                    result.Add((id, approved, time, doorNumber));
-                }
-            }
-
-        }
-        catch (Exception ex)
-        {
-            TryLogMessage(ex.Message);
-        }
-
-        return result;
-    }
-
-    // Set
-    public bool LogAccess(DateTime timeOfEntry, string cardId, bool approvedEntry, int doorNumber)
-    {
-        bool result = false;
-
-        Dictionary<string, object> parameters = new()
-        {
-            {DbUserdataSchema.PARAM_TIMEOFENTRY, timeOfEntry },
-            {DbUserdataSchema.PARAM_DOORNUMBER, doorNumber },
-            {DbUserdataSchema.PARAM_APPROVEDENTRY, approvedEntry },
-            {DbUserdataSchema.PARAM_ID , cardId }
-        };
-
-        try
-        {
-            DataTable dataTable = GetDataTable(DbUserdataSchema.FUNCTION_LOGACCESS, parameters);
-
-            if (dataTable.Rows.Count > 0)
-            {
-                DataRow row = dataTable.Rows[0];
-                result = Convert.ToBoolean(row[0]);
-            }
-        }
-        catch (Exception ex)
-        {
-            TryLogMessage(ex.Message);
-        }
-
-        return result;
-    }
-
-    // ======================== ALARM LOG ======================== //
+    // ======================== CARD READER ======================== //
 
     // Get
-    public List<(DateTime time, int doorNumber, string alarmType)> GetAlarmLogs(DateTime start, DateTime end)
-    {
-        List<(DateTime time, int doorNumber, string alarmType)> result = new();
-
-        Dictionary<string, object> parameters = new()
-        {
-            {DbUserdataSchema.PARAM_STARTDATE, start },
-            {DbUserdataSchema.PARAM_ENDDATE, end }
-        };
-
-        try
-        {
-            DataTable dataTable = GetDataTable(DbUserdataSchema.FUNCTION_GETDOORACCESSLOGS, parameters);
-
-            foreach (DataRow log in dataTable.Rows)
-            {
-                DateTime time = (DateTime)log[DbUserdataSchema.RETURN_TIMEOFALARM];
-                int doorNumber = Convert.ToInt32(log[DbUserdataSchema.RETURN_DOORNUMBER].ToString());
-                string? alarmType = log[DbUserdataSchema.RETURN_ALARMTYPE].ToString();
-
-                if(alarmType != null)
-                {
-                    result.Add((time, doorNumber, alarmType));
-                }
-            }
-
-        }
-        catch (Exception ex)
-        {
-            TryLogMessage(ex.Message);
-        }
-
-        return result;
-    }
-
+    // refactor 0
     public bool ValidateUser(string id, string pin)
     {
         bool result = false;
@@ -423,15 +274,165 @@ public class DatabaseConnection
         return result;
     }
 
+    // ======================== ACCESS LOG ======================== //
+
+    // Get
+    //refactor 1
+    public List<AccessLogData> GetAccessLogs(DateTime start, DateTime end)
+    {
+        List<AccessLogData> result = new();
+
+        Dictionary<string, object> parameters = new()
+        {
+            {DbUserdataSchema.PARAM_STARTDATE, start },
+            {DbUserdataSchema.PARAM_ENDDATE, end }
+        };
+
+        try
+        {
+            DataTable dataTable = GetDataTable(DbUserdataSchema.FUNCTION_GETACCESSLOGS, parameters);
+
+            foreach (DataRow log in dataTable.Rows)
+            {
+                AccessLogData newData = new()
+                {
+                    CardId = log[DbUserdataSchema.RETURN_ID].ToString(),
+                    AccessGranted = Convert.ToBoolean(log[DbUserdataSchema.RETURN_APPROVED].ToString()),
+                    Time = (DateTime)log[DbUserdataSchema.RETURN_TIMEOFENTRY],
+                    DoorNumber = Convert.ToInt32(log[DbUserdataSchema.RETURN_DOORNUMBER].ToString())
+                };
+
+                result.Add(newData);
+            }
+
+        }
+        catch (Exception ex)
+        {
+            TryLogMessage(ex.Message);
+        }
+
+        return result;
+    }
+
+    //refactor 1
+    public List<AccessLogData> GetDoorLogs(DateTime start, DateTime end, int doorNumber)
+    {
+        List<AccessLogData> result = new();
+
+        Dictionary<string, object> parameters = new()
+        {
+            {DbUserdataSchema.PARAM_STARTDATE, start },
+            {DbUserdataSchema.PARAM_ENDDATE, end },
+            {DbUserdataSchema.PARAM_DOORNUMBER, doorNumber}
+        };
+
+        try
+        {
+            DataTable dataTable = GetDataTable(DbUserdataSchema.FUNCTION_GETDOORACCESSLOGS, parameters);
+
+            foreach (DataRow log in dataTable.Rows)
+            {
+                AccessLogData newData = new()
+                {
+                    CardId = log[DbUserdataSchema.RETURN_ID].ToString(),
+                    AccessGranted = Convert.ToBoolean(log[DbUserdataSchema.RETURN_APPROVED].ToString()),
+                    Time = (DateTime)log[DbUserdataSchema.RETURN_TIMEOFENTRY],
+                    DoorNumber = doorNumber
+                };
+
+                result.Add(newData);
+            }
+
+        }
+        catch (Exception ex)
+        {
+            TryLogMessage(ex.Message);
+        }
+
+        return result;
+    }
+
     // Set
-    public bool LogAlarm(DateTime timeOfAlarm, int doorNumber, string alarmType)
+    //refactor 1
+    public bool LogAccess(AccessLogData accessLog)
+    {
+        bool result = false;
+
+        Dictionary<string, object> parameters = new()
+        {
+            {DbUserdataSchema.PARAM_TIMEOFENTRY, accessLog.Time },
+            {DbUserdataSchema.PARAM_DOORNUMBER, accessLog.DoorNumber },
+            {DbUserdataSchema.PARAM_APPROVEDENTRY, accessLog.AccessGranted },
+            {DbUserdataSchema.PARAM_ID , accessLog.CardId ?? "" }
+        };
+
+        try
+        {
+            DataTable dataTable = GetDataTable(DbUserdataSchema.FUNCTION_LOGACCESS, parameters);
+
+            if (dataTable.Rows.Count > 0)
+            {
+                DataRow row = dataTable.Rows[0];
+                result = Convert.ToBoolean(row[0]);
+            }
+        }
+        catch (Exception ex)
+        {
+            TryLogMessage(ex.Message);
+        }
+
+        return result;
+    }
+
+    // ======================== ALARM LOG ======================== //
+
+    // Get
+    //refactor 1
+    public List<AlarmLogData> GetAlarmLogs(DateTime start, DateTime end)
+    {
+        List<AlarmLogData> result = new();
+
+        Dictionary<string, object> parameters = new()
+        {
+            {DbUserdataSchema.PARAM_STARTDATE, start },
+            {DbUserdataSchema.PARAM_ENDDATE, end }
+        };
+
+        try
+        {
+            DataTable dataTable = GetDataTable(DbUserdataSchema.FUNCTION_GETDOORACCESSLOGS, parameters);
+
+            foreach (DataRow log in dataTable.Rows)
+            {
+                AlarmLogData newData = new()
+                {
+                    Time = (DateTime)log[DbUserdataSchema.RETURN_TIMEOFALARM],
+                    DoorNumber = Convert.ToInt32(log[DbUserdataSchema.RETURN_DOORNUMBER].ToString()),
+                    AlarmType = log[DbUserdataSchema.RETURN_ALARMTYPE].ToString()
+                };
+
+                result.Add(newData);
+            }
+
+        }
+        catch (Exception ex)
+        {
+            TryLogMessage(ex.Message);
+        }
+
+        return result;
+    }
+
+    // Set
+    //refactor 1
+    public bool LogAlarm(AlarmLogData alarmLog)
     {
         bool result = false;
         Dictionary<string, object> parameters = new()
         {
-            {DbUserdataSchema.PARAM_TIMEOFALARM, timeOfAlarm },
-            {DbUserdataSchema.PARAM_DOORNUMBER, doorNumber },
-            {DbUserdataSchema.PARAM_ALARMTYPE, alarmType }
+            {DbUserdataSchema.PARAM_TIMEOFALARM, alarmLog.Time },
+            {DbUserdataSchema.PARAM_DOORNUMBER, alarmLog.DoorNumber },
+            {DbUserdataSchema.PARAM_ALARMTYPE, alarmLog.AlarmType ?? "" }
         };
 
         try

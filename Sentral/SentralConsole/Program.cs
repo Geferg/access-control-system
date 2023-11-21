@@ -5,6 +5,7 @@ using System.Net.Sockets;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using SentralLibrary;
+using SentralLibrary.DataClasses;
 
 namespace SentralConsole;
 
@@ -188,12 +189,12 @@ internal class Program
 
     private static void HandleShowCommand()
     {
-        dialogs.ShowUsers(dbConnection.GetUserbase().OrderBy(u => u.id).ToList());
+        dialogs.ShowUsers(dbConnection.GetUserbase().OrderBy(u => u.CardID).ToList());
     }
 
     private static void HandleShowSpecificCommand(string cardId)
     {
-        UserData? selectedUser = dbConnection.GetUser(cardId);
+        UserDetailedData? selectedUser = dbConnection.GetUser(cardId);
 
         if (selectedUser != null)
         {
@@ -213,7 +214,7 @@ internal class Program
         }
         else
         {
-            UserData? newUser = dialogs.MakeUser(cardId);
+            UserDetailedData? newUser = dialogs.MakeUser(cardId);
 
             if (newUser != null)
             {
@@ -224,14 +225,14 @@ internal class Program
 
     private static void HandleEditSpecificCommand(string cardId)
     {
-        UserData? selectedUser = dbConnection.GetUser(cardId);
+        UserDetailedData? selectedUser = dbConnection.GetUser(cardId);
         if (selectedUser == null)
         {
             Console.WriteLine(missingInDbMessage);
         }
         else
         {
-            UserData newUser = dialogs.EditUser(selectedUser);
+            UserDetailedData newUser = dialogs.EditUser(selectedUser);
             if (!dbConnection.EditUser(cardId, newUser))
             {
                 Console.WriteLine(failureInDbMessage);
@@ -241,7 +242,7 @@ internal class Program
 
     private static void HandleRemoveSpecificCommand(string cardId)
     {
-        UserData? userToRemove = dbConnection.GetUser(cardId);
+        UserDetailedData? userToRemove = dbConnection.GetUser(cardId);
 
         if (userToRemove == null)
         {
@@ -267,7 +268,7 @@ internal class Program
             return;
         }
 
-        List<(string id, bool approved, DateTime time, int doorNumber)> logs = dbConnection.GetAccessLogs(start, end);
+        List<AccessLogData> logs = dbConnection.GetAccessLogs(start, end);
 
         dialogs.ShowAccessLogs(logs);
     }
@@ -285,7 +286,7 @@ internal class Program
             return;
         }
 
-        List<(DateTime time, int doorNumber, string alarmType)> logs = dbConnection.GetAlarmLogs(start, end);
+        List<AlarmLogData> logs = dbConnection.GetAlarmLogs(start, end);
 
         dialogs.ShowAlarmLogs(logs);
     }
@@ -319,12 +320,27 @@ internal class Program
 
     private static void HandleLogAlarm(DateTime timeOfAlarm, int doorNumber, string alarmType)
     {
-        dbConnection.LogAlarm(timeOfAlarm, doorNumber, alarmType);
+        AlarmLogData alarmData = new()
+        {
+            Time = timeOfAlarm,
+            DoorNumber = doorNumber,
+            AlarmType = alarmType
+        };
+
+        dbConnection.LogAlarm(alarmData);
     }
 
     private static void HandleLogAccess(string cardId, bool approvedEntry, DateTime timeOfEntry, int doorNumber)
     {
-        dbConnection.LogAccess(timeOfEntry, cardId, approvedEntry, doorNumber);
+        AccessLogData accessData = new()
+        {
+            CardId = cardId,
+            AccessGranted = approvedEntry,
+            Time = timeOfEntry,
+            DoorNumber = doorNumber
+        };
+
+        dbConnection.LogAccess(accessData);
     }
 
     // EVENT HANDLERS

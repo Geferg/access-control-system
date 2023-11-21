@@ -7,4 +7,5 @@ using System.Threading.Tasks;
 namespace SentralLibrary;
 internal interface IDatabaseConnection
 {
+
 }
