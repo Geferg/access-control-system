@@ -232,7 +232,7 @@ internal class Program
         else
         {
             UserData newUser = dialogs.EditUser(selectedUser);
-            if (!dbConnection.UpdateUser(cardId, newUser))
+            if (!dbConnection.EditUser(cardId, newUser))
             {
                 Console.WriteLine(failureInDbMessage);
             }

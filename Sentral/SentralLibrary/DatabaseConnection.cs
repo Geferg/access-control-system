@@ -14,8 +14,7 @@ public class DatabaseConnection
     public readonly string HostPort;
     public readonly string DatabaseName;
     private readonly string connectionString;
-    private UIConnection? uiConnection;
-
+    //private UIConnection? uiConnection;
 
     public DatabaseConnection(string hostIp, string port, string username, string password, string database)
     {
@@ -23,11 +22,6 @@ public class DatabaseConnection
         HostPort = port;
         DatabaseName = username;
         connectionString = $"Host={hostIp};Port={port};Username={username};Password={password};Database={database}";
-    }
-
-    public void AttachUIConnection(UIConnection uiConnection)
-    {
-        this.uiConnection = uiConnection;
     }
 
     public bool TestConnection()
@@ -44,338 +38,9 @@ public class DatabaseConnection
         }
     }
 
-    protected virtual void TryLogMessage(string message)
-    {
-        uiConnection?.PutOnUI($"Debug (database): {message}");
-    }
+    // ========================= USER DATA ========================= //
 
-    public bool LogAlarm(DateTime timeOfAlarm, int doorNumber, string alarmType)
-    {
-        bool result = false;
-        Dictionary<string, object> parameters = new()
-        {
-            {DbUserdataSchema.PARAM_TIMEOFALARM, timeOfAlarm },
-            {DbUserdataSchema.PARAM_DOORNUMBER, doorNumber },
-            {DbUserdataSchema.PARAM_ALARMTYPE, alarmType }
-        };
-
-        try
-        {
-            DataTable dataTable = GetDataTable(DbUserdataSchema.FUNCTION_LOGALARM, parameters);
-
-            if (dataTable.Rows.Count > 0)
-            {
-                DataRow row = dataTable.Rows[0];
-                result = Convert.ToBoolean(row[0]);
-            }
-        }
-        catch (Exception ex)
-        {
-            TryLogMessage(ex.Message);
-        }
-        return result;
-    }
-
-    public List<(DateTime time, int doorNumber, string alarmType)> GetAlarmLogs(DateTime start, DateTime end)
-    {
-        List<(DateTime time, int doorNumber, string alarmType)> result = new();
-
-        Dictionary<string, object> parameters = new()
-        {
-            {DbUserdataSchema.PARAM_STARTDATE, start },
-            {DbUserdataSchema.PARAM_ENDDATE, end }
-        };
-
-        try
-        {
-            DataTable dataTable = GetDataTable(DbUserdataSchema.FUNCTION_GETDOORACCESSLOGS, parameters);
-
-            foreach (DataRow log in dataTable.Rows)
-            {
-                DateTime time = (DateTime)log[DbUserdataSchema.RETURN_TIMEOFALARM];
-                int doorNumber = Convert.ToInt32(log[DbUserdataSchema.RETURN_DOORNUMBER].ToString());
-                string? alarmType = log[DbUserdataSchema.RETURN_ALARMTYPE].ToString();
-
-                if(alarmType != null)
-                {
-                    result.Add((time, doorNumber, alarmType));
-                }
-            }
-
-        }
-        catch (Exception ex)
-        {
-            TryLogMessage(ex.Message);
-        }
-
-        return result;
-    }
-
-    public List<(string id, bool approved, DateTime time, int doorNumber)> GetAccessLogs(DateTime start, DateTime end)
-    {
-        List<(string id, bool approved, DateTime time, int doorNumber)> result = new();
-
-        Dictionary<string, object> parameters = new()
-        {
-            {DbUserdataSchema.PARAM_STARTDATE, start },
-            {DbUserdataSchema.PARAM_ENDDATE, end }
-        };
-
-        try
-        {
-            DataTable dataTable = GetDataTable(DbUserdataSchema.FUNCTION_GETACCESSLOGS, parameters);
-
-            foreach (DataRow log in dataTable.Rows)
-            {
-                string? id = log[DbUserdataSchema.RETURN_ID].ToString();
-                bool approved = Convert.ToBoolean(log[DbUserdataSchema.RETURN_APPROVED].ToString());
-                DateTime time = (DateTime)log[DbUserdataSchema.RETURN_TIMEOFENTRY];
-                int doorNumber = Convert.ToInt32(log[DbUserdataSchema.RETURN_DOORNUMBER].ToString());
-
-                if(id != null)
-                {
-                    result.Add((id, approved, time, doorNumber));
-                }
-            }
-
-        }
-        catch (Exception ex)
-        {
-            TryLogMessage(ex.Message);
-        }
-
-        return result;
-    }
-
-    public List<(string id, bool approved, DateTime time, int doorNumber)> GetDoorLogs(DateTime start, DateTime end, int doorNumber)
-    {
-        List<(string id, bool approved, DateTime time, int doorNumber)> result = new();
-
-        Dictionary<string, object> parameters = new()
-        {
-            {DbUserdataSchema.PARAM_STARTDATE, start },
-            {DbUserdataSchema.PARAM_ENDDATE, end },
-            {DbUserdataSchema.PARAM_DOORNUMBER, doorNumber}
-        };
-
-        try
-        {
-            DataTable dataTable = GetDataTable(DbUserdataSchema.FUNCTION_GETDOORACCESSLOGS, parameters);
-
-            foreach (DataRow log in dataTable.Rows)
-            {
-                string? id = log[DbUserdataSchema.RETURN_ID].ToString();
-                bool approved = Convert.ToBoolean(log[DbUserdataSchema.RETURN_APPROVED].ToString());
-                DateTime time = (DateTime)log[DbUserdataSchema.RETURN_TIMEOFENTRY];
-
-                if (id != null)
-                {
-                    result.Add((id, approved, time, doorNumber));
-                }
-            }
-
-        }
-        catch (Exception ex)
-        {
-            TryLogMessage(ex.Message);
-        }
-
-        return result;
-    }
-
-    public bool LogAccess(DateTime timeOfEntry, string cardId, bool approvedEntry, int doorNumber)
-    {
-        bool result = false;
-
-        Dictionary<string, object> parameters = new()
-        {
-            {DbUserdataSchema.PARAM_TIMEOFENTRY, timeOfEntry },
-            {DbUserdataSchema.PARAM_DOORNUMBER, doorNumber },
-            {DbUserdataSchema.PARAM_APPROVEDENTRY, approvedEntry },
-            {DbUserdataSchema.PARAM_ID , cardId }
-        };
-
-        try
-        {
-            DataTable dataTable = GetDataTable(DbUserdataSchema.FUNCTION_LOGACCESS, parameters);
-
-            if (dataTable.Rows.Count > 0)
-            {
-                DataRow row = dataTable.Rows[0];
-                result = Convert.ToBoolean(row[0]);
-            }
-        }
-        catch (Exception ex)
-        {
-            TryLogMessage(ex.Message);
-        }
-
-        return result;
-    }
-
-    public bool ValidateUser(string id, string pin)
-    {
-        bool result = false;
-
-        Dictionary<string, object> parameters = new()
-        {
-            {DbUserdataSchema.PARAM_ID, id},
-            {DbUserdataSchema.PARAM_PIN, pin }
-        };
-
-        try
-        {
-            DataTable dataTable = GetDataTable(DbUserdataSchema.FUNCTION_USEREXISTS, parameters);
-
-            if (dataTable.Rows.Count > 0)
-            {
-                DataRow row = dataTable.Rows[0];
-                result = Convert.ToBoolean(row[0]);
-            }
-        }
-        catch (Exception ex)
-        {
-            TryLogMessage(ex.Message);
-        }
-
-        return result;
-    }
-
-    public bool UserExists(string id)
-    {
-        bool result = false;
-
-        Dictionary<string, object> parameters = new()
-        {
-            {DbUserdataSchema.PARAM_ID, id}
-        };
-
-
-        try
-        {
-            DataTable dataTable = GetDataTable(DbUserdataSchema.FUNCTION_USEREXISTS, parameters);
-
-            if (dataTable.Rows.Count > 0)
-            {
-                DataRow row = dataTable.Rows[0];
-                result = Convert.ToBoolean(row[0]);
-            }
-        }
-        catch (Exception ex)
-        {
-            TryLogMessage(ex.Message);
-        }
-
-        return result;
-    }
-
-    public bool AddUser(UserData newUser)
-    {
-        bool result = false;
-
-        Dictionary<string, object> parameters = new()
-        {
-            {DbUserdataSchema.PARAM_FIRSTNAME, newUser.FirstName},
-            {DbUserdataSchema.PARAM_LASTNAME, newUser.LastName},
-            {DbUserdataSchema.PARAM_EMAIL, newUser.Email},
-            {DbUserdataSchema.PARAM_ID, newUser.CardID },
-            {DbUserdataSchema.PARAM_PIN, newUser.CardPin },
-            {DbUserdataSchema.PARAM_STARTVALIDITY, newUser.ValidityPeriod.start },
-            {DbUserdataSchema.PARAM_ENDVALIDITY, newUser.ValidityPeriod.end }
-        };
-
-        try
-        {
-            DataTable dataTable = GetDataTable(DbUserdataSchema.FUNCTION_ADDUSER, parameters);
-
-            if (dataTable.Rows.Count > 0)
-            {
-                DataRow row = dataTable.Rows[0];
-                result = Convert.ToBoolean(row[0]);
-            }
-            else
-            {
-                result = false;
-            }
-
-        }
-        catch (Exception ex)
-        {
-            TryLogMessage(ex.Message);
-        }
-
-        return result;
-    }
-
-    public bool RemoveUser(string id)
-    {
-        bool result = false;
-
-        Dictionary<string, object> parameters = new()
-        {
-            {DbUserdataSchema.PARAM_ID, id}
-        };
-
-        try
-        {
-            DataTable dataTable = GetDataTable(DbUserdataSchema.FUNCTION_REMOVEUSER, parameters);
-
-            if (dataTable.Rows.Count > 0)
-            {
-                DataRow row = dataTable.Rows[0];
-                result = Convert.ToBoolean(row[0]);
-            }
-            else
-            {
-                result = false;
-            }
-        }
-        catch (Exception ex)
-        {
-            TryLogMessage(ex.Message);
-        }
-
-        return result;
-    }
-
-    public bool UpdateUser(string previousId, UserData newUserData)
-    {
-        bool result = false;
-
-        Dictionary<string, object> parameters = new()
-        {
-            {DbUserdataSchema.PARAM_PREVIOUSID, previousId},
-            {DbUserdataSchema.PARAM_FIRSTNAME, newUserData.FirstName},
-            {DbUserdataSchema.PARAM_LASTNAME, newUserData.LastName},
-            {DbUserdataSchema.PARAM_EMAIL,  newUserData.Email},
-            {DbUserdataSchema.PARAM_ID, newUserData.CardID },
-            {DbUserdataSchema.PARAM_PIN, newUserData.CardPin },
-            {DbUserdataSchema.PARAM_STARTVALIDITY, newUserData.ValidityPeriod.start },
-            {DbUserdataSchema.PARAM_ENDVALIDITY,  newUserData.ValidityPeriod.end }
-        };
-
-        try
-        {
-            DataTable dataTable = GetDataTable(DbUserdataSchema.FUNCTION_UPDATEUSER, parameters);
-
-            if (dataTable.Rows.Count > 0)
-            {
-                DataRow row = dataTable.Rows[0];
-                result = Convert.ToBoolean(row[0]);
-            }
-            else
-            {
-                result = false;
-            }
-        }
-        catch (Exception ex)
-        {
-            TryLogMessage(ex.Message);
-        }
-
-        return result;
-    }
-
+    // Get
     public UserData? GetUser(string id)
     {
         UserData? result = null;
@@ -433,7 +98,7 @@ public class DatabaseConnection
                 string? lastName = user[DbUserdataSchema.RETURN_LASTNAME].ToString();
 
                 //TODO rework null handling if needed
-                if(cardId != null && firstName != null && lastName != null)
+                if (cardId != null && firstName != null && lastName != null)
                 {
                     result.Add((cardId, firstName, lastName));
                 }
@@ -447,6 +112,346 @@ public class DatabaseConnection
 
         return result;
     }
+
+    public bool UserExists(string id)
+    {
+        bool result = false;
+
+        Dictionary<string, object> parameters = new()
+        {
+            {DbUserdataSchema.PARAM_ID, id}
+        };
+
+
+        try
+        {
+            DataTable dataTable = GetDataTable(DbUserdataSchema.FUNCTION_USEREXISTS, parameters);
+
+            if (dataTable.Rows.Count > 0)
+            {
+                DataRow row = dataTable.Rows[0];
+                result = Convert.ToBoolean(row[0]);
+            }
+        }
+        catch (Exception ex)
+        {
+            TryLogMessage(ex.Message);
+        }
+
+        return result;
+    }
+
+    // Set
+    public bool RemoveUser(string id)
+    {
+        bool result = false;
+
+        Dictionary<string, object> parameters = new()
+        {
+            {DbUserdataSchema.PARAM_ID, id}
+        };
+
+        try
+        {
+            DataTable dataTable = GetDataTable(DbUserdataSchema.FUNCTION_REMOVEUSER, parameters);
+
+            if (dataTable.Rows.Count > 0)
+            {
+                DataRow row = dataTable.Rows[0];
+                result = Convert.ToBoolean(row[0]);
+            }
+            else
+            {
+                result = false;
+            }
+        }
+        catch (Exception ex)
+        {
+            TryLogMessage(ex.Message);
+        }
+
+        return result;
+    }
+
+    public bool AddUser(UserData newUser)
+    {
+        bool result = false;
+
+        Dictionary<string, object> parameters = new()
+        {
+            {DbUserdataSchema.PARAM_FIRSTNAME, newUser.FirstName},
+            {DbUserdataSchema.PARAM_LASTNAME, newUser.LastName},
+            {DbUserdataSchema.PARAM_EMAIL, newUser.Email},
+            {DbUserdataSchema.PARAM_ID, newUser.CardID },
+            {DbUserdataSchema.PARAM_PIN, newUser.CardPin },
+            {DbUserdataSchema.PARAM_STARTVALIDITY, newUser.ValidityPeriod.start },
+            {DbUserdataSchema.PARAM_ENDVALIDITY, newUser.ValidityPeriod.end }
+        };
+
+        try
+        {
+            DataTable dataTable = GetDataTable(DbUserdataSchema.FUNCTION_ADDUSER, parameters);
+
+            if (dataTable.Rows.Count > 0)
+            {
+                DataRow row = dataTable.Rows[0];
+                result = Convert.ToBoolean(row[0]);
+            }
+            else
+            {
+                result = false;
+            }
+
+        }
+        catch (Exception ex)
+        {
+            TryLogMessage(ex.Message);
+        }
+
+        return result;
+    }
+
+    public bool EditUser(string previousId, UserData newUserData)
+    {
+        bool result = false;
+
+        Dictionary<string, object> parameters = new()
+        {
+            {DbUserdataSchema.PARAM_PREVIOUSID, previousId},
+            {DbUserdataSchema.PARAM_FIRSTNAME, newUserData.FirstName},
+            {DbUserdataSchema.PARAM_LASTNAME, newUserData.LastName},
+            {DbUserdataSchema.PARAM_EMAIL,  newUserData.Email},
+            {DbUserdataSchema.PARAM_ID, newUserData.CardID },
+            {DbUserdataSchema.PARAM_PIN, newUserData.CardPin },
+            {DbUserdataSchema.PARAM_STARTVALIDITY, newUserData.ValidityPeriod.start },
+            {DbUserdataSchema.PARAM_ENDVALIDITY,  newUserData.ValidityPeriod.end }
+        };
+
+        try
+        {
+            DataTable dataTable = GetDataTable(DbUserdataSchema.FUNCTION_UPDATEUSER, parameters);
+
+            if (dataTable.Rows.Count > 0)
+            {
+                DataRow row = dataTable.Rows[0];
+                result = Convert.ToBoolean(row[0]);
+            }
+            else
+            {
+                result = false;
+            }
+        }
+        catch (Exception ex)
+        {
+            TryLogMessage(ex.Message);
+        }
+
+        return result;
+    }
+
+    // ======================== ACCESS LOG ======================== //
+
+    //Get
+    //refactor 1
+    public List<AccessLogData> GetAccessLogs(DateTime start, DateTime end)
+    {
+        List<AccessLogData> result = new();
+
+        Dictionary<string, object> parameters = new()
+        {
+            {DbUserdataSchema.PARAM_STARTDATE, start },
+            {DbUserdataSchema.PARAM_ENDDATE, end }
+        };
+
+        try
+        {
+            DataTable dataTable = GetDataTable(DbUserdataSchema.FUNCTION_GETACCESSLOGS, parameters);
+
+            foreach (DataRow log in dataTable.Rows)
+            {
+                AccessLogData newData = new()
+                {
+                    Id = log[DbUserdataSchema.RETURN_ID].ToString(),
+                    AccessGranted = Convert.ToBoolean(log[DbUserdataSchema.RETURN_APPROVED].ToString()),
+                    Time = (DateTime)log[DbUserdataSchema.RETURN_TIMEOFENTRY],
+                    DoorNumber = Convert.ToInt32(log[DbUserdataSchema.RETURN_DOORNUMBER].ToString())
+                };
+
+                result.Add(newData);
+            }
+
+        }
+        catch (Exception ex)
+        {
+            TryLogMessage(ex.Message);
+        }
+
+        return result;
+    }
+
+    //refactor 0
+    public List<AccessLogData> GetDoorLogs(DateTime start, DateTime end, int doorNumber)
+    {
+        List<(string id, bool approved, DateTime time, int doorNumber)> result = new();
+
+        Dictionary<string, object> parameters = new()
+        {
+            {DbUserdataSchema.PARAM_STARTDATE, start },
+            {DbUserdataSchema.PARAM_ENDDATE, end },
+            {DbUserdataSchema.PARAM_DOORNUMBER, doorNumber}
+        };
+
+        try
+        {
+            DataTable dataTable = GetDataTable(DbUserdataSchema.FUNCTION_GETDOORACCESSLOGS, parameters);
+
+            foreach (DataRow log in dataTable.Rows)
+            {
+                string? id = log[DbUserdataSchema.RETURN_ID].ToString();
+                bool approved = Convert.ToBoolean(log[DbUserdataSchema.RETURN_APPROVED].ToString());
+                DateTime time = (DateTime)log[DbUserdataSchema.RETURN_TIMEOFENTRY];
+
+                if (id != null)
+                {
+                    result.Add((id, approved, time, doorNumber));
+                }
+            }
+
+        }
+        catch (Exception ex)
+        {
+            TryLogMessage(ex.Message);
+        }
+
+        return result;
+    }
+
+    // Set
+    public bool LogAccess(DateTime timeOfEntry, string cardId, bool approvedEntry, int doorNumber)
+    {
+        bool result = false;
+
+        Dictionary<string, object> parameters = new()
+        {
+            {DbUserdataSchema.PARAM_TIMEOFENTRY, timeOfEntry },
+            {DbUserdataSchema.PARAM_DOORNUMBER, doorNumber },
+            {DbUserdataSchema.PARAM_APPROVEDENTRY, approvedEntry },
+            {DbUserdataSchema.PARAM_ID , cardId }
+        };
+
+        try
+        {
+            DataTable dataTable = GetDataTable(DbUserdataSchema.FUNCTION_LOGACCESS, parameters);
+
+            if (dataTable.Rows.Count > 0)
+            {
+                DataRow row = dataTable.Rows[0];
+                result = Convert.ToBoolean(row[0]);
+            }
+        }
+        catch (Exception ex)
+        {
+            TryLogMessage(ex.Message);
+        }
+
+        return result;
+    }
+
+    // ======================== ALARM LOG ======================== //
+
+    // Get
+    public List<(DateTime time, int doorNumber, string alarmType)> GetAlarmLogs(DateTime start, DateTime end)
+    {
+        List<(DateTime time, int doorNumber, string alarmType)> result = new();
+
+        Dictionary<string, object> parameters = new()
+        {
+            {DbUserdataSchema.PARAM_STARTDATE, start },
+            {DbUserdataSchema.PARAM_ENDDATE, end }
+        };
+
+        try
+        {
+            DataTable dataTable = GetDataTable(DbUserdataSchema.FUNCTION_GETDOORACCESSLOGS, parameters);
+
+            foreach (DataRow log in dataTable.Rows)
+            {
+                DateTime time = (DateTime)log[DbUserdataSchema.RETURN_TIMEOFALARM];
+                int doorNumber = Convert.ToInt32(log[DbUserdataSchema.RETURN_DOORNUMBER].ToString());
+                string? alarmType = log[DbUserdataSchema.RETURN_ALARMTYPE].ToString();
+
+                if(alarmType != null)
+                {
+                    result.Add((time, doorNumber, alarmType));
+                }
+            }
+
+        }
+        catch (Exception ex)
+        {
+            TryLogMessage(ex.Message);
+        }
+
+        return result;
+    }
+
+    public bool ValidateUser(string id, string pin)
+    {
+        bool result = false;
+
+        Dictionary<string, object> parameters = new()
+        {
+            {DbUserdataSchema.PARAM_ID, id},
+            {DbUserdataSchema.PARAM_PIN, pin }
+        };
+
+        try
+        {
+            DataTable dataTable = GetDataTable(DbUserdataSchema.FUNCTION_USEREXISTS, parameters);
+
+            if (dataTable.Rows.Count > 0)
+            {
+                DataRow row = dataTable.Rows[0];
+                result = Convert.ToBoolean(row[0]);
+            }
+        }
+        catch (Exception ex)
+        {
+            TryLogMessage(ex.Message);
+        }
+
+        return result;
+    }
+
+    // Set
+    public bool LogAlarm(DateTime timeOfAlarm, int doorNumber, string alarmType)
+    {
+        bool result = false;
+        Dictionary<string, object> parameters = new()
+        {
+            {DbUserdataSchema.PARAM_TIMEOFALARM, timeOfAlarm },
+            {DbUserdataSchema.PARAM_DOORNUMBER, doorNumber },
+            {DbUserdataSchema.PARAM_ALARMTYPE, alarmType }
+        };
+
+        try
+        {
+            DataTable dataTable = GetDataTable(DbUserdataSchema.FUNCTION_LOGALARM, parameters);
+
+            if (dataTable.Rows.Count > 0)
+            {
+                DataRow row = dataTable.Rows[0];
+                result = Convert.ToBoolean(row[0]);
+            }
+        }
+        catch (Exception ex)
+        {
+            TryLogMessage(ex.Message);
+        }
+        return result;
+    }
+
+    // ========================= INTERNAL ========================= //
 
     private DataTable GetDataTable(string function, Dictionary<string, object> parameters)
     {
@@ -481,6 +486,13 @@ public class DatabaseConnection
         return dataTable;
     }
 
+    // ======================== DEPRECATED ======================== //
+
+    public void AttachUIConnection(UIConnection uiConnection)
+    {
+        //this.uiConnection = uiConnection;
+    }
+
     private static string GetValidatedFunctionName(string function)
     {
         var validFunctions = new HashSet<string>
@@ -511,5 +523,9 @@ public class DatabaseConnection
         }
     }
 
+    protected virtual void TryLogMessage(string message)
+    {
+        //uiConnection?.PutOnUI($"Debug (database): {message}");
+    }
 
 }
