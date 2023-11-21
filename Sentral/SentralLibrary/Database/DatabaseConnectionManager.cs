@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace SentralLibrary.Database;
-public class DatabaseConnection
+public class DatabaseConnectionManager
 {
     public string HostIp { get; }
     public string HostPort { get; }
@@ -14,7 +14,7 @@ public class DatabaseConnection
 
     private readonly string connectionString;
 
-    public DatabaseConnection(string hostIp, string database, string hostPort, string username, string password)
+    public DatabaseConnectionManager(string hostIp, string database, string hostPort, string username, string password)
     {
         HostIp = hostIp;
         HostPort = hostPort;

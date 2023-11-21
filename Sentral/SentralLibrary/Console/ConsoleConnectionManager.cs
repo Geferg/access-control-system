@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace SentralLibrary.Console;
-public class ConsoleConnection
+public class ConsoleConnectionManager
 {
     public event Action<string>? ClassToUI;
     public event Func<string?>? UIStringToClass;

@@ -9,9 +9,9 @@ using System.Threading.Tasks;
 namespace SentralLibrary.Database;
 public class DatabaseAccess
 {
-    private readonly DatabaseConnection databaseConnection;
+    private readonly DatabaseConnectionManager databaseConnection;
 
-    public DatabaseAccess(DatabaseConnection databaseConnection)
+    public DatabaseAccess(DatabaseConnectionManager databaseConnection)
     {
         this.databaseConnection = databaseConnection;
     }

@@ -1,6 +1,6 @@
 ﻿using Newtonsoft.Json;
-using SentralLibrary.DataClasses;
-using SentralLibrary.TcpRequests;
+using SentralLibrary.Tcp;
+using SentralLibrary.Tcp.TcpRequests;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -23,25 +23,15 @@ using System.Threading.Tasks;
 namespace SentralLibrary;
 public class TcpConnectionOld
 {
-    private readonly TcpListener listener;
-    private List<TcpClientData> clients;
-    private static readonly JsonSerializerSettings serializerSettings = new()
-    {
-        TypeNameHandling = TypeNameHandling.Auto
-    };
-
-    public delegate void AlarmReportHandler(TcpClientData clientInfo, AlarmReportRequest request);
-    public event AlarmReportHandler? AlarmReport;
-    public delegate void AccessReportHandler(TcpClientData clientInfo, AccessReportRequest request);
-    public event AccessReportHandler? AccessReport;
-    public delegate void AccessHandler(TcpClientData clientInfo, AccessRequest request);
-    public event AccessHandler? Access;
-
     public TcpConnectionOld(int port)
     {
         listener = new(IPAddress.Any, port);
         clients = new();
     }
+
+    // ========================= CONNECTIONS ========================= //
+    private readonly TcpListener listener;
+    private readonly List<TcpClientData> clients;
 
     public void Start()
     {
@@ -82,16 +72,103 @@ public class TcpConnectionOld
 
     public List<int> GetClientIds()
     {
+        // Does this belong on connection?
         List<int> ids = new();
         lock (clients)
         {
-            foreach(var client in clients.Where(c => c.IsAuthenticated))
+            foreach (var client in clients.Where(c => c.IsAuthenticated))
             {
                 ids.Add(client.ClientId);
             }
         }
         return ids;
     }
+
+    private async void ListenForClientsAsync()
+    {
+        // Does this go here?
+        try
+        {
+            while (true)
+            {
+                TcpClient newClient = await listener.AcceptTcpClientAsync();
+                TcpClientData client = new(newClient);
+                lock (clients)
+                {
+                    clients.Add(client);
+                    //TryLogMessage($"Client connected - {client.TcpClient.Client.RemoteEndPoint}");
+                }
+
+                _ = HandleClientAsync(client);
+            }
+        }
+        catch (ObjectDisposedException)
+        {
+            //TryLogMessage("Lister has been stopped.");
+        }
+        catch (Exception ex)
+        {
+            //TryLogMessage($"Failed to listen: {ex}");
+        }
+    }
+
+    // ======================== RECEIVE REQUEST ======================== //
+
+    private async Task HandleClientAsync(TcpClientData client)
+    {
+        try
+        {
+            NetworkStream stream = client.TcpClient.GetStream();
+            byte[] buffer = new byte[1024];
+            while (client.TcpClient.Connected)
+            {
+                int bytesRead = await stream.ReadAsync(buffer);
+                if (bytesRead == 0) break;
+
+                string request = Encoding.UTF8.GetString(buffer, 0, bytesRead);
+                DelegateRequests(client, request);
+                //RequestReceived?.Invoke(client.TcpClient, request, RespondToClient);
+            }
+        }
+        catch (Exception ex)
+        {
+            //TryLogMessage($"Error - {ex.Message}");
+        }
+        finally
+        {
+            client.TcpClient.Close();
+            lock (clients)
+            {
+                clients.Remove(client);
+            }
+
+        }
+    }
+
+    // ======================== RESPOND REQUEST ======================== //
+
+    private static void RespondToClient(TcpClient client, Response response)
+    {
+        string jsonResponse = JsonConvert.SerializeObject(response);
+        var responseBytes = Encoding.UTF8.GetBytes(jsonResponse);
+        client.GetStream().WriteAsync(responseBytes, 0, responseBytes.Length);
+    }
+
+    private static void SendResponseToClient(TcpClientData clientInfo, string actionType, string status, string message)
+    {
+        // Deprecated? Where does this even go??
+        Response response = new(actionType, status, message);
+        RespondToClient(clientInfo.TcpClient, response);
+    }
+
+    // ======================== HANDLE REQUEST ======================== //
+    // This entire section needs to be reworked i think
+    public delegate void AlarmReportHandler(TcpClientData clientInfo, AlarmReportRequest request);
+    public event AlarmReportHandler? AlarmReport;
+    public delegate void AccessReportHandler(TcpClientData clientInfo, AccessReportRequest request);
+    public event AccessReportHandler? AccessReport;
+    public delegate void AccessHandler(TcpClientData clientInfo, AccessRequest request);
+    public event AccessHandler? Access;
 
     private void DelegateRequests(TcpClientData clientInfo, string request)
     {
@@ -205,74 +282,11 @@ public class TcpConnectionOld
         SendResponseToClient(clientInfo, actionType, status, message);
     }
 
-    private async void ListenForClientsAsync()
+    // ========================== DEPRECATED ========================== //
+
+    private static readonly JsonSerializerSettings serializerSettings = new()
     {
-        try
-        {
-            while (true)
-            {
-                TcpClient newClient = await listener.AcceptTcpClientAsync();
-                TcpClientData client = new(newClient);
-                lock (clients)
-                {
-                    clients.Add(client);
-                    //TryLogMessage($"Client connected - {client.TcpClient.Client.RemoteEndPoint}");
-                }
+        TypeNameHandling = TypeNameHandling.Auto
+    };
 
-                _ = HandleClientAsync(client);
-            }
-        }
-        catch (ObjectDisposedException)
-        {
-            //TryLogMessage("Lister has been stopped.");
-        }
-        catch (Exception ex)
-        {
-            //TryLogMessage($"Failed to listen: {ex}");
-        }
-    }
-
-    private async Task HandleClientAsync(TcpClientData client)
-    {
-        try
-        {
-            NetworkStream stream = client.TcpClient.GetStream();
-            byte[] buffer = new byte[1024];
-            while (client.TcpClient.Connected)
-            {
-                int bytesRead = await stream.ReadAsync(buffer);
-                if (bytesRead == 0) break;
-
-                string request = Encoding.UTF8.GetString(buffer, 0, bytesRead);
-                DelegateRequests(client, request);
-                //RequestReceived?.Invoke(client.TcpClient, request, RespondToClient);
-            }
-        }
-        catch (Exception ex)
-        {
-            //TryLogMessage($"Error - {ex.Message}");
-        }
-        finally
-        {
-            client.TcpClient.Close();
-            lock (clients)
-            {
-                clients.Remove(client);
-            }
-
-        }
-    }
-
-    private static void SendResponseToClient(TcpClientData clientInfo, string actionType, string status, string message)
-    {
-        Response response = new(actionType, status, message);
-        RespondToClient(clientInfo.TcpClient, response);
-    }
-
-    private static void RespondToClient(TcpClient client, Response response)
-    {
-        string jsonResponse = JsonConvert.SerializeObject(response);
-        var responseBytes = Encoding.UTF8.GetBytes(jsonResponse);
-        client.GetStream().WriteAsync(responseBytes, 0, responseBytes.Length);
-    }
 }

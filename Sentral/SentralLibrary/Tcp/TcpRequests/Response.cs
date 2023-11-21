@@ -5,7 +5,7 @@ using System.Text;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
-namespace SentralLibrary.TcpRequests;
+namespace SentralLibrary.Tcp.TcpRequests;
 public class Response
 {
     public string Action { get; set; }

@@ -38,7 +38,7 @@ internal class Program
     private static readonly UIConnection uiConnection = new();
     private static readonly UIDialogs dialogs = new(uiConnection);
 
-    private static readonly DatabaseConnection databaseConnection = new(dbIP, dbDatabase, dbIP, dbUsername, dbPassword);
+    private static readonly DatabaseConnectionManager databaseConnection = new(dbIP, dbDatabase, dbIP, dbUsername, dbPassword);
 
 
 
@@ -55,7 +55,7 @@ internal class Program
         // ...
         //var serviceProvider = serviceCollection.BuildServiceProvider();
 
-        DatabaseConnection sharedDatabaseConnection = new(dbIP, dbDatabase, dbPort, dbUsername, dbPassword);
+        DatabaseConnectionManager sharedDatabaseConnection = new(dbIP, dbDatabase, dbPort, dbUsername, dbPassword);
 
         DatabaseAccess sharedDatabaseAccess = new(sharedDatabaseConnection);
 
@@ -76,10 +76,31 @@ internal class Program
             Thread.Sleep(1000);
         }
 
-        foreach (var u in accessProcessing.GetAccessLogs(DateTime.MinValue, DateTime.MaxValue))
+        /*
+         * TESTS
+        Console.WriteLine("Users:");
+
+        foreach (var user in userProcessing.GetUserbase())
         {
-            Console.WriteLine($"[{u.DoorNumber}] {u.CardId}");
+            Console.WriteLine($"[{user.CardID}] {user.FirstName} {user.LastName}");
         }
+
+        Console.WriteLine("\nAccess logs:");
+
+        foreach (var log in accessProcessing.GetAccessLogs(DateTime.MinValue, DateTime.MaxValue))
+        {
+            Console.WriteLine($"[{log.DoorNumber}] {log.CardId}, access granted: {log.AccessGranted}");
+        }
+
+        Console.WriteLine("\nAlarm logs:");
+
+        foreach (var log in alarmLogProcessing.GetAlarmLogs(DateTime.MinValue, DateTime.MaxValue))
+        {
+            Console.WriteLine($"[{log.DoorNumber}] {log.AlarmType}");
+        }
+        */
+
+
         Console.ReadKey(true);
 
         // TCP connection

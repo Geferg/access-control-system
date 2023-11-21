@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SentralLibrary.TcpRequests;
+namespace SentralLibrary.Tcp.TcpRequests;
 public class AlarmReportRequest : IRequest
 {
     public DateTime Time { get; set; }

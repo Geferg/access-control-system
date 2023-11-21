@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SentralLibrary.TcpRequests;
+namespace SentralLibrary.Tcp.TcpRequests;
 internal class AuthorizationRequest : IRequest
 {
     public int ClientId { get; set; }
