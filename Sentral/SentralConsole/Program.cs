@@ -6,6 +6,7 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using SentralLibrary;
 using SentralLibrary.DataClasses;
+using SentralLibrary.TcpRequests;
 
 namespace SentralConsole;
 
@@ -359,12 +360,12 @@ internal class Program
         return Console.ReadKey(true);
     }
 
-    private static void OnLogAlarmReport(ClientInfo clientInfo, AlarmReportRequest request)
+    private static void OnLogAlarmReport(TcpClientData clientInfo, AlarmReportRequest request)
     {
         HandleLogAlarm(request.Time, clientInfo.ClientId, request.AlarmType);
     }
 
-    private static void OnLogAccessReport(ClientInfo clientInfo, AccessReportRequest request)
+    private static void OnLogAccessReport(TcpClientData clientInfo, AccessReportRequest request)
     {
         HandleLogAccess(request.CardId, request.Approved, request.Time, request.DoorNumber);
     }

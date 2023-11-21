@@ -1,4 +1,6 @@
 ﻿using Newtonsoft.Json;
+using SentralLibrary.DataClasses;
+using SentralLibrary.TcpRequests;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -22,17 +24,17 @@ namespace SentralLibrary;
 public class TcpConnection
 {
     private readonly TcpListener listener;
-    private List<ClientInfo> clients;
+    private List<TcpClientData> clients;
     private static readonly JsonSerializerSettings serializerSettings = new()
     {
         TypeNameHandling = TypeNameHandling.Auto
     };
 
-    public delegate void AlarmReportHandler(ClientInfo clientInfo, AlarmReportRequest request);
+    public delegate void AlarmReportHandler(TcpClientData clientInfo, AlarmReportRequest request);
     public event AlarmReportHandler? AlarmReport;
-    public delegate void AccessReportHandler(ClientInfo clientInfo, AccessReportRequest request);
+    public delegate void AccessReportHandler(TcpClientData clientInfo, AccessReportRequest request);
     public event AccessReportHandler? AccessReport;
-    public delegate void AccessHandler(ClientInfo clientInfo, AccessRequest request);
+    public delegate void AccessHandler(TcpClientData clientInfo, AccessRequest request);
     public event AccessHandler? Access;
 
     public TcpConnection(int port)
@@ -91,12 +93,12 @@ public class TcpConnection
         return ids;
     }
 
-    private void DelegateRequests(ClientInfo clientInfo, string request)
+    private void DelegateRequests(TcpClientData clientInfo, string request)
     {
         try
         {
 
-            BaseRequest? requestDeserialized = JsonConvert.DeserializeObject<BaseRequest>(request) ?? throw new Exception();
+            IRequest? requestDeserialized = JsonConvert.DeserializeObject<IRequest>(request) ?? throw new Exception();
 
             switch (requestDeserialized.RequestType)
             {
@@ -124,7 +126,7 @@ public class TcpConnection
         }
     }
 
-    private void HandleAccessRequest(ClientInfo clientInfo, AccessRequest? request)
+    private void HandleAccessRequest(TcpClientData clientInfo, AccessRequest? request)
     {
         string actionType = TcpConnectionDictionary.request_access;
         string message;
@@ -149,7 +151,7 @@ public class TcpConnection
         SendResponseToClient(clientInfo, actionType, status, message);
     }
 
-    private void HandleAlarmReportRequest(ClientInfo clientInfo, AlarmReportRequest? request)
+    private void HandleAlarmReportRequest(TcpClientData clientInfo, AlarmReportRequest? request)
     {
         string actionType = TcpConnectionDictionary.request_alarmReport;
         string message;
@@ -176,7 +178,7 @@ public class TcpConnection
         SendResponseToClient(clientInfo, actionType, status, message);
     }
 
-    private void HandleAuthorizationRequest(ClientInfo clientInfo, AuthorizationRequest? request)
+    private void HandleAuthorizationRequest(TcpClientData clientInfo, AuthorizationRequest? request)
     {
         string actionType = TcpConnectionDictionary.request_authorization;
         string message;
@@ -210,7 +212,7 @@ public class TcpConnection
             while (true)
             {
                 TcpClient newClient = await listener.AcceptTcpClientAsync();
-                ClientInfo client = new(newClient);
+                TcpClientData client = new(newClient);
                 lock (clients)
                 {
                     clients.Add(client);
@@ -230,7 +232,7 @@ public class TcpConnection
         }
     }
 
-    private async Task HandleClientAsync(ClientInfo client)
+    private async Task HandleClientAsync(TcpClientData client)
     {
         try
         {
@@ -261,7 +263,7 @@ public class TcpConnection
         }
     }
 
-    private static void SendResponseToClient(ClientInfo clientInfo, string actionType, string status, string message)
+    private static void SendResponseToClient(TcpClientData clientInfo, string actionType, string status, string message)
     {
         Response response = new(actionType, status, message);
         RespondToClient(clientInfo.TcpClient, response);

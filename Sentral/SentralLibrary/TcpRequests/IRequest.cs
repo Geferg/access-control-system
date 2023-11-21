@@ -4,8 +4,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SentralLibrary;
-internal interface IDatabaseConnection
+namespace SentralLibrary.TcpRequests;
+internal interface IRequest
 {
-
+    string? RequestType { get; set; }
 }
