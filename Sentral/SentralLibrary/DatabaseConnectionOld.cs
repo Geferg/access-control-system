@@ -176,8 +176,8 @@ public class DatabaseConnectionOld
             {DbUserdataSchema.PARAM_EMAIL, newUser.Email},
             {DbUserdataSchema.PARAM_ID, newUser.CardID },
             {DbUserdataSchema.PARAM_PIN, newUser.CardPin },
-            {DbUserdataSchema.PARAM_STARTVALIDITY, newUser.ValidityPeriod.start },
-            {DbUserdataSchema.PARAM_ENDVALIDITY, newUser.ValidityPeriod.end }
+            {DbUserdataSchema.PARAM_STARTVALIDITY, newUser.StartValidityTime },
+            {DbUserdataSchema.PARAM_ENDVALIDITY, newUser.EndValidityTime }
         };
 
         try

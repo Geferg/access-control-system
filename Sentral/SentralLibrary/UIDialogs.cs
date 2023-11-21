@@ -10,6 +10,7 @@ using SentralLibrary.DataClasses;
 namespace SentralLibrary;
 public class UIDialogs
 {
+    //TODO use data classes
     private UIConnection connection;
 
     public UIDialogs(UIConnection connection)
@@ -34,14 +35,19 @@ public class UIDialogs
         string lastName = GetNameInput("last name");
         string email = GetEmailInput("email");
 
-        UserDetailedData newUser = new(firstName, lastName, email, cardId);
+        UserDetailedData newUser = new()
+        {
+            FirstName = firstName,
+            LastName = lastName,
+            Email = email
+        };
 
-        Console.WriteLine("");
-        Console.WriteLine($"name: {newUser.FirstName} {newUser.LastName}");
-        Console.WriteLine($"email: {newUser.Email}");
-        Console.WriteLine($"card id: {newUser.CardID}");
-        Console.WriteLine($"card pin: {newUser.CardPin}");
-        Console.WriteLine($"validity period: {newUser.GetFormattedPeriod()}\n");
+        WriteLine("");
+        WriteLine($"name: {newUser.FirstName} {newUser.LastName}");
+        WriteLine($"email: {newUser.Email}");
+        WriteLine($"card id: {newUser.CardID}");
+        WriteLine($"card pin: {newUser.CardPin}");
+        WriteLine($"validity period: {newUser.StartValidityTime} - {newUser.EndValidityTime}\n");
 
         if (!UserConfirm("confirm addition of user?"))
         {
@@ -56,7 +62,7 @@ public class UIDialogs
         WriteLine($"      last name: {user.LastName}");
         WriteLine($"          email: {user.Email}");
         WriteLine($"        card id: {user.CardID}");
-        WriteLine($"validity period: {user.GetFormattedPeriod()}");
+        WriteLine($"validity period: {user.StartValidityTime} - {user.EndValidityTime}");
         WriteLine($"       card pin: {user.CardPin}");
 
         WriteLine("");
@@ -71,7 +77,7 @@ public class UIDialogs
         {
             return false;
         }
-        Console.WriteLine("exiting...");
+        WriteLine("exiting...");
         return true;
     }
     public void ListCommands()
@@ -99,8 +105,8 @@ public class UIDialogs
         WriteLine($"1. first name: {user.FirstName}");
         WriteLine($"2. last name: {user.LastName}");
         WriteLine($"3. email: {user.Email}");
-        WriteLine($"4. validity start: {user.ValidityPeriod.start}");
-        WriteLine($"5. validity end: {user.ValidityPeriod.end}");
+        WriteLine($"4. validity start: {user.StartValidityTime}");
+        WriteLine($"5. validity end: {user.EndValidityTime}");
         WriteLine($"6. card pin: {user.CardPin}");
         WriteLine($"0. cancel");
 
@@ -116,51 +122,51 @@ public class UIDialogs
             switch (responseKeyChar)
             {
                 case '1':
-                    Console.WriteLine("1");
+                    WriteLine("1");
                     string newFirstName = GetNameInput("new first name");
                     user.FirstName = newFirstName;
                     ongoingDialog = false;
                     break;
 
                 case '2':
-                    Console.WriteLine("2");
+                    WriteLine("2");
                     string newLastName = GetNameInput("new last name");
                     user.LastName = newLastName;
                     ongoingDialog = false;
                     break;
 
                 case '3':
-                    Console.WriteLine("3");
+                    WriteLine("3");
                     string newEmail = GetEmailInput("new email");
                     user.Email = newEmail;
                     ongoingDialog = false;
                     break;
 
                 case '4':
-                    Console.WriteLine("4");
+                    WriteLine("4");
                     DateTime newStartTime = GetDateTime(1900, 2100);
 
-                    user.ValidityPeriod = (newStartTime, user.ValidityPeriod.end);
+                    user.StartValidityTime = newStartTime;
                     ongoingDialog = false;
                     break;
 
                 case '5':
-                    Console.WriteLine("5");
+                    WriteLine("5");
                     DateTime newEndTime = GetDateTime(1900, 2100);
 
-                    user.ValidityPeriod = (user.ValidityPeriod.start, newEndTime);
+                    user.EndValidityTime =  newEndTime;
                     ongoingDialog = false;
                     break;
 
                 case '6':
-                    Console.WriteLine("6");
+                    WriteLine("6");
                     string newCardPin = GetFourDigitInput("new pin");
                     user.CardPin = newCardPin;
                     ongoingDialog = false;
                     break;
 
                 case '0':
-                    Console.WriteLine("0");
+                    WriteLine("0");
                     ongoingDialog = false;
                     break;
             }
