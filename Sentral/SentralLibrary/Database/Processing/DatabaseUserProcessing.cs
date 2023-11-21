@@ -107,11 +107,11 @@ public class DatabaseUserProcessing
 
         Dictionary<string, object> parameters = new()
         {
-            {DbUserdataSchema.PARAM_FIRSTNAME, newUser.FirstName},
-            {DbUserdataSchema.PARAM_LASTNAME, newUser.LastName},
-            {DbUserdataSchema.PARAM_EMAIL, newUser.Email},
-            {DbUserdataSchema.PARAM_ID, newUser.CardID },
-            {DbUserdataSchema.PARAM_PIN, newUser.CardPin },
+            {DbUserdataSchema.PARAM_FIRSTNAME, newUser.FirstName ?? ""},
+            {DbUserdataSchema.PARAM_LASTNAME, newUser.LastName ?? ""},
+            {DbUserdataSchema.PARAM_EMAIL, newUser.Email ?? ""},
+            {DbUserdataSchema.PARAM_ID, newUser.CardID ?? ""},
+            {DbUserdataSchema.PARAM_PIN, newUser.CardPin ?? ""},
             {DbUserdataSchema.PARAM_STARTVALIDITY, newUser.StartValidityTime },
             {DbUserdataSchema.PARAM_ENDVALIDITY, newUser.EndValidityTime }
         };
@@ -134,11 +134,11 @@ public class DatabaseUserProcessing
         Dictionary<string, object> parameters = new()
         {
             {DbUserdataSchema.PARAM_PREVIOUSID, previousId},
-            {DbUserdataSchema.PARAM_FIRSTNAME, newUserData.FirstName},
-            {DbUserdataSchema.PARAM_LASTNAME, newUserData.LastName},
-            {DbUserdataSchema.PARAM_EMAIL,  newUserData.Email},
-            {DbUserdataSchema.PARAM_ID, newUserData.CardID },
-            {DbUserdataSchema.PARAM_PIN, newUserData.CardPin },
+            {DbUserdataSchema.PARAM_FIRSTNAME, newUserData.FirstName ?? ""},
+            {DbUserdataSchema.PARAM_LASTNAME, newUserData.LastName ?? ""},
+            {DbUserdataSchema.PARAM_EMAIL,  newUserData.Email ?? ""},
+            {DbUserdataSchema.PARAM_ID, newUserData.CardID ?? "" },
+            {DbUserdataSchema.PARAM_PIN, newUserData.CardPin ?? "" },
             {DbUserdataSchema.PARAM_STARTVALIDITY, newUserData.StartValidityTime },
             {DbUserdataSchema.PARAM_ENDVALIDITY,  newUserData.EndValidityTime }
         };
