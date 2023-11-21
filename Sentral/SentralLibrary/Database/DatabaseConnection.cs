@@ -37,7 +37,7 @@ public class DatabaseConnection
             // Optionally, execute a simple query like "SELECT 1" to test the connection
             return true;
         }
-        catch (Exception)
+        catch (Exception ex)
         {
             return false;
         }

@@ -24,6 +24,7 @@ public class DatabaseConnectionOld
         DatabaseName = username;
         connectionString = $"Host={hostIp};Port={port};Username={username};Password={password};Database={database}";
     }
+    /*
 
     public bool TestConnection()
     {
@@ -216,8 +217,8 @@ public class DatabaseConnectionOld
             {DbUserdataSchema.PARAM_EMAIL,  newUserData.Email},
             {DbUserdataSchema.PARAM_ID, newUserData.CardID },
             {DbUserdataSchema.PARAM_PIN, newUserData.CardPin },
-            {DbUserdataSchema.PARAM_STARTVALIDITY, newUserData.ValidityPeriod.start },
-            {DbUserdataSchema.PARAM_ENDVALIDITY,  newUserData.ValidityPeriod.end }
+            {DbUserdataSchema.PARAM_STARTVALIDITY, newUserData.StartValidityTime },
+            {DbUserdataSchema.PARAM_ENDVALIDITY,  newUserData.EndValidityTime }
         };
 
         try
@@ -528,5 +529,5 @@ public class DatabaseConnectionOld
     {
         //uiConnection?.PutOnUI($"Debug (database): {message}");
     }
-
+    */
 }

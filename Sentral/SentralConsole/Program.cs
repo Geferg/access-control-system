@@ -4,7 +4,10 @@ using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using Microsoft.Extensions.DependencyInjection;
 using SentralLibrary;
+using SentralLibrary.Database;
+using SentralLibrary.Database.Processing;
 using SentralLibrary.DataClasses;
 using SentralLibrary.TcpRequests;
 
@@ -35,25 +38,52 @@ internal class Program
     private static readonly UIConnection uiConnection = new();
     private static readonly UIDialogs dialogs = new(uiConnection);
 
+    private static readonly DatabaseConnection databaseConnection = new(dbIP, dbDatabase, dbIP, dbUsername, dbPassword);
+
+
+
     static async Task Main(string[] args)
     {
         Console.WriteLine("\u001b]0;Sentral\u0007");
         Console.Clear();
 
-        uiConnection.ClassToUI += OnWriteToUI;
-        uiConnection.UIStringToClass += OnRecieveFromUI;
-        uiConnection.UIKeyToClass += OnGetKeypress;
-        tcpServer.AlarmReport += OnLogAlarmReport;
-        tcpServer.AccessReport += OnLogAccessReport;
+        //ServiceCollection serviceCollection = new ServiceCollection();
+        //serviceCollection.AddSingleton(provider => new DatabaseConnection(dbIP, dbDatabase, dbIP, dbUsername, dbPassword));
+
+        //serviceCollection.AddTransient<DatabaseAccess>();
+        //serviceCollection.AddTransient<DatabaseUserProcessing>();
+        // ...
+        //var serviceProvider = serviceCollection.BuildServiceProvider();
+
+        DatabaseConnection sharedDatabaseConnection = new(dbIP, dbDatabase, dbPort, dbUsername, dbPassword);
+
+        DatabaseAccess sharedDatabaseAccess = new(sharedDatabaseConnection);
+
+        DatabaseUserProcessing userProcessing = new(sharedDatabaseAccess);
+        DatabaseAccessLogProcessing accessProcessing = new(sharedDatabaseAccess);
+        DatabaseAlarmLogProcessing alarmLogProcessing = new(sharedDatabaseAccess);
+
+        //uiConnection.ClassToUI += OnWriteToUI;
+        //uiConnection.UIStringToClass += OnRecieveFromUI;
+        //uiConnection.UIKeyToClass += OnGetKeypress;
+        //tcpServer.AlarmReport += OnLogAlarmReport;
+        //tcpServer.AccessReport += OnLogAccessReport;
 
         // Database connection
-        while (!dbConnection.TestConnection())
+        while (!sharedDatabaseConnection.TestConnection())
         {
             Console.WriteLine("failed to connect to database, retrying...");
             Thread.Sleep(1000);
         }
 
+        foreach (var u in accessProcessing.GetAccessLogs(DateTime.MinValue, DateTime.MaxValue))
+        {
+            Console.WriteLine($"[{u.DoorNumber}] {u.CardId}");
+        }
+        Console.ReadKey(true);
+
         // TCP connection
+        /*
         tcpServer.Start();
 
         dialogs.ListCommands();
@@ -107,9 +137,11 @@ internal class Program
                     break;
             }
         }
+        */
     }
 
     // CONNECTION COMMANDS
+    /*
     private static void HandleDatabaseDetailsCommand(DatabaseConnectionOld connection)
     {
         if(connection.TestConnection())
@@ -387,5 +419,5 @@ internal class Program
             return null;
         }
     }
-
+    */
 }

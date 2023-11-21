@@ -8,7 +8,110 @@ using System.Threading.Tasks;
 namespace SentralLibrary;
 internal static class DbUserdataSchema
 {
+    // ================= PARAMETERS =================
+    // User data
+    public const string Parameter_CardId = "CardId";
+    public const string Parameter_CardPin = "CardPin";
+    public const string Parameter_Email = "Email";
+    public const string Parameter_FirstName = "FirstName";
+    public const string Parameter_LastName = "LastName";
+    public const string Parameter_StartValidity = "ValidEnd";
+    public const string Parameter_EndValidity = "ValidStart";
+
+    public const string Parameter_OldCardId = "PreviousCardId";
+
+    // Access log
+    public const string Parameter_ApprovedEntry = "ApprovedEntry";
+    public const string Parameter_TimeOfEntry = "TimeOfEntry";
+
+    public const string Parameter_DoorNumber = "DoorNumber";
+    public const string Parameter_DateTimeStart = "StartDate";
+    public const string Parameter_DateTimeEnd = "EndDate";
+
+    // Alarm log
+    public const string Parameter_TimeOfAlarm = "TimeOfAlarm";
+    public const string Parameter_AlarmType = "AlarmType";
+
+    // ================= QUERIES =================
+
+    // User data
+    public const string Query_AddUser = $"select * from adduser(" +
+        $"@{Parameter_CardId}," +
+        $"@{Parameter_CardPin}," +
+        $"@{Parameter_Email}," +
+        $"@{Parameter_FirstName}," +
+        $"@{Parameter_LastName}," +
+        $"@{Parameter_EndValidity}," +
+        $"@{Parameter_StartValidity})";
+
+    public const string Query_EditUser = $"select * from updateuser(" +
+        $"@{Parameter_CardId}," +
+        $"@{Parameter_CardPin}," +
+        $"@{Parameter_Email}," +
+        $"@{Parameter_FirstName}," +
+        $"@{Parameter_LastName}," +
+        $"@{Parameter_OldCardId}," +
+        $"@{Parameter_EndValidity}," +
+        $"@{Parameter_StartValidity})";
+
+    public const string Query_GetUserbase = "select * from GetUserbase()";
+
+    public const string Query_GetUser = $"select * from GetUserbase(@{Parameter_CardId})";
+
+    public const string Query_PeekUser = $"select * from peekuser(@{Parameter_CardId})";
+
+    public const string Query_RemoveUser = $"select * from RemoveUser(@{Parameter_CardId})";
+
+    public const string Query_ValidateUser = $"select * from ValidateUser(" +
+        $"@{Parameter_CardId}," +
+        $"@{Parameter_CardPin})";
+
+    // Access log
+    public const string Query_LogAccess = $"select * from AddAccessLog(" +
+        $"@{Parameter_CardId}," +
+        $"@{Parameter_ApprovedEntry}," +
+        $"@{Parameter_TimeOfEntry}," +
+        $"@{Parameter_DoorNumber})";
+
+    public const string Query_GetDoorAccessReport = $"select * from DoorReport(" +
+        $"@{Parameter_DoorNumber}," +
+        $"@{Parameter_DateTimeStart}," +
+        $"@{Parameter_DateTimeEnd})";
+
+    public const string Query_GetAccessReport = $"select * from AccessReport(" +
+        $"@{Parameter_DateTimeStart}," +
+        $"@{Parameter_DateTimeEnd})";
+
+    public const string Query_GetSuspiciousUsers = "select * from SuspiciousUsers()";
+
+    // Alarm log
+    public const string Query_LogAlarm = $"select * from AddAlarmLog(" +
+        $"@{Parameter_TimeOfAlarm}," +
+        $"@{Parameter_DoorNumber}," +
+        $"@{Parameter_AlarmType})";
+
+    public const string Query_GetAlarmReport = $"select * from AlarmReport(" +
+        $"@{Parameter_DateTimeStart}," +
+        $"@{Parameter_DateTimeEnd})";
+
+    // ================= RETURNS =================
+
+    public const string Return_FirstName = "firstName";
+    public const string Return_LastName = "lastName";
+    public const string Return_Email = "emailAddress";
+    public const string Return_Id = "cardId";
+    public const string Return_Pin = "cardPin";
+    public const string Return_StartValidity = "validStart";
+    public const string Return_EndValidity = "validEnd";
+    public const string Return_Approved = "approvedentry";
+    public const string Return_TimeOfAlarm = "timeOfAlarm";
+    public const string Return_TimeOfEntry = "timeOfEntry";
+    public const string Return_DoorNumber = "doorNumber";
+    public const string Return_AlarmType = "alarmType";
+
+    // ================= DEPRECATED =================
     // Columns
+    /*
     public const string COLUMN_FIRSTNAME = "first_name";
     public const string COLUMN_LASTNAME = "last_name";
     public const string COLUMN_EMAIL = "email_address";
@@ -59,4 +162,5 @@ internal static class DbUserdataSchema
     public const string FUNCTION_GETDOORACCESSLOGS = "doorreport";
     public const string FUNCTION_GETALARMLOG = "alarmreport";
     public const string FUNCTION_GETSUSPICIOUSUSERS = "suspicioususers";
+    */
 }
