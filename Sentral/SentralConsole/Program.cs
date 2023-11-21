@@ -30,8 +30,8 @@ internal class Program
     private const string missingInDbMessage = "user not found in database";
     private const string failureInDbMessage = "could not perform operation in database";
 
-    private static readonly DatabaseConnection dbConnection = new(dbIP, dbPort, dbUsername, dbPassword, dbDatabase);
-    private static readonly TcpConnection tcpServer = new(8000);
+    private static readonly DatabaseConnectionOld dbConnection = new(dbIP, dbPort, dbUsername, dbPassword, dbDatabase);
+    private static readonly TcpConnectionOld tcpServer = new(8000);
     private static readonly UIConnection uiConnection = new();
     private static readonly UIDialogs dialogs = new(uiConnection);
 
@@ -110,7 +110,7 @@ internal class Program
     }
 
     // CONNECTION COMMANDS
-    private static void HandleDatabaseDetailsCommand(DatabaseConnection connection)
+    private static void HandleDatabaseDetailsCommand(DatabaseConnectionOld connection)
     {
         if(connection.TestConnection())
         {
@@ -129,7 +129,7 @@ internal class Program
         Console.WriteLine("");
     }
 
-    private static void HandleSystemDetailsCommand(TcpConnection connection)
+    private static void HandleSystemDetailsCommand(TcpConnectionOld connection)
     {
         Console.WriteLine("tcp system details");
         Console.WriteLine($"  autorized connections: {connection.GetAutorizedClientCount()}");

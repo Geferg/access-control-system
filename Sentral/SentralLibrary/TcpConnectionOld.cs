@@ -21,7 +21,7 @@ using System.Threading.Tasks;
  */
 
 namespace SentralLibrary;
-public class TcpConnection
+public class TcpConnectionOld
 {
     private readonly TcpListener listener;
     private List<TcpClientData> clients;
@@ -37,7 +37,7 @@ public class TcpConnection
     public delegate void AccessHandler(TcpClientData clientInfo, AccessRequest request);
     public event AccessHandler? Access;
 
-    public TcpConnection(int port)
+    public TcpConnectionOld(int port)
     {
         listener = new(IPAddress.Any, port);
         clients = new();

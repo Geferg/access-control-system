@@ -9,7 +9,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace SentralLibrary;
-public class DatabaseConnection
+public class DatabaseConnectionOld
 {
     public readonly string HostIp;
     public readonly string HostPort;
@@ -17,7 +17,7 @@ public class DatabaseConnection
     private readonly string connectionString;
     //private UIConnection? uiConnection;
 
-    public DatabaseConnection(string hostIp, string port, string username, string password, string database)
+    public DatabaseConnectionOld(string hostIp, string port, string username, string password, string database)
     {
         HostIp = hostIp;
         HostPort = port;
