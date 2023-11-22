@@ -11,21 +11,30 @@ public class TcpConnectionManager
 {
     private readonly TcpListener listener;
     private readonly List<TcpClientData> clients;
+    private readonly TcpClientHandler clientHandler;
+    private readonly CancellationTokenSource cancellationTokenSource;
+    private readonly TcpRequestProcessor processor;
 
     public TcpConnectionManager(int port)
     {
         listener = new(IPAddress.Any, port);
         clients = new();
+        cancellationTokenSource = new();
+
+        processor = new();
+        clientHandler = new(processor);
+        clientHandler.ClientDisconnected += ClientHandler_ClientDisconnected;
     }
 
     public void Start()
     {
         listener.Start();
-        ListenForClientsAsync();
+        _ = ListenForClientsAsync(cancellationTokenSource.Token);
     }
 
     public void Stop()
     {
+        cancellationTokenSource.Cancel();
         listener.Stop();
         lock (clients)
         {
@@ -37,31 +46,33 @@ public class TcpConnectionManager
         }
     }
 
-    private async void ListenForClientsAsync()
+    private async Task ListenForClientsAsync(CancellationToken cancellationToken)
     {
-        // Does this go here?
         try
         {
-            while (true)
+            while (!cancellationToken.IsCancellationRequested)
             {
-                TcpClient newClient = await listener.AcceptTcpClientAsync();
+                TcpClient newClient = await listener.AcceptTcpClientAsync(cancellationToken);
                 TcpClientData client = new(newClient);
                 lock (clients)
                 {
                     clients.Add(client);
-                    //TryLogMessage($"Client connected - {client.TcpClient.Client.RemoteEndPoint}");
                 }
 
-                _ = HandleClientAsync(client);
+                _ = clientHandler.HandleClientAsync(client, cancellationToken);
             }
         }
         catch (ObjectDisposedException)
         {
-            //TryLogMessage("Lister has been stopped.");
+            //TODO consider handling listener stopped
         }
-        catch (Exception ex)
+    }
+
+    private void ClientHandler_ClientDisconnected(TcpClientData clientData)
+    {
+        lock (clients)
         {
-            //TryLogMessage($"Failed to listen: {ex}");
+            clients.Remove(clientData);
         }
     }
 }
