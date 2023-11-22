@@ -11,9 +11,12 @@ public class AccessRequest : IRequest
     public string? CardId { get; set; }
     public string? Pin { get; set; }
     public string? RequestType { get; set; }
+    public DateTime Time { get; set; }
+    public bool Approved { get; set; }
+    public int DoorNumber { get; set; }
 
     public AccessRequest()
     {
-        RequestType = TcpConnectionDictionary.request_access;
+        RequestType = SentralLibrary.TcpRequestConstants.RequestAccess;
     }
 }

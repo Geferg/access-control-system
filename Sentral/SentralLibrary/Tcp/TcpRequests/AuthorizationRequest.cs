@@ -13,6 +13,6 @@ internal class AuthorizationRequest : IRequest
 
     public AuthorizationRequest()
     {
-        RequestType = TcpConnectionDictionary.request_authorization;
+        RequestType = SentralLibrary.TcpRequestConstants.request_authorization;
     }
 }

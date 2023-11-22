@@ -1,4 +1,5 @@
-﻿using System;
+﻿using SentralLibrary.Tcp.TcpRequests;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Sockets;
@@ -12,10 +13,12 @@ public class TcpClientHandler
     public event ClientDisconnectedHandler? ClientDisconnected;
 
     private readonly TcpRequestProcessor requestProcessor;
+    private readonly TcpResponseProcessor responseProcessor;
 
-    public TcpClientHandler(TcpRequestProcessor requestProcessor)
+    public TcpClientHandler(TcpRequestProcessor requestProcessor, TcpResponseProcessor responseProcessor)
     {
         this.requestProcessor = requestProcessor;
+        this.responseProcessor = responseProcessor;
     }
 
     public async Task HandleClientAsync(TcpClientData clientData, CancellationToken cancellationToken)
@@ -34,7 +37,8 @@ public class TcpClientHandler
                 }
 
                 string request = Encoding.UTF8.GetString(buffer, 0, bytesRead);
-                requestProcessor.ProccessClientRequest(clientData, request);
+                Response response = requestProcessor.ProcessClientRequest(clientData, request);
+                responseProcessor.SendResponse(clientData, response);
             }
         }
         finally

@@ -181,15 +181,15 @@ public class TcpConnectionOld
             {
                 //TODO Add cases
                 //TODO add generic type response handler
-                case TcpConnectionDictionary.request_authorization:
+                case TcpRequestConstants.request_authorization:
                     HandleAuthorizationRequest(clientInfo, JsonConvert.DeserializeObject<AuthorizationRequest>(request));
                     break;
 
-                case TcpConnectionDictionary.request_alarmReport:
+                case TcpRequestConstants.request_alarmReport:
                     HandleAlarmReportRequest(clientInfo, JsonConvert.DeserializeObject<AlarmReportRequest>(request));
                     break;
 
-                case TcpConnectionDictionary.request_access:
+                case TcpRequestConstants.request_access:
                     HandleAccessRequest(clientInfo, JsonConvert.DeserializeObject<AccessRequest>(request));
                     break;
             }
@@ -205,23 +205,23 @@ public class TcpConnectionOld
 
     private void HandleAccessRequest(TcpClientData clientInfo, AccessRequest? request)
     {
-        string actionType = TcpConnectionDictionary.request_access;
+        string actionType = TcpRequestConstants.request_access;
         string message;
         string status;
 
         if (request == null)
         {
-            status = TcpConnectionDictionary.status_fail;
+            status = TcpRequestConstants.status_fail;
             message = "invalid request type";
         }
         else if(true)
         {
-            status = TcpConnectionDictionary.status_notAccepted;
+            status = TcpRequestConstants.status_notAccepted;
             message = "invalid credentials";
         }
         else
         {
-            status= TcpConnectionDictionary.status_accepted;
+            status= TcpRequestConstants.status_accepted;
             message = "access granted";
         }
 
@@ -230,24 +230,24 @@ public class TcpConnectionOld
 
     private void HandleAlarmReportRequest(TcpClientData clientInfo, AlarmReportRequest? request)
     {
-        string actionType = TcpConnectionDictionary.request_alarmReport;
+        string actionType = TcpRequestConstants.request_alarmReport;
         string message;
         string status;
 
         if (request == null)
         {
-            status = TcpConnectionDictionary.status_fail;
+            status = TcpRequestConstants.status_fail;
             message = "invalid request type";
         }
-        else if (request.AlarmType != TcpConnectionDictionary.alarm_breach &&
-            request.AlarmType != TcpConnectionDictionary.alarm_timeout)
+        else if (request.AlarmType != TcpRequestConstants.alarm_breach &&
+            request.AlarmType != TcpRequestConstants.alarm_timeout)
         {
-            status = TcpConnectionDictionary.status_notAccepted;
+            status = TcpRequestConstants.status_notAccepted;
             message = "invalid alarm type";
         }
         else
         {
-            status = TcpConnectionDictionary.status_accepted;
+            status = TcpRequestConstants.status_accepted;
             message = "report is logged";
             AlarmReport?.Invoke(clientInfo, request);
         }
@@ -257,23 +257,23 @@ public class TcpConnectionOld
 
     private void HandleAuthorizationRequest(TcpClientData clientInfo, AuthorizationRequest? request)
     {
-        string actionType = TcpConnectionDictionary.request_authorization;
+        string actionType = TcpRequestConstants.request_authorization;
         string message;
         string status;
 
         if (request == null)
         {
-            status = TcpConnectionDictionary.status_fail;
+            status = TcpRequestConstants.status_fail;
             message = "invalid request type";
         }
         else if (request.ClientId < 1 || request.ClientId > 99 || clients.Any(c => c.ClientId == request.ClientId))
         {
-            status = TcpConnectionDictionary.status_notAccepted;
+            status = TcpRequestConstants.status_notAccepted;
             message = "id number rejected";
         }
         else
         {
-            status = TcpConnectionDictionary.status_accepted;
+            status = TcpRequestConstants.status_accepted;
             message = "id number accepted";
             clientInfo.IsAuthenticated = true;
             clientInfo.ClientId = request.ClientId;

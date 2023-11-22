@@ -9,7 +9,7 @@ using SentralLibrary;
 using SentralLibrary.Database;
 using SentralLibrary.Database.Processing;
 using SentralLibrary.DataClasses;
-using SentralLibrary.TcpRequests;
+using SentralLibrary.TcpRequestConstants;
 
 namespace SentralConsole;
 

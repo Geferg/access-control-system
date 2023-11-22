@@ -7,13 +7,12 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace SentralLibrary.Tcp;
-public class TcpConnectionManager
+public class TcpConnectionManager : IClientManager
 {
     private readonly TcpListener listener;
     private readonly List<TcpClientData> clients;
     private readonly TcpClientHandler clientHandler;
     private readonly CancellationTokenSource cancellationTokenSource;
-    private readonly TcpRequestProcessor processor;
 
     public TcpConnectionManager(int port)
     {
@@ -21,8 +20,9 @@ public class TcpConnectionManager
         clients = new();
         cancellationTokenSource = new();
 
-        processor = new();
-        clientHandler = new(processor);
+        TcpRequestProcessor requestProcessor = new(this);
+        TcpResponseProcessor responseProcessor = new();
+        clientHandler = new(requestProcessor, responseProcessor);
         clientHandler.ClientDisconnected += ClientHandler_ClientDisconnected;
     }
 
@@ -44,6 +44,11 @@ public class TcpConnectionManager
             }
             clients.Clear();
         }
+    }
+
+    public bool IsDuplicateClientId(int clientId)
+    {
+        return clients.Any(client => client.Equals(clientId));
     }
 
     private async Task ListenForClientsAsync(CancellationToken cancellationToken)
