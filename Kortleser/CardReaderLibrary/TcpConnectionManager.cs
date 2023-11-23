@@ -10,8 +10,8 @@ public class TcpConnectionManager
 {
     public string ServerAddress;
 
-    private TcpClient client;
-    private NetworkStream stream;
+    private readonly TcpClient client;
+    private readonly NetworkStream stream;
     public event EventHandler<string>? LogMessage;
 
     public TcpConnectionManager(string serverAddress, int serverPort)

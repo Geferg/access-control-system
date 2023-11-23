@@ -7,5 +7,5 @@ using System.Threading.Tasks;
 namespace CardReaderLibrary.TcpRequests;
 public interface IRequest
 {
-    string? RequestType { get; }
+    string? RequestType { get; set; }
 }

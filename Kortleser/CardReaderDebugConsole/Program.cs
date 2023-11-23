@@ -27,6 +27,8 @@ internal class Program
         Console.WriteLine("\u001b]0;Kortleser\u0007");
         Console.Clear();
 
+        //TODO take com port input (list available?)
+
         InitializeSerialConnection("COM7");
         Console.WriteLine($"initialized serial port {serialConnection!.Port}");
 
@@ -38,7 +40,20 @@ internal class Program
         InitializeTcpConnection("127.0.0.1", 8000);
         Console.WriteLine($"connected to server {tcpConnection!.ServerAddress}");
 
-        // Authorize connection with central
+        await AuthorizeTcpConnection();
+
+        //TODO take id and pin and send request to central
+
+
+        Console.WriteLine("Press escape to close.");
+        while (Console.ReadKey(true).Key != ConsoleKey.Escape);
+        serialConnection.CloseConnection();
+    }
+
+    // NEW METHODS
+
+    private static async Task AuthorizeTcpConnection()
+    {
         bool isAuthorized = false;
         while (!isAuthorized)
         {
@@ -55,36 +70,42 @@ internal class Program
                 isAuthorized = authorizationResponse.Status == TcpConnectionDictionary.status_accepted;
             }
         }
-
-        Console.WriteLine("Press escape to close.");
-        while (Console.ReadKey(true).Key != ConsoleKey.Escape);
-        serialConnection.CloseConnection();
     }
+
+    // OLD METHODS
 
     private static async void OnHardwareMessageReceived(string message)
     {
-        Console.WriteLine($"Received (hardware): {message}");
-        var state = SerialConnectionManager.ExtractState(message);
+        //TODO link access attempts to lock state
+        //TODO lock door when closed
 
-        Console.WriteLine($"Locked: {state.locked}");
-        Console.WriteLine($"Open: {state.open}");
-        Console.WriteLine($"Alarm: {state.alarm}");
-        Console.WriteLine($"Breach State: {state.breachState}");
-        Console.WriteLine($"Time: {state.time}");
+        bool debug = true;
 
-        if (!state.open)
+        var (locked, open, alarm, breachState, time) = SerialConnectionManager.ExtractState(message);
+
+        if (debug)
         {
-            lastTimeClosed = state.time;
+            Console.WriteLine($"Received (hardware): {message}");
+            Console.WriteLine($"Locked: {locked}");
+            Console.WriteLine($"Open: {open}");
+            Console.WriteLine($"Alarm: {alarm}");
+            Console.WriteLine($"Breach State: {breachState}");
+            Console.WriteLine($"Time: {time}");
         }
 
-        if (!state.locked)
+        if (!open)
         {
-            lastTimeLocked = state.time;
+            lastTimeClosed = time;
         }
 
-        if (state.breachState > 500)
+        if (!locked)
         {
-            Response? breachResponse = await SendAlarmReportRequestAsync(state.time, TcpConnectionDictionary.alarm_breach);
+            lastTimeLocked = time;
+        }
+
+        if (breachState > 500)
+        {
+            Response? breachResponse = await SendAlarmReportRequestAsync(time, TcpConnectionDictionary.alarm_breach);
 
             if (breachResponse == null)
             {
@@ -96,9 +117,9 @@ internal class Program
             }
         }
 
-        if (state.open && lastTimeClosed.AddSeconds(30) < state.time)
+        if (open && lastTimeClosed.AddSeconds(30) < time)
         {
-            Response? timeoutResponse = await SendAlarmReportRequestAsync(state.time, TcpConnectionDictionary.alarm_timeout);
+            Response? timeoutResponse = await SendAlarmReportRequestAsync(time, TcpConnectionDictionary.alarm_timeout);
 
             if (timeoutResponse == null)
             {
@@ -138,7 +159,6 @@ internal class Program
         {
             try
             {
-                // Uncomment before shipping
                 serialConnection!.OpenConnection();
             }
             catch (Exception)
@@ -186,7 +206,11 @@ internal class Program
     {
         try
         {
-            AlarmReportRequest requestObject = new(time, alarmType);
+            AlarmReportRequest requestObject = new()
+            {
+                AlarmType = alarmType,
+                Time = time
+            };
             string requestJson = JsonConvert.SerializeObject(requestObject);
             string responseJson = await tcpConnection!.SendRequestAsync(requestJson);
             return JsonConvert.DeserializeObject<Response?>(responseJson);

@@ -8,7 +8,6 @@ using Microsoft.Extensions.DependencyInjection;
 using SentralLibrary;
 using SentralLibrary.Database;
 using SentralLibrary.Database.Processing;
-using SentralLibrary.DataClasses;
 using SentralLibrary.Services;
 using SentralLibrary.Tcp;
 
@@ -91,8 +90,6 @@ internal class Program
         {
             Console.WriteLine($"[{log.DoorNumber}] {log.AlarmType}");
         }
-
-
 
         Console.ReadKey(true);
 

@@ -9,7 +9,7 @@ public class AuthorizationRequest : IRequest
 {
     public int ClientId { get; set; }
     public string? AdditionalInfo { get; set; }
-    public string? RequestType { get; }
+    public string? RequestType { get; set; }
 
     public AuthorizationRequest()
     {
