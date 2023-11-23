@@ -70,7 +70,11 @@ internal class Program
             Thread.Sleep(1000);
         }
 
-        Console.WriteLine("All users:");
+        Console.WriteLine("Kristian:");
+        var me = databaseService.GetUserById("0000");
+        Console.WriteLine($"[{me?.CardID}] {me?.FirstName}, pin: {me?.CardPin}");
+
+        Console.WriteLine("\nAll users:");
 
         foreach (var user in databaseService.GetAllUsers())
         {

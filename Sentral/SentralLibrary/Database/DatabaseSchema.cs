@@ -56,7 +56,7 @@ internal static class DatabaseSchema
 
     public const string Query_GetUserbase = "select * from GetUserbase()";
 
-    public const string Query_GetUser = $"select * from GetUserbase(@{Parameter_CardId})";
+    public const string Query_GetUser = $"select * from GetUser(@{Parameter_CardId})";
 
     public const string Query_PeekUser = $"select * from peekuser(@{Parameter_CardId})";
 

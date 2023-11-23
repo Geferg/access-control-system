@@ -6,6 +6,7 @@ using System.IO.Ports;
 using CardReaderLibrary.Tcp.TcpRequests;
 using CardReaderLibrary.Tcp;
 using CardReaderLibrary.Serial;
+using System.Net;
 
 /*
  * Concerns:
@@ -31,40 +32,55 @@ internal class Program
         Console.WriteLine("\u001b]0;Kortleser\u0007");
         Console.Clear();
 
-        //TODO take com port input (list available?)
 
         InitializeSerialConnection();
 
         Console.WriteLine($"Connected to serial port {serialConnection!.Port}");
 
-        serialConnection.DataReceived += OnHardwareMessageReceived;
+        while (!tcpConnection.Connected)
+        {
+            try
+            {
+                tcpConnection.OpenConnection();
+            }
+            catch (Exception)
+            {
+                Console.WriteLine("Could not connect to central, retrying");
+                Thread.Sleep(2000);
+            }
+        }
 
-        InitializeTcpConnection("127.0.0.1", 8000);
+        tcpConnection.OpenConnection();
+
         Console.WriteLine($"connected to server {tcpConnection!.ServerAddress}");
 
-        await AuthorizeTcpConnection();
+        SerialProcessing serialProcessing = new(serialConnection);
+        TcpProcessing tcpProcessing = new(tcpConnection);
 
-        doorStateManager = new(serialConnection, tcpConnection);
+        await AuthorizeTcpConnection(tcpProcessing);
 
-        string cardId = GetFourDigitInput("enter id");
-        string cardPin = GetFourDigitInput("enter pin");
+        doorStateManager = new(serialProcessing, tcpProcessing);
 
-        bool accessGranted = await CheckUserAccess(cardId, cardPin);
+        while (true)
+        {
+            string cardId = GetFourDigitInput("enter id");
+            string cardPin = GetFourDigitInput("enter pin");
 
-        //TODO unlock door
+            bool accessGranted = await CheckUserAccess(cardId, cardPin, tcpProcessing);
 
-        //TODO on door close, lock door
-
-        Console.WriteLine("Press escape to close.");
-        while (Console.ReadKey(true).Key != ConsoleKey.Escape);
-        serialConnection.CloseConnection();
+            if (accessGranted)
+            {
+                await doorStateManager.UnlockDoor();
+                Console.WriteLine("door unlocked");
+            }
+        }
     }
 
     // NEW METHODS
 
-    private static async Task<bool> CheckUserAccess(string cardId, string cardPin)
+    private static async Task<bool> CheckUserAccess(string cardId, string cardPin, TcpProcessing tcpProcessing)
     {
-        Response? response = await SendAccessRequestAsync(accessPointNumber, cardId, cardPin, DateTime.Now);
+        Response? response = await tcpProcessing.SendAccessRequestAsync(accessPointNumber, cardId, cardPin, DateTime.Now);
 
         if (response == null)
         {
@@ -82,13 +98,13 @@ internal class Program
         return true;
     }
 
-    private static async Task AuthorizeTcpConnection()
+    private static async Task AuthorizeTcpConnection(TcpProcessing tcpProcessing)
     {
         bool isAuthorized = false;
         while (!isAuthorized)
         {
             accessPointNumber = GetValidatedNumberInput("access point number", 1, 99);
-            Response? authorizationResponse = await SendAuthorizationRequestAsync(accessPointNumber);
+            Response? authorizationResponse = await tcpProcessing.SendAuthorizationRequestAsync(accessPointNumber);
 
             if (authorizationResponse == null)
             {
@@ -148,25 +164,6 @@ internal class Program
             {
                 Console.WriteLine($"Could not connect to serial port {serialConnection!.Port}, retrying");
                 continue;
-            }
-        }
-    }
-
-
-    // ===================== CENTRAL CONNECTION =====================
-
-    private static void InitializeTcpConnection(string ipAddress, int port)
-    {
-        while (tcpConnection == null)
-        {
-            try
-            {
-                tcpConnection = new TcpConnectionManager(ipAddress, port);
-            }
-            catch (Exception)
-            {
-                Console.WriteLine("Could not connect to central, retrying");
-                Thread.Sleep(2000);
             }
         }
     }

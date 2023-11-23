@@ -13,6 +13,9 @@ public class DoorStateManager
 {
     private const int doorOpenTimeoutThreshold = 15;
     private const int doorBreachLevelThreshold = 500;
+    private const int lockPin = 5;
+    private const int openPin = 6;
+    private const int alarmPin = 7;
 
     private readonly SerialProcessing serialProcessing;
     private readonly TcpProcessing tcpProcessing;
@@ -21,28 +24,27 @@ public class DoorStateManager
     public bool IsLocked { get; private set; }
     public int BreachLevel { get; private set; }
 
-    private DateTime LastTimeClosed { get; set; }
-    private DateTime LastTimeLocked { get; set; }
+    public bool IsBreached { get; private set; }
+    public bool IsTimeout { get; private set; }
 
+    private DateTime LastTimeClosed { get; set; }
 
     public DoorStateManager(SerialProcessing serialProcessing, TcpProcessing tcpProcessing)
     {
         this.serialProcessing = serialProcessing;
         this.tcpProcessing = tcpProcessing;
 
-        serialConnection.DataReceived += OnHardwareMessageReceived;
+        serialProcessing.DataReceived += OnHardwareMessageReceived;
 
         IsOpen = false;
         IsLocked = false;
         BreachLevel = 0;
         LastTimeClosed = DateTime.Now;
-        LastTimeLocked = DateTime.Now;
     }
 
-    public void UnlockDoor()
+    public async Task UnlockDoor()
     {
-
-        //TODO send command to unlock door via serial (DI for serial connection probably)
+        await serialProcessing.ChangeDigitalOutputs(lockPin, false);
     }
 
     private async Task DoorOpened(DateTime time)
@@ -55,18 +57,17 @@ public class DoorStateManager
         }
     }
 
-    private void DoorClosed(DateTime time)
+    private async Task DoorClosed(DateTime time)
     {
         IsOpen = false;
         LastTimeClosed = time;
 
-        //TODO send command to lock door via serial (DI for serial connection probably)
+        await serialProcessing.ChangeDigitalOutputs(lockPin, true);
     }
 
-    private void DoorLocked(DateTime time)
+    private void DoorLocked()
     {
         IsLocked = true;
-        LastTimeLocked = time;
     }
 
     private void DoorUnlocked()
@@ -122,12 +123,12 @@ public class DoorStateManager
         }
         else
         {
-            DoorClosed(time);
+            await DoorClosed(time);
         }
 
         if (locked)
         {
-            DoorLocked(time);
+            DoorLocked();
         }
         else
         {

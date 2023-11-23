@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 namespace CardReaderLibrary.Serial;
 public class SerialConnectionManager
 {
-    public string Port;
+    public readonly string Port;
 
     private const char startChar = '$';
     private const char endChar = '#';

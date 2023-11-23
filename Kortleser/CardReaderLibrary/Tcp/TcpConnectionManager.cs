@@ -25,8 +25,11 @@ public class TcpConnectionManager
 
     public void OpenConnection()
     {
-        client.Connect(ServerAddress, ServerPort);
-        stream = client.GetStream();
+        if (!client.Connected)
+        {
+            client.Connect(ServerAddress, ServerPort);
+            stream = client.GetStream();
+        }
     }
 
     public async Task<string> SendRequestAsync(string jsonRequest)

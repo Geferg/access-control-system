@@ -9,9 +9,13 @@ public class SerialProcessing
 {
     private readonly SerialConnectionManager serialConnection;
 
+    public delegate void DataReceivedHandler(string message);
+    public event DataReceivedHandler? DataReceived;
+
     public SerialProcessing(SerialConnectionManager serialConnection)
     {
         this.serialConnection = serialConnection;
+        serialConnection.DataReceived += (message) => DataReceived?.Invoke(message);
     }
 
     public async Task ForceMessage()
@@ -21,7 +25,7 @@ public class SerialProcessing
 
     public async Task<bool> ChangeNode(int nodeNumber)
     {
-        if (0 < nodeNumber || nodeNumber <= 999)
+        if (nodeNumber <= 0 || 999 < nodeNumber)
         {
             return false;
         }
@@ -42,7 +46,7 @@ public class SerialProcessing
 
     public async Task<bool> ChangeInterval(int intervalSeconds)
     {
-        if (0 < intervalSeconds || intervalSeconds <= 999)
+        if (intervalSeconds <= 0 || 999 < intervalSeconds)
         {
             return false;
         }
@@ -53,7 +57,7 @@ public class SerialProcessing
 
     public async Task<bool> ChangeDigitalOutputs(int pin, bool value)
     {
-        if ((0 < pin || pin <= 7) && pin != 9)
+        if ((pin < 0 || 7 <= pin) && pin != 9)
         {
             return false;
         }
