@@ -43,6 +43,27 @@ public class TcpConnectionManager
         }
     }
 
+    public int GetAuthorizedClientCount()
+    {
+        return clients.Where(c => c.IsAuthenticated).Count();
+    }
+
+    public int GetUnauthorizedClientCount()
+    {
+        return clients.Where(c => !c.IsAuthenticated).Count();
+    }
+
+    public List<int> GetClientIds()
+    {
+        List<int> result = new();
+        foreach (var client in clients)
+        {
+            result.Add(client.ClientId);
+        }
+
+        return result;
+    }
+
     private async Task ListenForClientsAsync(CancellationToken cancellationToken)
     {
         while (!cancellationToken.IsCancellationRequested)
@@ -58,7 +79,7 @@ public class TcpConnectionManager
             }
             catch (ObjectDisposedException)
             {
-                
+
             }
             catch (SocketException)
             {

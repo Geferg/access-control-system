@@ -13,11 +13,11 @@ public class DatabaseService : IDatabaseService
     private readonly DatabaseAccessLogProcessing accessProcessing;
     private readonly DatabaseAlarmLogProcessing alarmProcessing;
 
-    public DatabaseService(DatabaseUserProcessing userProcessing, DatabaseAccessLogProcessing accessProcessing, DatabaseAlarmLogProcessing alarmLogProcessing)
+    public DatabaseService(DatabaseUserProcessing userProcessing, DatabaseAccessLogProcessing accessProcessing, DatabaseAlarmLogProcessing alarmProcessing)
     {
         this.userProcessing = userProcessing;
         this.accessProcessing = accessProcessing;
-        this.alarmProcessing = alarmLogProcessing;
+        this.alarmProcessing = alarmProcessing;
     }
 
     public bool AddUser(UserDetailedData newUser)
@@ -78,5 +78,10 @@ public class DatabaseService : IDatabaseService
     public List<AccessLogData> GetDoorLogs(DateTime start, DateTime end, int doorNumber)
     {
         return accessProcessing.GetDoorLogs(start, end, doorNumber);
+    }
+
+    public List<string> GetSuspiciousUserIds()
+    {
+        return userProcessing.GetSuspiciousUserIds();
     }
 }

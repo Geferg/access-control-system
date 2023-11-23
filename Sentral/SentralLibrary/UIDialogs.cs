@@ -19,11 +19,11 @@ public class UIDialogs
     }
 
     // SERVE UI
-    public void ShowUsers(List<(string id, string firstName, string lastName)> users)
+    public void ShowUsers(List<UserSimpleData> users)
     {
-        foreach (var (id, firstName, lastName) in users)
+        foreach (var user in users.OrderBy(u => u.CardID).ToList())
         {
-            WriteLine($"[{id}] {firstName} {lastName}");
+            WriteLine($"[{user.CardID}] {user.FirstName} {user.LastName}");
         }
         WriteLine("");
     }
@@ -40,7 +40,8 @@ public class UIDialogs
         {
             FirstName = firstName,
             LastName = lastName,
-            Email = email
+            Email = email,
+            CardID = cardId
         };
 
         WriteLine("");
@@ -75,21 +76,10 @@ public class UIDialogs
         return UserConfirm($"are you sure you want to delete [{user.CardID}] {user.FirstName} {user.LastName}");
     }
 
-    public bool ExitProgramConfirmation()
-    {
-        if (!UserConfirm("are you sure you want to exit?"))
-        {
-            return false;
-        }
-        WriteLine("exiting...");
-        return true;
-    }
-
     public void ListCommands()
     {
         WriteLine("commands:");
         WriteLine("clear - clear the console");
-        WriteLine("exit - close the program");
         WriteLine("database - shows status of database");
         WriteLine("system - shows status of card readers");
         WriteLine("show - lists all users");
@@ -97,10 +87,10 @@ public class UIDialogs
         WriteLine("show [card id] - details about a specific user");
         WriteLine("edit [card id]- change data of existing user");
         WriteLine("remove [card id] - remove existing user");
-        WriteLine("accesslog - lists all access attempts between two dates");
-        WriteLine("suspicious - lists all suspicious users...");
-        WriteLine("door log...");
-        WriteLine("alarm log...");
+        WriteLine("access - lists all access attempts between two dates");
+        WriteLine("suspicious - lists all users with more than 10 unsuccessful access attempts");
+        WriteLine("alarm - shows all alarms between two times");
+        WriteLine("alarm [door number] - shows alarms for one door between two times");
         WriteLine("");
     }
 
@@ -181,37 +171,50 @@ public class UIDialogs
         return user;
     }
 
-    public void ShowAccessLogs(List<(string id, bool approved, DateTime time, int doorNumber)> logs)
+    public void ShowAccessLogs(List<AccessLogData> logs)
     {
-        if(logs.Count == 0)
+        logs = logs.OrderBy(l => l.Time).ToList();
+        if (logs.Count == 0)
         {
             WriteLine("no logs found");
             return;
         }
         WriteLine("access logs:");
-        foreach (var (id, approved, time, doorNumber) in logs)
+        foreach (var log in logs)
         {
             string approvedMessage = "not approved";
-            if (approved)
+            if (log.AccessGranted)
             {
                 approvedMessage = "approved";
             }
-            WriteLine($"[{id}] was {approvedMessage} at door {doorNumber} {time}");
+            WriteLine($"{log.Time.ToShortDateString()} ({log.Time.ToShortTimeString()}): [{log.CardId}] tried accessing {log.DoorNumber}: {approvedMessage}");
         }
         WriteLine("");
     }
 
-    public void ShowAlarmLogs(List<(DateTime time, int doorNumber, string alarmType)> logs)
+    public void ShowAlarmLogs(List<AlarmLogData> logs)
     {
+        logs = logs.OrderBy(l => l.Time).ToList();
         if (logs.Count == 0)
         {
             WriteLine("no logs found");
             return;
         }
         WriteLine("alarm logs:");
-        foreach (var (time, doorNumber, alarmType) in logs)
+        foreach (var log in logs)
         {
-            WriteLine($"{alarmType} at door {doorNumber} {time}");
+            WriteLine($"{log.AlarmType} at door {log.DoorNumber} ({log.Time.ToLongDateString()})");
+        }
+        WriteLine("");
+    }
+
+    public void ShowSuspiciousUserIds(List<string> ids)
+    {
+        ids.Sort();
+        WriteLine("suspicious users:");
+        foreach (var id in ids)
+        {
+            WriteLine($"[{id}]");
         }
         WriteLine("");
     }
@@ -246,11 +249,7 @@ public class UIDialogs
     private string ReadLine()
     {
         string? line = connection.GetStringFromUI();
-        if (line == null)
-        {
-            line = "";
-        }
-        return line;
+        return line ?? "";
     }
 
     private ConsoleKeyInfo ReadKey()

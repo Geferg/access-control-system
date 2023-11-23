@@ -27,6 +27,12 @@ public class DatabaseUserProcessing
         };
 
         DataTable dataTable = databaseAccess.ExecuteQuery(DatabaseSchema.Query_GetUser, parameters);
+
+        if (dataTable.Rows.Count <= 0 )
+        {
+            return null;
+        }
+
         DataRow row = dataTable.Rows[0];
 
         result.CardID = row[DatabaseSchema.Return_Id].ToString();
@@ -173,5 +179,23 @@ public class DatabaseUserProcessing
         }
 
         return result;
+    }
+
+    public List<string> GetSuspiciousUserIds()
+    {
+        List<string> users = new();
+
+        DataTable dataTable = databaseAccess.ExecuteQuery(DatabaseSchema.Query_GetSuspiciousUsers, new Dictionary<string, object>());
+
+        foreach (DataRow row in dataTable.Rows)
+        {
+            string? userId = row[DatabaseSchema.Return_Id].ToString();
+            if (userId != null)
+            {
+                users.Add(userId);
+            }
+        }
+
+        return users;
     }
 }

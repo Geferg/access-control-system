@@ -7,6 +7,7 @@ using System.Text.RegularExpressions;
 using Microsoft.Extensions.DependencyInjection;
 using SentralLibrary;
 using SentralLibrary.Database;
+using SentralLibrary.Database.DataClasses;
 using SentralLibrary.Database.Processing;
 using SentralLibrary.Services;
 using SentralLibrary.Tcp;
@@ -16,10 +17,11 @@ namespace SentralConsole;
 internal class Program
 {
     // INPUT PATTERN MATCHING
-    private static readonly Regex removeRegex = new(@"^add \d{4}");
+    private static readonly Regex removeRegex = new(@"^remove \d{4}");
     private static readonly Regex editRegex = new(@"^edit \d{4}$");
     private static readonly Regex showRegex = new(@"^show \d{4}$");
     private static readonly Regex addRegex = new(@"^add \d{4}");
+    private static readonly Regex alarmRegex = new(@"^alarm \d{1,3}");
 
     // DATABASE CONNECTION STRINGS
     //? move to static class
@@ -57,12 +59,6 @@ internal class Program
         TcpConnectionManager tcpConnection = new(8000, databaseService);
         tcpConnection.Start();
 
-        //uiConnection.ClassToUI += OnWriteToUI;
-        //uiConnection.UIStringToClass += OnRecieveFromUI;
-        //uiConnection.UIKeyToClass += OnGetKeypress;
-        //tcpServer.AlarmReport += OnLogAlarmReport;
-        //tcpServer.AccessReport += OnLogAccessReport;
-
         // Database connection
         while (!sharedDatabaseConnection.TestConnection())
         {
@@ -70,6 +66,11 @@ internal class Program
             Thread.Sleep(1000);
         }
 
+        uiConnection.ClassToUI += (message) => Console.Write(message);
+        uiConnection.UIStringToClass += () => Console.ReadLine();
+        uiConnection.UIKeyToClass += () => Console.ReadKey(true);
+
+        /*
         Console.WriteLine("Kristian:");
         var me = databaseService.GetUserById("0000");
         Console.WriteLine($"[{me?.CardID}] {me?.FirstName}, pin: {me?.CardPin}");
@@ -96,10 +97,8 @@ internal class Program
         }
 
         Console.ReadKey(true);
+        */
 
-        // TCP connection
-        /*
-        tcpServer.Start();
 
         dialogs.ListCommands();
 
@@ -119,45 +118,41 @@ internal class Program
                     HandleClearCommand();
                     break;
 
-                case "exit":
-                    HandleExitCommand();
-                    break;
-
                 case "show":
-                    HandleShowCommand();
+                    HandleShowCommand(databaseService);
                     break;
 
                 case "database":
-                    HandleDatabaseDetailsCommand(dbConnection);
+                    HandleDatabaseDetailsCommand(sharedDatabaseConnection);
                     break;
 
                 case "system":
-                    HandleSystemDetailsCommand(tcpServer);
+                    HandleSystemDetailsCommand(tcpConnection);
                     break;
 
-                case "accesslog":
-                    HandleAccessLogDetailsCommand();
+                case "access":
+                    HandleAccessLogDetailsCommand(databaseService);
                     break;
 
-                case "alarmlog":
-                    HandleAlarmLogDetailsCommand();
+                case "alarm":
+                    HandleAlarmLogDetailsCommand(databaseService);
                     break;
 
-                case "doorlog":
-                    HandleDoorLogDetailsCommand(command);
+                case "suspicious":
+                    HandleSuspiciousCommand(databaseService);
                     break;
 
                 default:
-                    FindPatternOnCommandAndHandle(command);
+                    FindPatternOnCommandAndHandle(databaseService, command);
                     break;
             }
         }
-        */
+
     }
 
     // CONNECTION COMMANDS
-    /*
-    private static void HandleDatabaseDetailsCommand(DatabaseConnectionOld connection)
+
+    private static void HandleDatabaseDetailsCommand(DatabaseConnectionManager connection)
     {
         if(connection.TestConnection())
         {
@@ -176,10 +171,10 @@ internal class Program
         Console.WriteLine("");
     }
 
-    private static void HandleSystemDetailsCommand(TcpConnectionOld connection)
+    private static void HandleSystemDetailsCommand(TcpConnectionManager connection)
     {
         Console.WriteLine("tcp system details");
-        Console.WriteLine($"  autorized connections: {connection.GetAutorizedClientCount()}");
+        Console.WriteLine($"  autorized connections: {connection.GetAuthorizedClientCount()}");
         Console.WriteLine($"unauthorized connetions: {connection.GetUnauthorizedClientCount()}");
         foreach (var id in connection.GetClientIds())
         {
@@ -189,7 +184,7 @@ internal class Program
     }
 
     // DATABASE INTERRACTION COMMANDS
-    private static void FindPatternOnCommandAndHandle(string command)
+    private static void FindPatternOnCommandAndHandle(DatabaseService databaseService, string command)
     {
         string? cardId = GetNumbersFromCommand(command);
         if (string.IsNullOrEmpty(cardId))
@@ -200,19 +195,23 @@ internal class Program
 
         if (addRegex.IsMatch(command))
         {
-            HandleAddSpecificCommand(cardId);
+            HandleAddSpecificCommand(databaseService, cardId);
         }
         else if (showRegex.IsMatch(command))
         {
-            HandleShowSpecificCommand(cardId);
+            HandleShowSpecificCommand(databaseService, cardId);
         }
         else if (editRegex.IsMatch(command))
         {
-            HandleEditSpecificCommand(cardId);
+            HandleEditSpecificCommand(databaseService, cardId);
         }
         else if (removeRegex.IsMatch(command))
         {
-            HandleRemoveSpecificCommand(cardId);
+            HandleRemoveSpecificCommand(databaseService, cardId);
+        }
+        else if (alarmRegex.IsMatch(command))
+        {
+            HandleDoorLogDetailsCommand(databaseService, command);
         }
         else
         {
@@ -226,23 +225,14 @@ internal class Program
         dialogs.ListCommands();
     }
 
-    private static void HandleExitCommand()
+    private static void HandleShowCommand(DatabaseService databaseService)
     {
-        if (dialogs.ExitProgramConfirmation())
-        {
-            tcpServer.Stop();
-            Environment.Exit(0);
-        }
+        dialogs.ShowUsers(databaseService.GetAllUsers());
     }
 
-    private static void HandleShowCommand()
+    private static void HandleShowSpecificCommand(DatabaseService databaseService, string cardId)
     {
-        dialogs.ShowUsers(dbConnection.GetUserbase().OrderBy(u => u.CardID).ToList());
-    }
-
-    private static void HandleShowSpecificCommand(string cardId)
-    {
-        UserDetailedData? selectedUser = dbConnection.GetUser(cardId);
+        UserDetailedData? selectedUser = databaseService.GetUserById(cardId);
 
         if (selectedUser != null)
         {
@@ -254,9 +244,9 @@ internal class Program
         }
     }
 
-    private static void HandleAddSpecificCommand(string cardId)
+    private static void HandleAddSpecificCommand(DatabaseService databaseService, string cardId)
     {
-        if (dbConnection.UserExists(cardId))
+        if (databaseService.UserExists(cardId))
         {
             Console.WriteLine("card id already exists!\n");
         }
@@ -266,14 +256,14 @@ internal class Program
 
             if (newUser != null)
             {
-                dbConnection.AddUser(newUser);
+                databaseService.AddUser(newUser);
             }
         }
     }
 
-    private static void HandleEditSpecificCommand(string cardId)
+    private static void HandleEditSpecificCommand(DatabaseService databaseService, string cardId)
     {
-        UserDetailedData? selectedUser = dbConnection.GetUser(cardId);
+        UserDetailedData? selectedUser = databaseService.GetUserById(cardId);
         if (selectedUser == null)
         {
             Console.WriteLine(missingInDbMessage);
@@ -281,29 +271,29 @@ internal class Program
         else
         {
             UserDetailedData newUser = dialogs.EditUser(selectedUser);
-            if (!dbConnection.EditUser(cardId, newUser))
+            if (!databaseService.EditUser(cardId, newUser))
             {
                 Console.WriteLine(failureInDbMessage);
             }
         }
     }
 
-    private static void HandleRemoveSpecificCommand(string cardId)
+    private static void HandleRemoveSpecificCommand(DatabaseService databaseService, string cardId)
     {
-        UserDetailedData? userToRemove = dbConnection.GetUser(cardId);
+        UserDetailedData? userToRemove = databaseService.GetUserById(cardId);
 
-        if (userToRemove == null)
+        if (userToRemove == null || userToRemove.CardID == null)
         {
             Console.WriteLine(missingInDbMessage + "\n");
         }
         else if (dialogs.DeleteUserConfirmation(userToRemove))
         {
-            dbConnection.RemoveUser(userToRemove.CardID);
+            databaseService.RemoveUser(userToRemove.CardID);
             Console.WriteLine($"removed user\n");
         }
     }
 
-    private static void HandleAccessLogDetailsCommand()
+    private static void HandleAccessLogDetailsCommand(DatabaseService databaseService)
     {
         Console.WriteLine("start date");
         DateTime start = dialogs.GetDateTime(0, 9999);
@@ -316,12 +306,12 @@ internal class Program
             return;
         }
 
-        List<AccessLogData> logs = dbConnection.GetAccessLogs(start, end);
+        List<AccessLogData> logs = databaseService.GetAccessLogs(start, end);
 
         dialogs.ShowAccessLogs(logs);
     }
 
-    private static void HandleAlarmLogDetailsCommand()
+    private static void HandleAlarmLogDetailsCommand(DatabaseService databaseService)
     {
         Console.WriteLine("start date");
         DateTime start = dialogs.GetDateTime(0, 9999);
@@ -334,12 +324,12 @@ internal class Program
             return;
         }
 
-        List<AlarmLogData> logs = dbConnection.GetAlarmLogs(start, end);
+        List<AlarmLogData> logs = databaseService.GetAlarmLogs(start, end);
 
         dialogs.ShowAlarmLogs(logs);
     }
 
-    private static void HandleDoorLogDetailsCommand(string command)
+    private static void HandleDoorLogDetailsCommand(DatabaseService databaseService, string command)
     {
         string? number = GetNumbersFromCommand(command);
 
@@ -361,66 +351,22 @@ internal class Program
             return;
         }
 
-        //List<(string id, bool approved, DateTime time, int doorNumber)> logs = dbConnection.GetDoorLogs(start, end);
+        List<AccessLogData> logs = databaseService.GetDoorLogs(start, end, doorNumber);
 
-        //dialogs.ShowAccessLogs(logs);
+        dialogs.ShowAccessLogs(logs);
     }
 
-    private static void HandleLogAlarm(DateTime timeOfAlarm, int doorNumber, string alarmType)
+    private static void HandleSuspiciousCommand(DatabaseService databaseService)
     {
-        AlarmLogData alarmData = new()
-        {
-            Time = timeOfAlarm,
-            DoorNumber = doorNumber,
-            AlarmType = alarmType
-        };
+        List<string> suspiciousUserIds = databaseService.GetSuspiciousUserIds();
 
-        dbConnection.LogAlarm(alarmData);
-    }
-
-    private static void HandleLogAccess(string cardId, bool approvedEntry, DateTime timeOfEntry, int doorNumber)
-    {
-        AccessLogData accessData = new()
-        {
-            CardId = cardId,
-            AccessGranted = approvedEntry,
-            Time = timeOfEntry,
-            DoorNumber = doorNumber
-        };
-
-        dbConnection.LogAccess(accessData);
-    }
-
-    // EVENT HANDLERS
-    private static void OnWriteToUI(string message)
-    {
-        Console.Write(message);
-    }
-
-    private static string? OnRecieveFromUI()
-    {
-        return Console.ReadLine();
-    }
-
-    private static ConsoleKeyInfo? OnGetKeypress()
-    {
-        return Console.ReadKey(true);
-    }
-
-    private static void OnLogAlarmReport(TcpClientData clientInfo, AlarmReportRequest request)
-    {
-        HandleLogAlarm(request.Time, clientInfo.ClientId, request.AlarmType);
-    }
-
-    private static void OnLogAccessReport(TcpClientData clientInfo, AccessReportRequest request)
-    {
-        HandleLogAccess(request.CardId, request.Approved, request.Time, request.DoorNumber);
+        dialogs.ShowSuspiciousUserIds(suspiciousUserIds);
     }
 
     // Helper methods
     private static string? GetNumbersFromCommand(string command)
     {
-        string pattern = @"\b\w+ (\d{4})\b";
+        string pattern = @"\b\w+ (\d{1,4})\b";
 
         Match match = Regex.Match(command, pattern);
 
@@ -434,5 +380,5 @@ internal class Program
             return null;
         }
     }
-    */
+
 }
