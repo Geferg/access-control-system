@@ -68,20 +68,35 @@ public class SerialConnectionManager
 
         if (buffer.ToString().Contains(startChar) && buffer.ToString().Contains(endChar))
         {
-            string message = ExtractMessage(buffer.ToString());
-            DataReceived?.Invoke(message);
+            string? message = ExtractMessage(buffer.ToString());
+
+            if (message != null)
+            {
+                DataReceived?.Invoke(message);
+            }
 
             buffer.Clear();
         }
 
     }
 
-    private string ExtractMessage(string data)
+    private string? ExtractMessage(string data)
     {
         int startIndex = data.IndexOf(startChar);
         int endIndex = data.IndexOf(endChar);
 
-        return data[startIndex..endIndex];
+        string? result = null;
+
+        try
+        {
+            result = data[startIndex..endIndex];
+        }
+        catch (Exception)
+        {
+
+        }
+
+        return result;
     }
 
     public static (bool locked, bool open, bool alarm, int breachState, DateTime time) ExtractState(string message)
