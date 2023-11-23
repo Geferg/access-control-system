@@ -2,6 +2,7 @@
 using System.Text;
 using CardReaderLibrary;
 using Newtonsoft.Json;
+using CardReaderLibrary.TcpRequests;
 
 /*
  * Concerns:
@@ -26,7 +27,7 @@ internal class Program
         Console.WriteLine("\u001b]0;Kortleser\u0007");
         Console.Clear();
 
-        InitializeSerialConnection("COM6");
+        InitializeSerialConnection("COM7");
         Console.WriteLine($"initialized serial port {serialConnection!.Port}");
 
         OpenSerialConnection(serialConnection);
@@ -168,7 +169,8 @@ internal class Program
     {
         try
         {
-            AuthorizationRequest requestObject = new(id);
+            AuthorizationRequest requestObject = new();
+            requestObject.ClientId = id;
             string requestJson = JsonConvert.SerializeObject(requestObject);
             string responseJson = await tcpConnection!.SendRequestAsync(requestJson);
             return JsonConvert.DeserializeObject<Response>(responseJson);

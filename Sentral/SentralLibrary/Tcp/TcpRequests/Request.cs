@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace SentralLibrary.Tcp.TcpRequests;
-public interface IRequest
+public class Request : IRequest
 {
-    string? RequestType { get; set; }
+    public string? RequestType { get; set; }
 }

@@ -22,26 +22,31 @@ public class TcpRequestProcessor
 
     public Response ProcessClientRequest(TcpClientData clientData, string requestString)
     {
-        IRequest? request = JsonConvert.DeserializeObject<IRequest>(requestString);
+        IRequest? request = JsonConvert.DeserializeObject<Request>(requestString);
 
         if (request == null )
         {
             return new(TcpRequestConstants.RequestInvalid, TcpRequestConstants.StatusFail, "request does not match any known patterns");
         }
 
-        return request switch
+        switch (request.RequestType)
         {
-            AuthorizationRequest authRequest when request.RequestType == TcpRequestConstants.RequestAuthorization
-            => HandleAuthorizationRequest(clientData, authRequest),
+            case TcpRequestConstants.RequestAuthorization:
+                AuthorizationRequest? authorizationRequest = JsonConvert.DeserializeObject<AuthorizationRequest>(requestString);
+                return HandleAuthorizationRequest(clientData, authorizationRequest);
 
-            AccessRequest accessRequest when request.RequestType == TcpRequestConstants.RequestAccess
-                => HandleAccessRequest(clientData, accessRequest),
+            case TcpRequestConstants.RequestAccess:
+                AccessRequest? accessRequest = JsonConvert.DeserializeObject<AccessRequest>(requestString);
+                return HandleAccessRequest(clientData, accessRequest);
 
-            AlarmReportRequest alarmReportRequest when request.RequestType == TcpRequestConstants.RequestAlarmReport
-                => HandleAlarmReportRequest(clientData, alarmReportRequest),
+            case TcpRequestConstants.RequestAlarmReport:
+                AlarmReportRequest? alarmReportRequest = JsonConvert.DeserializeObject<AlarmReportRequest>(requestString);
+                return HandleAlarmReportRequest(clientData, alarmReportRequest);
 
-            _ => HandleUnknownRequest(),
-        };
+            default:
+                return HandleUnknownRequest();
+        }
+
     }
 
     private Response HandleAuthorizationRequest(TcpClientData clientData, AuthorizationRequest? request)
@@ -94,7 +99,7 @@ public class TcpRequestProcessor
         return HandleUnknownRequest();
     }
 
-    private Response HandleUnknownRequest()
+    private static Response HandleUnknownRequest()
     {
         return new(TcpRequestConstants.RequestInvalid, TcpRequestConstants.StatusFail, "request does not match any known patterns");
     }

@@ -22,20 +22,20 @@ public class DatabaseAccessLogProcessing
 
         Dictionary<string, object> parameters = new()
         {
-            {DbUserdataSchema.Parameter_DateTimeStart, start },
-            {DbUserdataSchema.Parameter_DateTimeEnd, end }
+            {DatabaseSchema.Parameter_DateTimeStart, start },
+            {DatabaseSchema.Parameter_DateTimeEnd, end }
         };
 
-        DataTable dataTable = databaseAccess.ExecuteQuery(DbUserdataSchema.Query_GetAccessReport, parameters);
+        DataTable dataTable = databaseAccess.ExecuteQuery(DatabaseSchema.Query_GetAccessReport, parameters);
 
         foreach (DataRow log in dataTable.Rows)
         {
             AccessLogData newData = new()
             {
-                CardId = log[DbUserdataSchema.Return_Id].ToString(),
-                AccessGranted = Convert.ToBoolean(log[DbUserdataSchema.Return_Approved].ToString()),
-                Time = (DateTime)log[DbUserdataSchema.Return_TimeOfEntry],
-                DoorNumber = Convert.ToInt32(log[DbUserdataSchema.Return_DoorNumber].ToString())
+                CardId = log[DatabaseSchema.Return_Id].ToString(),
+                AccessGranted = Convert.ToBoolean(log[DatabaseSchema.Return_Approved].ToString()),
+                Time = (DateTime)log[DatabaseSchema.Return_TimeOfEntry],
+                DoorNumber = Convert.ToInt32(log[DatabaseSchema.Return_DoorNumber].ToString())
             };
 
             result.Add(newData);
@@ -50,20 +50,20 @@ public class DatabaseAccessLogProcessing
 
         Dictionary<string, object> parameters = new()
         {
-            {DbUserdataSchema.Parameter_DateTimeStart, start },
-            {DbUserdataSchema.Parameter_DateTimeEnd, end },
-            {DbUserdataSchema.Parameter_DoorNumber, doorNumber}
+            {DatabaseSchema.Parameter_DateTimeStart, start },
+            {DatabaseSchema.Parameter_DateTimeEnd, end },
+            {DatabaseSchema.Parameter_DoorNumber, doorNumber}
         };
 
-        DataTable dataTable = databaseAccess.ExecuteQuery(DbUserdataSchema.Query_GetDoorAccessReport, parameters);
+        DataTable dataTable = databaseAccess.ExecuteQuery(DatabaseSchema.Query_GetDoorAccessReport, parameters);
 
         foreach (DataRow log in dataTable.Rows)
         {
             AccessLogData newData = new()
             {
-                CardId = log[DbUserdataSchema.Return_Id].ToString(),
-                AccessGranted = Convert.ToBoolean(log[DbUserdataSchema.Return_Approved].ToString()),
-                Time = (DateTime)log[DbUserdataSchema.Return_TimeOfEntry],
+                CardId = log[DatabaseSchema.Return_Id].ToString(),
+                AccessGranted = Convert.ToBoolean(log[DatabaseSchema.Return_Approved].ToString()),
+                Time = (DateTime)log[DatabaseSchema.Return_TimeOfEntry],
                 DoorNumber = doorNumber
             };
 
@@ -79,13 +79,13 @@ public class DatabaseAccessLogProcessing
 
         Dictionary<string, object> parameters = new()
         {
-            {DbUserdataSchema.Parameter_TimeOfEntry, accessLog.Time },
-            {DbUserdataSchema.Parameter_DoorNumber, accessLog.DoorNumber },
-            {DbUserdataSchema.Parameter_TimeOfEntry, accessLog.AccessGranted },
-            {DbUserdataSchema.Parameter_CardId , accessLog.CardId ?? "" }
+            {DatabaseSchema.Parameter_TimeOfEntry, accessLog.Time },
+            {DatabaseSchema.Parameter_DoorNumber, accessLog.DoorNumber },
+            {DatabaseSchema.Parameter_TimeOfEntry, accessLog.AccessGranted },
+            {DatabaseSchema.Parameter_CardId , accessLog.CardId ?? "" }
         };
 
-        DataTable dataTable = databaseAccess.ExecuteQuery(DbUserdataSchema.Query_LogAccess, parameters);
+        DataTable dataTable = databaseAccess.ExecuteQuery(DatabaseSchema.Query_LogAccess, parameters);
 
         if (dataTable.Rows.Count > 0)
         {

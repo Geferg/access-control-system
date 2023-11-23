@@ -5,8 +5,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SentralLibrary;
-internal static class DbUserdataSchema
+namespace SentralLibrary.Database;
+internal static class DatabaseSchema
 {
     // ================= PARAMETERS =================
     // User data

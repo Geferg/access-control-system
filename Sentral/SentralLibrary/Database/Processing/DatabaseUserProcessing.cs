@@ -23,19 +23,19 @@ public class DatabaseUserProcessing
 
         Dictionary<string, object> parameters = new()
         {
-            {DbUserdataSchema.Parameter_CardId, id}
+            {DatabaseSchema.Parameter_CardId, id}
         };
 
-        DataTable dataTable = databaseAccess.ExecuteQuery(DbUserdataSchema.Query_GetUser, parameters);
+        DataTable dataTable = databaseAccess.ExecuteQuery(DatabaseSchema.Query_GetUser, parameters);
         DataRow row = dataTable.Rows[0];
 
-        result.CardID = row[DbUserdataSchema.Return_Id].ToString();
-        result.FirstName = row[DbUserdataSchema.Return_FirstName].ToString();
-        result.LastName = row[DbUserdataSchema.Return_LastName].ToString(); ;
-        result.Email = row[DbUserdataSchema.Return_Email].ToString();
-        result.CardPin = row[DbUserdataSchema.Return_Pin].ToString();
-        result.StartValidityTime = (DateTime)row[DbUserdataSchema.Return_StartValidity];
-        result.EndValidityTime = (DateTime)row[DbUserdataSchema.Return_EndValidity];
+        result.CardID = row[DatabaseSchema.Return_Id].ToString();
+        result.FirstName = row[DatabaseSchema.Return_FirstName].ToString();
+        result.LastName = row[DatabaseSchema.Return_LastName].ToString(); ;
+        result.Email = row[DatabaseSchema.Return_Email].ToString();
+        result.CardPin = row[DatabaseSchema.Return_Pin].ToString();
+        result.StartValidityTime = (DateTime)row[DatabaseSchema.Return_StartValidity];
+        result.EndValidityTime = (DateTime)row[DatabaseSchema.Return_EndValidity];
 
         return result;
     }
@@ -43,15 +43,15 @@ public class DatabaseUserProcessing
     public List<UserSimpleData> GetUserbase()
     {
         List<UserSimpleData> result = new();
-        DataTable table = databaseAccess.ExecuteQuery(DbUserdataSchema.Query_GetUserbase, new Dictionary<string, object>());
+        DataTable table = databaseAccess.ExecuteQuery(DatabaseSchema.Query_GetUserbase, new Dictionary<string, object>());
 
         foreach (DataRow user in table.Rows)
         {
             UserSimpleData newData = new()
             {
-                CardID = user[DbUserdataSchema.Return_Id].ToString(),
-                FirstName = user[DbUserdataSchema.Return_FirstName].ToString(),
-                LastName = user[DbUserdataSchema.Return_LastName].ToString()
+                CardID = user[DatabaseSchema.Return_Id].ToString(),
+                FirstName = user[DatabaseSchema.Return_FirstName].ToString(),
+                LastName = user[DatabaseSchema.Return_LastName].ToString()
             };
 
             result.Add(newData);
@@ -66,11 +66,11 @@ public class DatabaseUserProcessing
 
         Dictionary<string, object> parameters = new()
         {
-            {DbUserdataSchema.Parameter_CardId, id}
+            {DatabaseSchema.Parameter_CardId, id}
         };
 
 
-        DataTable dataTable = databaseAccess.ExecuteQuery(DbUserdataSchema.Query_PeekUser, parameters);
+        DataTable dataTable = databaseAccess.ExecuteQuery(DatabaseSchema.Query_PeekUser, parameters);
 
         if (dataTable.Rows.Count > 0)
         {
@@ -87,10 +87,10 @@ public class DatabaseUserProcessing
 
         Dictionary<string, object> parameters = new()
         {
-            {DbUserdataSchema.Parameter_CardId, id}
+            {DatabaseSchema.Parameter_CardId, id}
         };
 
-        DataTable dataTable = databaseAccess.ExecuteQuery(DbUserdataSchema.Query_RemoveUser, parameters);
+        DataTable dataTable = databaseAccess.ExecuteQuery(DatabaseSchema.Query_RemoveUser, parameters);
 
         if (dataTable.Rows.Count > 0)
         {
@@ -107,16 +107,16 @@ public class DatabaseUserProcessing
 
         Dictionary<string, object> parameters = new()
         {
-            {DbUserdataSchema.Parameter_FirstName, newUser.FirstName ?? ""},
-            {DbUserdataSchema.Parameter_LastName, newUser.LastName ?? ""},
-            {DbUserdataSchema.Parameter_Email, newUser.Email ?? ""},
-            {DbUserdataSchema.Parameter_CardId, newUser.CardID ?? ""},
-            {DbUserdataSchema.Parameter_CardPin, newUser.CardPin ?? ""},
-            {DbUserdataSchema.Parameter_StartValidity, newUser.StartValidityTime },
-            {DbUserdataSchema.Parameter_EndValidity, newUser.EndValidityTime }
+            {DatabaseSchema.Parameter_FirstName, newUser.FirstName ?? ""},
+            {DatabaseSchema.Parameter_LastName, newUser.LastName ?? ""},
+            {DatabaseSchema.Parameter_Email, newUser.Email ?? ""},
+            {DatabaseSchema.Parameter_CardId, newUser.CardID ?? ""},
+            {DatabaseSchema.Parameter_CardPin, newUser.CardPin ?? ""},
+            {DatabaseSchema.Parameter_StartValidity, newUser.StartValidityTime },
+            {DatabaseSchema.Parameter_EndValidity, newUser.EndValidityTime }
         };
 
-        DataTable dataTable = databaseAccess.ExecuteQuery(DbUserdataSchema.Query_AddUser, parameters);
+        DataTable dataTable = databaseAccess.ExecuteQuery(DatabaseSchema.Query_AddUser, parameters);
 
         if (dataTable.Rows.Count > 0)
         {
@@ -133,17 +133,17 @@ public class DatabaseUserProcessing
 
         Dictionary<string, object> parameters = new()
         {
-            {DbUserdataSchema.Parameter_OldCardId, previousId},
-            {DbUserdataSchema.Parameter_FirstName, newUserData.FirstName ?? ""},
-            {DbUserdataSchema.Parameter_LastName, newUserData.LastName ?? ""},
-            {DbUserdataSchema.Parameter_Email,  newUserData.Email ?? ""},
-            {DbUserdataSchema.Parameter_CardId, newUserData.CardID ?? "" },
-            {DbUserdataSchema.Parameter_CardPin, newUserData.CardPin ?? "" },
-            {DbUserdataSchema.Parameter_StartValidity, newUserData.StartValidityTime },
-            {DbUserdataSchema.Parameter_EndValidity,  newUserData.EndValidityTime }
+            {DatabaseSchema.Parameter_OldCardId, previousId},
+            {DatabaseSchema.Parameter_FirstName, newUserData.FirstName ?? ""},
+            {DatabaseSchema.Parameter_LastName, newUserData.LastName ?? ""},
+            {DatabaseSchema.Parameter_Email,  newUserData.Email ?? ""},
+            {DatabaseSchema.Parameter_CardId, newUserData.CardID ?? "" },
+            {DatabaseSchema.Parameter_CardPin, newUserData.CardPin ?? "" },
+            {DatabaseSchema.Parameter_StartValidity, newUserData.StartValidityTime },
+            {DatabaseSchema.Parameter_EndValidity,  newUserData.EndValidityTime }
         };
 
-        DataTable dataTable = databaseAccess.ExecuteQuery(DbUserdataSchema.Query_EditUser, parameters);
+        DataTable dataTable = databaseAccess.ExecuteQuery(DatabaseSchema.Query_EditUser, parameters);
 
         if (dataTable.Rows.Count > 0)
         {

@@ -22,19 +22,19 @@ public class DatabaseAlarmLogProcessing
 
         Dictionary<string, object> parameters = new()
         {
-            {DbUserdataSchema.Parameter_DateTimeStart, start },
-            {DbUserdataSchema.Parameter_DateTimeEnd, end }
+            {DatabaseSchema.Parameter_DateTimeStart, start },
+            {DatabaseSchema.Parameter_DateTimeEnd, end }
         };
 
-        DataTable dataTable = databaseAccess.ExecuteQuery(DbUserdataSchema.Query_GetAlarmReport, parameters);
+        DataTable dataTable = databaseAccess.ExecuteQuery(DatabaseSchema.Query_GetAlarmReport, parameters);
 
         foreach (DataRow log in dataTable.Rows)
         {
             AlarmLogData newData = new()
             {
-                Time = (DateTime)log[DbUserdataSchema.Return_TimeOfAlarm],
-                DoorNumber = Convert.ToInt32(log[DbUserdataSchema.Return_DoorNumber].ToString()),
-                AlarmType = log[DbUserdataSchema.Return_AlarmType].ToString()
+                Time = (DateTime)log[DatabaseSchema.Return_TimeOfAlarm],
+                DoorNumber = Convert.ToInt32(log[DatabaseSchema.Return_DoorNumber].ToString()),
+                AlarmType = log[DatabaseSchema.Return_AlarmType].ToString()
             };
 
             result.Add(newData);
@@ -48,12 +48,12 @@ public class DatabaseAlarmLogProcessing
         bool result = false;
         Dictionary<string, object> parameters = new()
         {
-            {DbUserdataSchema.Parameter_TimeOfAlarm, alarmLog.Time },
-            {DbUserdataSchema.Parameter_DoorNumber, alarmLog.DoorNumber },
-            {DbUserdataSchema.Parameter_AlarmType, alarmLog.AlarmType ?? "" }
+            {DatabaseSchema.Parameter_TimeOfAlarm, alarmLog.Time },
+            {DatabaseSchema.Parameter_DoorNumber, alarmLog.DoorNumber },
+            {DatabaseSchema.Parameter_AlarmType, alarmLog.AlarmType ?? "" }
         };
 
-        DataTable dataTable = databaseAccess.ExecuteQuery(DbUserdataSchema.Query_LogAlarm, parameters);
+        DataTable dataTable = databaseAccess.ExecuteQuery(DatabaseSchema.Query_LogAlarm, parameters);
 
         if (dataTable.Rows.Count > 0)
         {
