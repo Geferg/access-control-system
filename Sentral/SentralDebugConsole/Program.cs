@@ -2,19 +2,20 @@
 using System.Net;
 using System.Text;
 using SentralLibrary;
+using SentralLibrary.DataClasses;
 
 namespace SentralDebugConsole;
 
 internal class Program
 {
     static UILogger logger = new();
-    static DatabaseConnection connection = new("129.151.221.119", "5432", "599146", "Ha1FinDagIDag!", "599146");
+    static DatabaseConnectionOld connection = new("129.151.221.119", "5432", "599146", "Ha1FinDagIDag!", "599146");
 
     static void Main(string[] args)
     {
         connection.AttachLogger(logger);
 
-        UserData? user = connection.GetUser("1111");
+        UserDetailedData? user = connection.GetUser("1111");
 
         if (user != null)
         {
@@ -22,7 +23,7 @@ internal class Program
         }
 
         Console.WriteLine("\u001b]0;Control Central\u0007");
-        var server = new TcpConnection(8000);
+        var server = new TcpConnectionOld(8000);
 
         server.AttachLogger(logger);
 

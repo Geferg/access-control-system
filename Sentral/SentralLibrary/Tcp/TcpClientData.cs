@@ -5,14 +5,14 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SentralLibrary;
-internal class ClientInfo
+namespace SentralLibrary.Tcp;
+public class TcpClientData
 {
     public TcpClient TcpClient { get; set; }
     public int ClientId { get; set; }
     public bool IsAuthenticated { get; set; }
 
-    public ClientInfo(TcpClient client)
+    public TcpClientData(TcpClient client)
     {
         TcpClient = client;
         IsAuthenticated = false;

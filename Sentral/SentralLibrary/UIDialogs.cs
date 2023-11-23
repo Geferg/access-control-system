@@ -5,11 +5,13 @@ using System.Linq;
 using System.Net.Mail;
 using System.Text;
 using System.Threading.Tasks;
+using SentralLibrary.DataClasses;
 
 namespace SentralLibrary;
 public class UIDialogs
 {
-    private UIConnection connection;
+    //TODO use data classes
+    private readonly UIConnection connection;
 
     public UIDialogs(UIConnection connection)
     {
@@ -25,7 +27,8 @@ public class UIDialogs
         }
         WriteLine("");
     }
-    public UserData? MakeUser(string cardId)
+
+    public UserDetailedData? MakeUser(string cardId)
     {
         WriteLine("adding user, fill in data below\n");
 
@@ -33,14 +36,19 @@ public class UIDialogs
         string lastName = GetNameInput("last name");
         string email = GetEmailInput("email");
 
-        UserData newUser = new(firstName, lastName, email, cardId);
+        UserDetailedData newUser = new()
+        {
+            FirstName = firstName,
+            LastName = lastName,
+            Email = email
+        };
 
-        Console.WriteLine("");
-        Console.WriteLine($"name: {newUser.FirstName} {newUser.LastName}");
-        Console.WriteLine($"email: {newUser.Email}");
-        Console.WriteLine($"card id: {newUser.CardID}");
-        Console.WriteLine($"card pin: {newUser.CardPin}");
-        Console.WriteLine($"validity period: {newUser.GetFormattedPeriod()}\n");
+        WriteLine("");
+        WriteLine($"name: {newUser.FirstName} {newUser.LastName}");
+        WriteLine($"email: {newUser.Email}");
+        WriteLine($"card id: {newUser.CardID}");
+        WriteLine($"card pin: {newUser.CardPin}");
+        WriteLine($"validity period: {newUser.StartValidityTime} - {newUser.EndValidityTime}\n");
 
         if (!UserConfirm("confirm addition of user?"))
         {
@@ -49,30 +57,34 @@ public class UIDialogs
 
         return newUser;
     }
-    public void ShowUser(UserData user)
+
+    public void ShowUser(UserDetailedData user)
     {
         WriteLine($"     first name: {user.FirstName}");
         WriteLine($"      last name: {user.LastName}");
         WriteLine($"          email: {user.Email}");
         WriteLine($"        card id: {user.CardID}");
-        WriteLine($"validity period: {user.GetFormattedPeriod()}");
+        WriteLine($"validity period: {user.StartValidityTime} - {user.EndValidityTime}");
         WriteLine($"       card pin: {user.CardPin}");
 
         WriteLine("");
     }
-    public bool DeleteUserConfirmation(UserData user)
+
+    public bool DeleteUserConfirmation(UserDetailedData user)
     {
         return UserConfirm($"are you sure you want to delete [{user.CardID}] {user.FirstName} {user.LastName}");
     }
+
     public bool ExitProgramConfirmation()
     {
         if (!UserConfirm("are you sure you want to exit?"))
         {
             return false;
         }
-        Console.WriteLine("exiting...");
+        WriteLine("exiting...");
         return true;
     }
+
     public void ListCommands()
     {
         WriteLine("commands:");
@@ -85,17 +97,22 @@ public class UIDialogs
         WriteLine("show [card id] - details about a specific user");
         WriteLine("edit [card id]- change data of existing user");
         WriteLine("remove [card id] - remove existing user");
+        WriteLine("accesslog - lists all access attempts between two dates");
+        WriteLine("suspicious - lists all suspicious users...");
+        WriteLine("door log...");
+        WriteLine("alarm log...");
         WriteLine("");
     }
-    public UserData EditUser(UserData user)
+
+    public UserDetailedData EditUser(UserDetailedData user)
     {
         WriteLine($"editing user {user.CardID}...");
 
         WriteLine($"1. first name: {user.FirstName}");
         WriteLine($"2. last name: {user.LastName}");
         WriteLine($"3. email: {user.Email}");
-        WriteLine($"4. validity start: {user.ValidityPeriod.start}");
-        WriteLine($"5. validity end: {user.ValidityPeriod.end}");
+        WriteLine($"4. validity start: {user.StartValidityTime}");
+        WriteLine($"5. validity end: {user.EndValidityTime}");
         WriteLine($"6. card pin: {user.CardPin}");
         WriteLine($"0. cancel");
 
@@ -111,65 +128,92 @@ public class UIDialogs
             switch (responseKeyChar)
             {
                 case '1':
-                    Console.WriteLine("1");
+                    WriteLine("1");
                     string newFirstName = GetNameInput("new first name");
                     user.FirstName = newFirstName;
                     ongoingDialog = false;
                     break;
 
                 case '2':
-                    Console.WriteLine("2");
+                    WriteLine("2");
                     string newLastName = GetNameInput("new last name");
                     user.LastName = newLastName;
                     ongoingDialog = false;
                     break;
 
                 case '3':
-                    Console.WriteLine("3");
+                    WriteLine("3");
                     string newEmail = GetEmailInput("new email");
                     user.Email = newEmail;
                     ongoingDialog = false;
                     break;
 
                 case '4':
-                    Console.WriteLine("4");
-                    int newStartYear = GetValidatedNumberInput("year", 1900, 2100);
-                    int newStartMonth = GetValidatedNumberInput("month", 1, 12);
-                    int newStartDay = GetValidatedNumberInput("day", 1, DateTime.DaysInMonth(newStartYear, newStartMonth));
-                    int newStartHour = GetValidatedNumberInput("time (hour)", 0, 23);
-                    DateTime newStartTime = new(newStartYear, newStartMonth, newStartDay, newStartHour, 0, 0);
+                    WriteLine("4");
+                    DateTime newStartTime = GetDateTime(1900, 2100);
 
-                    user.ValidityPeriod = (newStartTime, user.ValidityPeriod.end);
+                    user.StartValidityTime = newStartTime;
                     ongoingDialog = false;
                     break;
 
                 case '5':
-                    Console.WriteLine("5");
-                    int newEndYear = GetValidatedNumberInput("year", 1900, 2100);
-                    int newEndMonth = GetValidatedNumberInput("month", 1, 12);
-                    int newEndDay = GetValidatedNumberInput("day", 1, DateTime.DaysInMonth(newEndYear, newEndMonth));
-                    int newEndHour = GetValidatedNumberInput("time (hour)", 0, 23);
-                    DateTime newEndTime = new(newEndYear, newEndMonth, newEndDay, newEndHour, 0, 0);
+                    WriteLine("5");
+                    DateTime newEndTime = GetDateTime(1900, 2100);
 
-                    user.ValidityPeriod = (user.ValidityPeriod.start, newEndTime);
+                    user.EndValidityTime =  newEndTime;
                     ongoingDialog = false;
                     break;
 
                 case '6':
-                    Console.WriteLine("6");
+                    WriteLine("6");
                     string newCardPin = GetFourDigitInput("new pin");
                     user.CardPin = newCardPin;
                     ongoingDialog = false;
                     break;
 
                 case '0':
-                    Console.WriteLine("0");
+                    WriteLine("0");
                     ongoingDialog = false;
                     break;
             }
         }
 
         return user;
+    }
+
+    public void ShowAccessLogs(List<(string id, bool approved, DateTime time, int doorNumber)> logs)
+    {
+        if(logs.Count == 0)
+        {
+            WriteLine("no logs found");
+            return;
+        }
+        WriteLine("access logs:");
+        foreach (var (id, approved, time, doorNumber) in logs)
+        {
+            string approvedMessage = "not approved";
+            if (approved)
+            {
+                approvedMessage = "approved";
+            }
+            WriteLine($"[{id}] was {approvedMessage} at door {doorNumber} {time}");
+        }
+        WriteLine("");
+    }
+
+    public void ShowAlarmLogs(List<(DateTime time, int doorNumber, string alarmType)> logs)
+    {
+        if (logs.Count == 0)
+        {
+            WriteLine("no logs found");
+            return;
+        }
+        WriteLine("alarm logs:");
+        foreach (var (time, doorNumber, alarmType) in logs)
+        {
+            WriteLine($"{alarmType} at door {doorNumber} {time}");
+        }
+        WriteLine("");
     }
 
     // SPECIAL
@@ -208,6 +252,7 @@ public class UIDialogs
         }
         return line;
     }
+
     private ConsoleKeyInfo ReadKey()
     {
         ConsoleKeyInfo? keyInfo = connection.GetKeyFromUI();
@@ -217,16 +262,29 @@ public class UIDialogs
         }
         return keyInfo.Value;
     }
+
     private void WriteLine(string message)
     {
         connection.PutOnUI(message + "\n");
     }
+
     private void Write(string message)
     {
         connection.PutOnUI(message);
     }
 
     // INPUT JANITORS
+    public DateTime GetDateTime(int minYear, int maxYear)
+    {
+        int year = GetValidatedNumberInput("year", minYear, maxYear);
+        int month = GetValidatedNumberInput("month", 1, 12);
+        int day = GetValidatedNumberInput("day", 1, DateTime.DaysInMonth(year, month));
+        int hour = GetValidatedNumberInput("time (hour)", 0, 23);
+        DateTime newStartTime = new(year, month, day, hour, 0, 0);
+
+        return newStartTime;
+    }
+
     private int GetValidatedNumberInput(string prompt, int minValue, int maxValue)
     {
         string input = "";
@@ -260,6 +318,7 @@ public class UIDialogs
 
         return int.Parse(input);
     }
+
     private string GetNameInput(string prompt)
     {
         string input = "";
@@ -286,6 +345,7 @@ public class UIDialogs
 
         return input;
     }
+
     private string GetFourDigitInput(string prompt)
     {
         string input = "";
@@ -320,6 +380,7 @@ public class UIDialogs
 
         return input;
     }
+
     private string GetEmailInput(string prompt)
     {
         string input = "";
@@ -361,6 +422,7 @@ public class UIDialogs
 
         return InputValidation.Valid;
     }
+
     private static InputValidation ValidateEmail(string? input)
     {
         if (string.IsNullOrWhiteSpace(input))
@@ -374,6 +436,7 @@ public class UIDialogs
 
         return InputValidation.Valid;
     }
+
     private static InputValidation ValidateFourDigits(string? input)
     {
         if (string.IsNullOrWhiteSpace(input))
@@ -395,6 +458,7 @@ public class UIDialogs
 
         return InputValidation.Valid;
     }
+
     private static InputValidation ValidateNumberInput(string? input, int minValue, int maxValue)
     {
         if (string.IsNullOrWhiteSpace(input))

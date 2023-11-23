@@ -8,6 +8,10 @@ namespace CardReaderLibrary;
 public static class TcpConnectionDictionary
 {
     public const string request_authorization = "Authorization";
+    public const string request_alarmReport = "AlarmReport";
+
+    public const string alarm_breach = "breach";
+    public const string alarm_timeout = "timeout";
 
     public const string status_fail = "failure";
     public const string status_notAccepted = "rejected";

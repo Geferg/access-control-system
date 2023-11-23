@@ -1,9 +1,16 @@
 ﻿using System.Data;
 using System.Net.Mail;
+using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using Microsoft.Extensions.DependencyInjection;
 using SentralLibrary;
+using SentralLibrary.Database;
+using SentralLibrary.Database.Processing;
+using SentralLibrary.DataClasses;
+using SentralLibrary.Services;
+using SentralLibrary.Tcp;
 
 namespace SentralConsole;
 
@@ -27,29 +34,70 @@ internal class Program
     private const string missingInDbMessage = "user not found in database";
     private const string failureInDbMessage = "could not perform operation in database";
 
-    private static readonly DatabaseConnection dbConnection = new(dbIP, dbPort, dbUsername, dbPassword, dbDatabase);
-    private static readonly TcpConnection tcpServer = new(8000);
+    //private static readonly DatabaseConnectionOld dbConnection = new(dbIP, dbPort, dbUsername, dbPassword, dbDatabase);
+    //private static readonly TcpConnectionOld tcpServer = new(8000);
     private static readonly UIConnection uiConnection = new();
     private static readonly UIDialogs dialogs = new(uiConnection);
 
-    static async Task Main(string[] args)
+    static void Main(string[] args)
     {
         Console.WriteLine("\u001b]0;Sentral\u0007");
         Console.Clear();
 
-        uiConnection.ClassToUI += OnWriteToUI;
-        uiConnection.UIStringToClass += OnRecieveFromUI;
-        uiConnection.UIKeyToClass += OnGetKeypress;
-        //tcpServer.RequestReceived += OnTcpRequest;
+        // Database dependency injections
+        DatabaseConnectionManager sharedDatabaseConnection = new(dbIP, dbDatabase, dbPort, dbUsername, dbPassword);
+
+        DatabaseAccess sharedDatabaseAccess = new(sharedDatabaseConnection);
+
+        DatabaseUserProcessing userProcessing = new(sharedDatabaseAccess);
+        DatabaseAccessLogProcessing accessProcessing = new(sharedDatabaseAccess);
+        DatabaseAlarmLogProcessing alarmLogProcessing = new(sharedDatabaseAccess);
+
+        DatabaseService databaseService = new(userProcessing, accessProcessing, alarmLogProcessing);
+
+        TcpConnectionManager tcpConnection = new(8000, databaseService);
+        tcpConnection.Start();
+
+        //uiConnection.ClassToUI += OnWriteToUI;
+        //uiConnection.UIStringToClass += OnRecieveFromUI;
+        //uiConnection.UIKeyToClass += OnGetKeypress;
+        //tcpServer.AlarmReport += OnLogAlarmReport;
+        //tcpServer.AccessReport += OnLogAccessReport;
 
         // Database connection
-        while (!dbConnection.TestConnection())
+        while (!sharedDatabaseConnection.TestConnection())
         {
             Console.WriteLine("failed to connect to database, retrying...");
             Thread.Sleep(1000);
         }
 
+        Console.WriteLine("All users:");
+
+        foreach (var user in databaseService.GetAllUsers())
+        {
+            Console.WriteLine($"[{user.CardID}] {user.FirstName} {user.LastName}");
+        }
+
+        Console.WriteLine("\nAccess logs:");
+
+        foreach (var log in databaseService.GetAccessLogs(DateTime.MinValue, DateTime.MaxValue).OrderBy(l => l.Time))
+        {
+            Console.WriteLine($"[{log.DoorNumber}] {log.CardId}, access granted: {log.AccessGranted}");
+        }
+
+        Console.WriteLine("\nAlarm logs:");
+
+        foreach (var log in databaseService.GetAlarmLogs(DateTime.MinValue, DateTime.MaxValue).OrderBy(l => l.Time))
+        {
+            Console.WriteLine($"[{log.DoorNumber}] {log.AlarmType}");
+        }
+
+
+
+        Console.ReadKey(true);
+
         // TCP connection
+        /*
         tcpServer.Start();
 
         dialogs.ListCommands();
@@ -86,15 +134,29 @@ internal class Program
                     HandleSystemDetailsCommand(tcpServer);
                     break;
 
+                case "accesslog":
+                    HandleAccessLogDetailsCommand();
+                    break;
+
+                case "alarmlog":
+                    HandleAlarmLogDetailsCommand();
+                    break;
+
+                case "doorlog":
+                    HandleDoorLogDetailsCommand(command);
+                    break;
+
                 default:
                     FindPatternOnCommandAndHandle(command);
                     break;
             }
         }
+        */
     }
 
     // CONNECTION COMMANDS
-    private static void HandleDatabaseDetailsCommand(DatabaseConnection connection)
+    /*
+    private static void HandleDatabaseDetailsCommand(DatabaseConnectionOld connection)
     {
         if(connection.TestConnection())
         {
@@ -113,12 +175,15 @@ internal class Program
         Console.WriteLine("");
     }
 
-    private static void HandleSystemDetailsCommand(TcpConnection connection)
+    private static void HandleSystemDetailsCommand(TcpConnectionOld connection)
     {
         Console.WriteLine("tcp system details");
         Console.WriteLine($"  autorized connections: {connection.GetAutorizedClientCount()}");
         Console.WriteLine($"unauthorized connetions: {connection.GetUnauthorizedClientCount()}");
-
+        foreach (var id in connection.GetClientIds())
+        {
+            Console.WriteLine($"      connected with id: {id}");
+        }
         Console.WriteLine("");
     }
 
@@ -153,11 +218,13 @@ internal class Program
             Console.WriteLine("command not recognized\n");
         }
     }
+
     private static void HandleClearCommand()
     {
         Console.Clear();
         dialogs.ListCommands();
     }
+
     private static void HandleExitCommand()
     {
         if (dialogs.ExitProgramConfirmation())
@@ -166,13 +233,15 @@ internal class Program
             Environment.Exit(0);
         }
     }
+
     private static void HandleShowCommand()
     {
-        dialogs.ShowUsers(dbConnection.GetUserbase().OrderBy(u => u.id).ToList());
+        dialogs.ShowUsers(dbConnection.GetUserbase().OrderBy(u => u.CardID).ToList());
     }
+
     private static void HandleShowSpecificCommand(string cardId)
     {
-        UserData? selectedUser = dbConnection.GetUser(cardId);
+        UserDetailedData? selectedUser = dbConnection.GetUser(cardId);
 
         if (selectedUser != null)
         {
@@ -183,6 +252,7 @@ internal class Program
             Console.WriteLine(missingInDbMessage + "\n");
         }
     }
+
     private static void HandleAddSpecificCommand(string cardId)
     {
         if (dbConnection.UserExists(cardId))
@@ -191,7 +261,7 @@ internal class Program
         }
         else
         {
-            UserData? newUser = dialogs.MakeUser(cardId);
+            UserDetailedData? newUser = dialogs.MakeUser(cardId);
 
             if (newUser != null)
             {
@@ -199,25 +269,27 @@ internal class Program
             }
         }
     }
+
     private static void HandleEditSpecificCommand(string cardId)
     {
-        UserData? selectedUser = dbConnection.GetUser(cardId);
+        UserDetailedData? selectedUser = dbConnection.GetUser(cardId);
         if (selectedUser == null)
         {
             Console.WriteLine(missingInDbMessage);
         }
         else
         {
-            UserData newUser = dialogs.EditUser(selectedUser);
-            if (!dbConnection.UpdateUser(cardId, newUser))
+            UserDetailedData newUser = dialogs.EditUser(selectedUser);
+            if (!dbConnection.EditUser(cardId, newUser))
             {
                 Console.WriteLine(failureInDbMessage);
             }
         }
     }
+
     private static void HandleRemoveSpecificCommand(string cardId)
     {
-        UserData? userToRemove = dbConnection.GetUser(cardId);
+        UserDetailedData? userToRemove = dbConnection.GetUser(cardId);
 
         if (userToRemove == null)
         {
@@ -230,25 +302,118 @@ internal class Program
         }
     }
 
+    private static void HandleAccessLogDetailsCommand()
+    {
+        Console.WriteLine("start date");
+        DateTime start = dialogs.GetDateTime(0, 9999);
+        Console.WriteLine("\nend date");
+        DateTime end = dialogs.GetDateTime(0, 9999);
+
+        if (start > end)
+        {
+            Console.WriteLine("start date cannot be after end date");
+            return;
+        }
+
+        List<AccessLogData> logs = dbConnection.GetAccessLogs(start, end);
+
+        dialogs.ShowAccessLogs(logs);
+    }
+
+    private static void HandleAlarmLogDetailsCommand()
+    {
+        Console.WriteLine("start date");
+        DateTime start = dialogs.GetDateTime(0, 9999);
+        Console.WriteLine("\nend date");
+        DateTime end = dialogs.GetDateTime(0, 9999);
+
+        if (start > end)
+        {
+            Console.WriteLine("start date cannot be after end date");
+            return;
+        }
+
+        List<AlarmLogData> logs = dbConnection.GetAlarmLogs(start, end);
+
+        dialogs.ShowAlarmLogs(logs);
+    }
+
+    private static void HandleDoorLogDetailsCommand(string command)
+    {
+        string? number = GetNumbersFromCommand(command);
+
+        if (number == null)
+        {
+            Console.WriteLine(missingInDbMessage + "\n");
+            return;
+        }
+        int doorNumber = Convert.ToInt32(number);
+
+        Console.WriteLine("start date");
+        DateTime start = dialogs.GetDateTime(0, 9999);
+        Console.WriteLine("\nend date");
+        DateTime end = dialogs.GetDateTime(0, 9999);
+
+        if (start > end)
+        {
+            Console.WriteLine("start date cannot be after end date");
+            return;
+        }
+
+        //List<(string id, bool approved, DateTime time, int doorNumber)> logs = dbConnection.GetDoorLogs(start, end);
+
+        //dialogs.ShowAccessLogs(logs);
+    }
+
+    private static void HandleLogAlarm(DateTime timeOfAlarm, int doorNumber, string alarmType)
+    {
+        AlarmLogData alarmData = new()
+        {
+            Time = timeOfAlarm,
+            DoorNumber = doorNumber,
+            AlarmType = alarmType
+        };
+
+        dbConnection.LogAlarm(alarmData);
+    }
+
+    private static void HandleLogAccess(string cardId, bool approvedEntry, DateTime timeOfEntry, int doorNumber)
+    {
+        AccessLogData accessData = new()
+        {
+            CardId = cardId,
+            AccessGranted = approvedEntry,
+            Time = timeOfEntry,
+            DoorNumber = doorNumber
+        };
+
+        dbConnection.LogAccess(accessData);
+    }
+
     // EVENT HANDLERS
     private static void OnWriteToUI(string message)
     {
         Console.Write(message);
     }
+
     private static string? OnRecieveFromUI()
     {
         return Console.ReadLine();
     }
+
     private static ConsoleKeyInfo? OnGetKeypress()
     {
         return Console.ReadKey(true);
     }
 
-    // Deprecated? handle all on tcp class unless need for user interaction
-    private static void OnTcpRequest(TcpClient client, string request, Action<TcpClient, string> respondCallback)
+    private static void OnLogAlarmReport(TcpClientData clientInfo, AlarmReportRequest request)
     {
-        //var requestObject = JsonSerializer.Deserialize<TcpClient>(request);
-        //respondCallback(client, "my response");
+        HandleLogAlarm(request.Time, clientInfo.ClientId, request.AlarmType);
+    }
+
+    private static void OnLogAccessReport(TcpClientData clientInfo, AccessReportRequest request)
+    {
+        HandleLogAccess(request.CardId, request.Approved, request.Time, request.DoorNumber);
     }
 
     // Helper methods
@@ -268,5 +433,5 @@ internal class Program
             return null;
         }
     }
-
+    */
 }
