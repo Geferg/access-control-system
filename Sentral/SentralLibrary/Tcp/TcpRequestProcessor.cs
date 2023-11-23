@@ -1,6 +1,6 @@
 ﻿using Newtonsoft.Json;
 using SentralLibrary.Database;
-using SentralLibrary.DataClasses;
+using SentralLibrary.Database.DataClasses;
 using SentralLibrary.Services;
 using SentralLibrary.Tcp.TcpRequests;
 using System;

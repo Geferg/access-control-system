@@ -1,5 +1,5 @@
-﻿using SentralLibrary.Database.Processing;
-using SentralLibrary.DataClasses;
+﻿using SentralLibrary.Database.DataClasses;
+using SentralLibrary.Database.Processing;
 using System;
 using System.Collections.Generic;
 using System.Linq;

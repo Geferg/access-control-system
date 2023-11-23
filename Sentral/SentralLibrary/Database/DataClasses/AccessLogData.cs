@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SentralLibrary.DataClasses;
+namespace SentralLibrary.Database.DataClasses;
 public class AccessLogData
 {
     public string? CardId { get; set; }
