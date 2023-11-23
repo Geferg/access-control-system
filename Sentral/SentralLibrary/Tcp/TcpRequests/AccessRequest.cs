@@ -12,7 +12,6 @@ public class AccessRequest : IRequest
     public string? Pin { get; set; }
     public string? RequestType { get; set; }
     public DateTime Time { get; set; }
-    public bool Approved { get; set; }
     public int DoorNumber { get; set; }
 
     public AccessRequest()

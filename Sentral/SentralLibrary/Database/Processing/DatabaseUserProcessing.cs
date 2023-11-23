@@ -153,4 +153,25 @@ public class DatabaseUserProcessing
 
         return result;
     }
+
+    public bool ValidateUser(string cardId, string cardPin)
+    {
+        bool result = false;
+
+        Dictionary<string, object> parameters = new()
+        {
+            { DatabaseSchema.Parameter_CardId, cardId },
+            { DatabaseSchema.Parameter_CardPin, cardPin }
+        };
+
+        DataTable dataTable = databaseAccess.ExecuteQuery(DatabaseSchema.Query_ValidateUser, parameters);
+
+        if (dataTable.Rows.Count > 0)
+        {
+            DataRow row = dataTable.Rows[0];
+            result = Convert.ToBoolean(row[0]);
+        }
+
+        return result;
+    }
 }

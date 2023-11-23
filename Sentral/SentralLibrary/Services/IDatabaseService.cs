@@ -20,6 +20,8 @@ public interface IDatabaseService
 
     bool EditUser(string previousId, UserDetailedData newUserData);
 
+    bool ValidateUser(string cardId, string cardPin);
+
 
     List<AlarmLogData> GetAlarmLogs(DateTime start, DateTime end);
 

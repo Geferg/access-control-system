@@ -60,7 +60,7 @@ public class DatabaseAlarmLogProcessing
             DataRow row = dataTable.Rows[0];
             result = Convert.ToBoolean(row[0]);
         }
-
+        
         return result;
     }
 }

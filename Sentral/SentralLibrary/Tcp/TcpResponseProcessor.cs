@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 namespace SentralLibrary.Tcp;
 public class TcpResponseProcessor
 {
-    public static void SendResponse(TcpClientData clientData, Response response)
+    public void SendResponse(TcpClientData clientData, Response response)
     {
         string jsonResponse = JsonConvert.SerializeObject(response);
         var responseBytes = Encoding.UTF8.GetBytes(jsonResponse);

@@ -50,6 +50,11 @@ public class DatabaseService : IDatabaseService
         return userProcessing.UserExists(id);
     }
 
+    public bool ValidateUser(string cardId, string cardPin)
+    {
+        return userProcessing.ValidateUser(cardId, cardPin);
+    }
+
     public bool LogAlarm(AlarmLogData alarmLog)
     {
         return alarmProcessing.LogAlarm(alarmLog);

@@ -80,14 +80,14 @@ internal class Program
 
         Console.WriteLine("\nAccess logs:");
 
-        foreach (var log in databaseService.GetAccessLogs(DateTime.MinValue, DateTime.MaxValue))
+        foreach (var log in databaseService.GetAccessLogs(DateTime.MinValue, DateTime.MaxValue).OrderBy(l => l.Time))
         {
             Console.WriteLine($"[{log.DoorNumber}] {log.CardId}, access granted: {log.AccessGranted}");
         }
 
         Console.WriteLine("\nAlarm logs:");
 
-        foreach (var log in databaseService.GetAlarmLogs(DateTime.MinValue, DateTime.MaxValue))
+        foreach (var log in databaseService.GetAlarmLogs(DateTime.MinValue, DateTime.MaxValue).OrderBy(l => l.Time))
         {
             Console.WriteLine($"[{log.DoorNumber}] {log.AlarmType}");
         }
