@@ -5,7 +5,7 @@ using System.Text;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
-namespace CardReaderLibrary.TcpRequests;
+namespace CardReaderLibrary.Tcp.TcpRequests;
 public class Response
 {
     public string Action { get; set; }

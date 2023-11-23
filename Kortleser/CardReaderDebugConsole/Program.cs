@@ -2,7 +2,10 @@
 using System.Text;
 using CardReaderLibrary;
 using Newtonsoft.Json;
-using CardReaderLibrary.TcpRequests;
+using System.IO.Ports;
+using CardReaderLibrary.Tcp.TcpRequests;
+using CardReaderLibrary.Tcp;
+using CardReaderLibrary.Serial;
 
 /*
  * Concerns:
@@ -16,8 +19,9 @@ namespace CardReaderDebugConsole;
 internal class Program
 {
     private static SerialConnectionManager? serialConnection;
-    private static TcpConnectionManager? tcpConnection;
+    private static TcpConnectionManager tcpConnection = new("127.0.0.1", 8000);
     private static int accessPointNumber;
+    private static DoorStateManager? doorStateManager;
 
     private static DateTime lastTimeClosed = DateTime.Now;
     private static DateTime lastTimeLocked = DateTime.Now;
@@ -29,11 +33,9 @@ internal class Program
 
         //TODO take com port input (list available?)
 
-        InitializeSerialConnection("COM7");
-        Console.WriteLine($"initialized serial port {serialConnection!.Port}");
+        InitializeSerialConnection();
 
-        OpenSerialConnection(serialConnection);
-        Console.WriteLine($"Connected to serial port {serialConnection.Port}");
+        Console.WriteLine($"Connected to serial port {serialConnection!.Port}");
 
         serialConnection.DataReceived += OnHardwareMessageReceived;
 
@@ -42,8 +44,16 @@ internal class Program
 
         await AuthorizeTcpConnection();
 
-        //TODO take id and pin and send request to central
+        doorStateManager = new(serialConnection, tcpConnection);
 
+        string cardId = GetFourDigitInput("enter id");
+        string cardPin = GetFourDigitInput("enter pin");
+
+        bool accessGranted = await CheckUserAccess(cardId, cardPin);
+
+        //TODO unlock door
+
+        //TODO on door close, lock door
 
         Console.WriteLine("Press escape to close.");
         while (Console.ReadKey(true).Key != ConsoleKey.Escape);
@@ -52,13 +62,33 @@ internal class Program
 
     // NEW METHODS
 
+    private static async Task<bool> CheckUserAccess(string cardId, string cardPin)
+    {
+        Response? response = await SendAccessRequestAsync(accessPointNumber, cardId, cardPin, DateTime.Now);
+
+        if (response == null)
+        {
+            Console.WriteLine("error in response");
+            return false;
+        }
+
+        Console.WriteLine(response.Message);
+
+        if (response.Status != TcpRequestConstants.StatusAccepted)
+        {
+            return false;
+        }
+
+        return true;
+    }
+
     private static async Task AuthorizeTcpConnection()
     {
         bool isAuthorized = false;
         while (!isAuthorized)
         {
-            int id = GetValidatedNumberInput("access point number", 1, 99);
-            Response? authorizationResponse = await SendAuthorizationRequestAsync(id);
+            accessPointNumber = GetValidatedNumberInput("access point number", 1, 99);
+            Response? authorizationResponse = await SendAuthorizationRequestAsync(accessPointNumber);
 
             if (authorizationResponse == null)
             {
@@ -67,107 +97,63 @@ internal class Program
             else
             {
                 Console.WriteLine(authorizationResponse.Message);
-                isAuthorized = authorizationResponse.Status == TcpConnectionDictionary.status_accepted;
+                isAuthorized = authorizationResponse.Status == TcpRequestConstants.StatusAccepted;
             }
         }
     }
 
-    // OLD METHODS
-
-    private static async void OnHardwareMessageReceived(string message)
+    private static void InitializeSerialConnection()
     {
-        //TODO link access attempts to lock state
-        //TODO lock door when closed
-
-        bool debug = true;
-
-        var (locked, open, alarm, breachState, time) = SerialConnectionManager.ExtractState(message);
-
-        if (debug)
+        while (true)
         {
-            Console.WriteLine($"Received (hardware): {message}");
-            Console.WriteLine($"Locked: {locked}");
-            Console.WriteLine($"Open: {open}");
-            Console.WriteLine($"Alarm: {alarm}");
-            Console.WriteLine($"Breach State: {breachState}");
-            Console.WriteLine($"Time: {time}");
-        }
-
-        if (!open)
-        {
-            lastTimeClosed = time;
-        }
-
-        if (!locked)
-        {
-            lastTimeLocked = time;
-        }
-
-        if (breachState > 500)
-        {
-            Response? breachResponse = await SendAlarmReportRequestAsync(time, TcpConnectionDictionary.alarm_breach);
-
-            if (breachResponse == null)
+            while (SerialPort.GetPortNames().Length == 0)
             {
-                Console.WriteLine("failed to get a response from the server.");
+                Console.WriteLine("no com ports available, retrying");
+                Thread.Sleep(2000);
             }
-            else
+
+            string[] ports = SerialPort.GetPortNames();
+
+            Console.WriteLine("select a port:");
+            foreach (var port in ports)
             {
-                Console.WriteLine(breachResponse.Message);
+                Console.WriteLine(port);
             }
-        }
 
-        if (open && lastTimeClosed.AddSeconds(30) < time)
-        {
-            Response? timeoutResponse = await SendAlarmReportRequestAsync(time, TcpConnectionDictionary.alarm_timeout);
+            Console.Write("> ");
+            string? selectedPort = Console.ReadLine()?.Trim().ToUpper();
 
-            if (timeoutResponse == null)
+            if (string.IsNullOrEmpty(selectedPort) || Array.IndexOf(ports, selectedPort) == -1)
             {
-                Console.WriteLine("failed to get a response from the server.");
+                Console.WriteLine("invalid com port, retrying");
+                continue;
             }
-            else
-            {
-                Console.WriteLine(timeoutResponse.Message);
-            }
-        }
 
-        //await tcpConnection!.SendRequestAsync(message);
-        //Console.WriteLine($"Sent (central): {message}");
-        //string response = await tcpConnection.ReceiveResponseAsync();
-        //Console.WriteLine($"Recieved (central): {response}");
-    }
-
-    private static void InitializeSerialConnection(string portName)
-    {
-        while (serialConnection == null)
-        {
             try
             {
-                serialConnection = new SerialConnectionManager(portName);
+                serialConnection = new SerialConnectionManager(selectedPort);
             }
             catch (Exception)
             {
-                Console.WriteLine("Could not initialize serial port");
-                Thread.Sleep(2000);
+                Console.WriteLine("Could not initialize serial port, retrying");
+                continue;
+            }
+
+            try
+            {
+                serialConnection.OpenConnection();
+                return;
+            }
+            catch (Exception)
+            {
+                Console.WriteLine($"Could not connect to serial port {serialConnection!.Port}, retrying");
+                continue;
             }
         }
     }
 
-    private static void OpenSerialConnection(SerialConnectionManager connection)
-    {
-        while (!connection.IsOpen())
-        {
-            try
-            {
-                serialConnection!.OpenConnection();
-            }
-            catch (Exception)
-            {
-                Console.WriteLine($"Could not connect to serial port {serialConnection!.Port}");
-                Thread.Sleep(2000);
-            }
-        }
-    }
+
+    // ===================== CENTRAL CONNECTION =====================
 
     private static void InitializeTcpConnection(string ipAddress, int port)
     {
@@ -179,48 +165,13 @@ internal class Program
             }
             catch (Exception)
             {
-                Console.WriteLine("Could not connect to central");
+                Console.WriteLine("Could not connect to central, retrying");
                 Thread.Sleep(2000);
             }
         }
     }
 
-    private static async Task<Response?> SendAuthorizationRequestAsync(int id)
-    {
-        try
-        {
-            AuthorizationRequest requestObject = new();
-            requestObject.ClientId = id;
-            string requestJson = JsonConvert.SerializeObject(requestObject);
-            string responseJson = await tcpConnection!.SendRequestAsync(requestJson);
-            return JsonConvert.DeserializeObject<Response>(responseJson);
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error: {ex.Message}");
-            return null;
-        }
-    }
-
-    private static async Task<Response?> SendAlarmReportRequestAsync(DateTime time, string alarmType)
-    {
-        try
-        {
-            AlarmReportRequest requestObject = new()
-            {
-                AlarmType = alarmType,
-                Time = time
-            };
-            string requestJson = JsonConvert.SerializeObject(requestObject);
-            string responseJson = await tcpConnection!.SendRequestAsync(requestJson);
-            return JsonConvert.DeserializeObject<Response?>(responseJson);
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error: {ex.Message}");
-            return null;
-        }
-    }
+    // OLD METHODS
 
     private static int GetValidatedNumberInput(string prompt, int minValue, int maxValue)
     {
@@ -249,5 +200,38 @@ internal class Program
 
             return number;
         }
+    }
+
+    private static string GetFourDigitInput(string prompt)
+    {
+        string input;
+
+        while (true)
+        {
+            Console.Write($"> {prompt}: ");
+            input = Console.ReadLine() ?? "";
+
+            if (string.IsNullOrWhiteSpace(input))
+            {
+                Console.WriteLine("card id cannot be empty\n");
+                continue;
+            }
+
+            if (!int.TryParse(input, out int number))
+            {
+                Console.WriteLine("card id must be a number\n");
+                continue;
+            }
+
+            if (input.Length != 4 || number < 0 || number > 9999)
+            {
+                Console.WriteLine("Card ID must be a 4-digit number between 0000 and 9999.\n");
+                continue;
+            }
+
+            break;
+        }
+
+        return input;
     }
 }

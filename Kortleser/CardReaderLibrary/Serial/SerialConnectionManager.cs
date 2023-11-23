@@ -7,7 +7,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
-namespace CardReaderLibrary;
+namespace CardReaderLibrary.Serial;
 public class SerialConnectionManager
 {
     public string Port;
@@ -35,6 +35,11 @@ public class SerialConnectionManager
         serialPort.DataReceived += OnDataReceived;
     }
 
+    public string[] AvailablePorts()
+    {
+        return SerialPort.GetPortNames();
+    }
+
     public bool IsOpen()
     {
         return serialPort.IsOpen;
@@ -45,7 +50,6 @@ public class SerialConnectionManager
         if (!serialPort.IsOpen)
         {
             serialPort.Open();
-            OnLogMessage("Serial port opened.");
         }
     }
 
@@ -54,7 +58,6 @@ public class SerialConnectionManager
         if (serialPort.IsOpen)
         {
             serialPort.Close();
-            OnLogMessage("Serial port closed.");
         }
     }
 
@@ -114,11 +117,6 @@ public class SerialConnectionManager
             byte[] commandBytes = Encoding.ASCII.GetBytes(command);
             await serialPort.BaseStream.WriteAsync(commandBytes);
         }
-    }
-
-    protected virtual void OnLogMessage(string message)
-    {
-        LogMessage?.Invoke(this, message);
     }
 
 }

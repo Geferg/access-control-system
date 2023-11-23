@@ -5,51 +5,48 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CardReaderLibrary;
+namespace CardReaderLibrary.Tcp;
 public class TcpConnectionManager
 {
     public string ServerAddress;
+    public int ServerPort;
+    public bool Connected => client.Connected;
 
     private readonly TcpClient client;
-    private readonly NetworkStream stream;
+    private NetworkStream? stream;
     public event EventHandler<string>? LogMessage;
 
     public TcpConnectionManager(string serverAddress, int serverPort)
     {
         ServerAddress = serverAddress;
-        client = new TcpClient(serverAddress, serverPort);
+        ServerPort = serverPort;
+        client = new TcpClient();
+    }
+
+    public void OpenConnection()
+    {
+        client.Connect(ServerAddress, ServerPort);
         stream = client.GetStream();
     }
 
     public async Task<string> SendRequestAsync(string jsonRequest)
     {
+        if (stream == null)
+        {
+            throw new Exception();
+        }
+
         byte[] requestBytes = Encoding.UTF8.GetBytes(jsonRequest);
         await stream.WriteAsync(requestBytes);
-        OnLogMessage($"Request sent: {jsonRequest}");
 
         byte[] responseBytes = new byte[1024];
         int bytesRead = await stream.ReadAsync(responseBytes);
         return Encoding.UTF8.GetString(responseBytes, 0, bytesRead);
     }
 
-    // Deprecated
-    public async Task<string> ReceiveResponseAsync()
-    {
-        byte[] responseBuffer = new byte[1024];
-        int bytesRead = await stream.ReadAsync(responseBuffer);
-        string response = Encoding.ASCII.GetString(responseBuffer, 0, bytesRead);
-        return response;
-    }
-
     public void CloseConnection()
     {
-        stream.Close();
+        stream?.Close();
         client.Close();
-        OnLogMessage("Connection closed.");
-    }
-
-    protected virtual void OnLogMessage(string message)
-    {
-        LogMessage?.Invoke(this, message);
     }
 }
