@@ -4,11 +4,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SentralLibrary.DataClasses;
-public class UserDetailedData
+namespace SentralLibrary.Database.DataClasses;
+public class UserSimpleData
 {
-    private readonly Random random = new();
-
+    public string? CardID { get; set; }
     public string? FirstName
     {
         get => firstName;
@@ -31,25 +30,7 @@ public class UserDetailedData
             }
         }
     }
-    public string? Email { get; set; }
-    public string? CardID { get; set; }
-    public string? CardPin { get; set; }
-    public DateTime StartValidityTime { get; set; }
-    public DateTime EndValidityTime { get; set; }
 
     private string? firstName;
     private string? lastName;
-
-    public UserDetailedData()
-    {
-        CardPin = GeneratePin();
-        StartValidityTime = DateTime.MinValue;
-        EndValidityTime = DateTime.MinValue;
-    }
-
-    private string GeneratePin()
-    {
-        int number = random.Next(0, 10000);
-        return number.ToString("D4");
-    }
 }

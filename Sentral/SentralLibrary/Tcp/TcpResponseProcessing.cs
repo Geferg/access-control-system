@@ -7,7 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace SentralLibrary.Tcp;
-public class TcpResponseProcessor
+public class TcpResponseProcessing
 {
     public void SendResponse(TcpClientData clientData, Response response)
     {

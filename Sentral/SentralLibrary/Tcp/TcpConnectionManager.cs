@@ -45,6 +45,32 @@ public class TcpConnectionManager
 
     private async Task ListenForClientsAsync(CancellationToken cancellationToken)
     {
+        while (!cancellationToken.IsCancellationRequested)
+        {
+            TcpClient newClient = await listener.AcceptTcpClientAsync(cancellationToken);
+            TcpClientData client = new(newClient);
+
+            try
+            {
+                clients.Add(client);
+                await clientHandler.HandleClientAsync(client, cancellationToken);
+                clients.Remove(client);
+            }
+            catch (ObjectDisposedException)
+            {
+                
+            }
+            catch (SocketException)
+            {
+
+            }
+            finally
+            {
+                clients.Remove(client);
+            }
+        }
+
+        /*
         try
         {
             while (!cancellationToken.IsCancellationRequested)
@@ -60,6 +86,7 @@ public class TcpConnectionManager
         {
             //TODO consider handling listener stopped
         }
+        */
     }
 
     public bool IsDuplicateClientId(int clientId)

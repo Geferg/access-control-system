@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CardReaderLibrary.TcpRequests;
+namespace CardReaderLibrary.Tcp.TcpRequests;
 public static class TcpRequestConstants
 {
     // Request Types

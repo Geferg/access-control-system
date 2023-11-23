@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SentralLibrary.Tcp.TcpRequests;
+namespace CardReaderLibrary.Tcp.TcpRequests;
 public class AccessRequest : IRequest
 {
     public string? CardId { get; set; }

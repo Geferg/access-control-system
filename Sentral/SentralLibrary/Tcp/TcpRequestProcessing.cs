@@ -1,6 +1,6 @@
 ﻿using Newtonsoft.Json;
 using SentralLibrary.Database;
-using SentralLibrary.DataClasses;
+using SentralLibrary.Database.DataClasses;
 using SentralLibrary.Services;
 using SentralLibrary.Tcp.TcpRequests;
 using System;
@@ -11,13 +11,13 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace SentralLibrary.Tcp;
-public class TcpRequestProcessor
+public class TcpRequestProcessing
 {
     //TODO maybe raise events for when requests are handled, maybe
     private readonly IClientManager clientManager;
     private readonly IDatabaseService databaseService;
 
-    public TcpRequestProcessor(IClientManager clientManager, IDatabaseService databaseService)
+    public TcpRequestProcessing(IClientManager clientManager, IDatabaseService databaseService)
     {
         this.clientManager = clientManager;
         this.databaseService = databaseService;
@@ -104,6 +104,11 @@ public class TcpRequestProcessor
         {
             response.Status = TcpRequestConstants.StatusAccepted;
             response.Message = "card id and pin code accepted";
+        }
+        else
+        {
+            response.Status = TcpRequestConstants.StatusNotAccepted;
+            response.Message = "card id and pin code not accepted";
         }
 
         AccessLogData accessLogData = new()

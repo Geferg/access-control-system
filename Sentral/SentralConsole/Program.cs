@@ -8,7 +8,6 @@ using Microsoft.Extensions.DependencyInjection;
 using SentralLibrary;
 using SentralLibrary.Database;
 using SentralLibrary.Database.Processing;
-using SentralLibrary.DataClasses;
 using SentralLibrary.Services;
 using SentralLibrary.Tcp;
 
@@ -71,7 +70,11 @@ internal class Program
             Thread.Sleep(1000);
         }
 
-        Console.WriteLine("All users:");
+        Console.WriteLine("Kristian:");
+        var me = databaseService.GetUserById("0000");
+        Console.WriteLine($"[{me?.CardID}] {me?.FirstName}, pin: {me?.CardPin}");
+
+        Console.WriteLine("\nAll users:");
 
         foreach (var user in databaseService.GetAllUsers())
         {
@@ -91,8 +94,6 @@ internal class Program
         {
             Console.WriteLine($"[{log.DoorNumber}] {log.AlarmType}");
         }
-
-
 
         Console.ReadKey(true);
 

@@ -1,4 +1,4 @@
-﻿using SentralLibrary.DataClasses;
+﻿using SentralLibrary.Database.DataClasses;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -81,7 +81,7 @@ public class DatabaseAccessLogProcessing
         {
             {DatabaseSchema.Parameter_TimeOfEntry, accessLog.Time },
             {DatabaseSchema.Parameter_DoorNumber, accessLog.DoorNumber },
-            {DatabaseSchema.Parameter_TimeOfEntry, accessLog.AccessGranted },
+            {DatabaseSchema.Parameter_ApprovedEntry, accessLog.AccessGranted },
             {DatabaseSchema.Parameter_CardId , accessLog.CardId ?? "" }
         };
 

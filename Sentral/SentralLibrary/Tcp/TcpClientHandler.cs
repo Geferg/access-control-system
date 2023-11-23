@@ -13,8 +13,8 @@ public class TcpClientHandler : IClientManager
     public delegate void ClientDisconnectedHandler(TcpClientData clientData);
     public event ClientDisconnectedHandler? ClientDisconnected;
 
-    private readonly TcpRequestProcessor requestProcessor;
-    private readonly TcpResponseProcessor responseProcessor;
+    private readonly TcpRequestProcessing requestProcessor;
+    private readonly TcpResponseProcessing responseProcessor;
     private readonly TcpConnectionManager connectionManager;
 
     public TcpClientHandler(TcpConnectionManager connectionManager, DatabaseService databaseService)

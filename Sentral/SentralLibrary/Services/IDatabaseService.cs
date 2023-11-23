@@ -1,4 +1,4 @@
-﻿using SentralLibrary.DataClasses;
+﻿using SentralLibrary.Database.DataClasses;
 using System;
 using System.Collections.Generic;
 using System.Linq;

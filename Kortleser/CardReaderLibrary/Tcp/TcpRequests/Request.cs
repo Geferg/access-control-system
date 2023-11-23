@@ -4,8 +4,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CardReaderLibrary.TcpRequests;
-public interface IRequest
+namespace CardReaderLibrary.Tcp.TcpRequests;
+public class Request : IRequest
 {
-    string? RequestType { get; }
+    public string? RequestType { get; set; }
 }

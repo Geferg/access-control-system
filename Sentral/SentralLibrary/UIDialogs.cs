@@ -5,7 +5,7 @@ using System.Linq;
 using System.Net.Mail;
 using System.Text;
 using System.Threading.Tasks;
-using SentralLibrary.DataClasses;
+using SentralLibrary.Database.DataClasses;
 
 namespace SentralLibrary;
 public class UIDialogs
