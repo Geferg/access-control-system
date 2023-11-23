@@ -1,4 +1,5 @@
-﻿using System;
+﻿using SentralLibrary.Services;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
@@ -7,23 +8,19 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace SentralLibrary.Tcp;
-public class TcpConnectionManager : IClientManager
+public class TcpConnectionManager
 {
     private readonly TcpListener listener;
     private readonly List<TcpClientData> clients;
     private readonly TcpClientHandler clientHandler;
     private readonly CancellationTokenSource cancellationTokenSource;
 
-    public TcpConnectionManager(int port)
+    public TcpConnectionManager(int port, DatabaseService databaseService)
     {
         listener = new(IPAddress.Any, port);
         clients = new();
         cancellationTokenSource = new();
-
-        TcpRequestProcessor requestProcessor = new(this);
-        TcpResponseProcessor responseProcessor = new();
-        clientHandler = new(requestProcessor, responseProcessor);
-        clientHandler.ClientDisconnected += ClientHandler_ClientDisconnected;
+        clientHandler = new(this, databaseService);
     }
 
     public void Start()
@@ -46,11 +43,6 @@ public class TcpConnectionManager : IClientManager
         }
     }
 
-    public bool IsDuplicateClientId(int clientId)
-    {
-        return clients.Any(client => client.Equals(clientId));
-    }
-
     private async Task ListenForClientsAsync(CancellationToken cancellationToken)
     {
         try
@@ -59,12 +51,9 @@ public class TcpConnectionManager : IClientManager
             {
                 TcpClient newClient = await listener.AcceptTcpClientAsync(cancellationToken);
                 TcpClientData client = new(newClient);
-                lock (clients)
-                {
-                    clients.Add(client);
-                }
-
-                _ = clientHandler.HandleClientAsync(client, cancellationToken);
+                clients.Add(client);
+                await clientHandler.HandleClientAsync(client, cancellationToken);
+                clients.Remove(client);
             }
         }
         catch (ObjectDisposedException)
@@ -73,11 +62,8 @@ public class TcpConnectionManager : IClientManager
         }
     }
 
-    private void ClientHandler_ClientDisconnected(TcpClientData clientData)
+    public bool IsDuplicateClientId(int clientId)
     {
-        lock (clients)
-        {
-            clients.Remove(clientData);
-        }
+        return clients.Any(client => client.ClientId == clientId);
     }
 }

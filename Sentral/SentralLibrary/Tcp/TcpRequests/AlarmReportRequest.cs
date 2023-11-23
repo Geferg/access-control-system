@@ -13,6 +13,6 @@ public class AlarmReportRequest : IRequest
 
     public AlarmReportRequest()
     {
-        RequestType = SentralLibrary.TcpRequestConstants.request_alarmReport;
+        RequestType = TcpRequestConstants.RequestAlarmReport;
     }
 }

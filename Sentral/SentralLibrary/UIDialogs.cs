@@ -11,7 +11,7 @@ namespace SentralLibrary;
 public class UIDialogs
 {
     //TODO use data classes
-    private UIConnection connection;
+    private readonly UIConnection connection;
 
     public UIDialogs(UIConnection connection)
     {
@@ -27,6 +27,7 @@ public class UIDialogs
         }
         WriteLine("");
     }
+
     public UserDetailedData? MakeUser(string cardId)
     {
         WriteLine("adding user, fill in data below\n");
@@ -56,6 +57,7 @@ public class UIDialogs
 
         return newUser;
     }
+
     public void ShowUser(UserDetailedData user)
     {
         WriteLine($"     first name: {user.FirstName}");
@@ -67,10 +69,12 @@ public class UIDialogs
 
         WriteLine("");
     }
+
     public bool DeleteUserConfirmation(UserDetailedData user)
     {
         return UserConfirm($"are you sure you want to delete [{user.CardID}] {user.FirstName} {user.LastName}");
     }
+
     public bool ExitProgramConfirmation()
     {
         if (!UserConfirm("are you sure you want to exit?"))
@@ -80,6 +84,7 @@ public class UIDialogs
         WriteLine("exiting...");
         return true;
     }
+
     public void ListCommands()
     {
         WriteLine("commands:");
@@ -98,6 +103,7 @@ public class UIDialogs
         WriteLine("alarm log...");
         WriteLine("");
     }
+
     public UserDetailedData EditUser(UserDetailedData user)
     {
         WriteLine($"editing user {user.CardID}...");
@@ -174,6 +180,7 @@ public class UIDialogs
 
         return user;
     }
+
     public void ShowAccessLogs(List<(string id, bool approved, DateTime time, int doorNumber)> logs)
     {
         if(logs.Count == 0)
@@ -245,6 +252,7 @@ public class UIDialogs
         }
         return line;
     }
+
     private ConsoleKeyInfo ReadKey()
     {
         ConsoleKeyInfo? keyInfo = connection.GetKeyFromUI();
@@ -254,10 +262,12 @@ public class UIDialogs
         }
         return keyInfo.Value;
     }
+
     private void WriteLine(string message)
     {
         connection.PutOnUI(message + "\n");
     }
+
     private void Write(string message)
     {
         connection.PutOnUI(message);
@@ -274,6 +284,7 @@ public class UIDialogs
 
         return newStartTime;
     }
+
     private int GetValidatedNumberInput(string prompt, int minValue, int maxValue)
     {
         string input = "";
@@ -307,6 +318,7 @@ public class UIDialogs
 
         return int.Parse(input);
     }
+
     private string GetNameInput(string prompt)
     {
         string input = "";
@@ -333,6 +345,7 @@ public class UIDialogs
 
         return input;
     }
+
     private string GetFourDigitInput(string prompt)
     {
         string input = "";
@@ -367,6 +380,7 @@ public class UIDialogs
 
         return input;
     }
+
     private string GetEmailInput(string prompt)
     {
         string input = "";
@@ -408,6 +422,7 @@ public class UIDialogs
 
         return InputValidation.Valid;
     }
+
     private static InputValidation ValidateEmail(string? input)
     {
         if (string.IsNullOrWhiteSpace(input))
@@ -421,6 +436,7 @@ public class UIDialogs
 
         return InputValidation.Valid;
     }
+
     private static InputValidation ValidateFourDigits(string? input)
     {
         if (string.IsNullOrWhiteSpace(input))
@@ -442,6 +458,7 @@ public class UIDialogs
 
         return InputValidation.Valid;
     }
+
     private static InputValidation ValidateNumberInput(string? input, int minValue, int maxValue)
     {
         if (string.IsNullOrWhiteSpace(input))

@@ -9,7 +9,8 @@ using SentralLibrary;
 using SentralLibrary.Database;
 using SentralLibrary.Database.Processing;
 using SentralLibrary.DataClasses;
-using SentralLibrary.TcpRequestConstants;
+using SentralLibrary.Services;
+using SentralLibrary.Tcp;
 
 namespace SentralConsole;
 
@@ -33,28 +34,17 @@ internal class Program
     private const string missingInDbMessage = "user not found in database";
     private const string failureInDbMessage = "could not perform operation in database";
 
-    private static readonly DatabaseConnectionOld dbConnection = new(dbIP, dbPort, dbUsername, dbPassword, dbDatabase);
-    private static readonly TcpConnectionOld tcpServer = new(8000);
+    //private static readonly DatabaseConnectionOld dbConnection = new(dbIP, dbPort, dbUsername, dbPassword, dbDatabase);
+    //private static readonly TcpConnectionOld tcpServer = new(8000);
     private static readonly UIConnection uiConnection = new();
     private static readonly UIDialogs dialogs = new(uiConnection);
 
-    private static readonly DatabaseConnectionManager databaseConnection = new(dbIP, dbDatabase, dbIP, dbUsername, dbPassword);
-
-
-
-    static async Task Main(string[] args)
+    static void Main(string[] args)
     {
         Console.WriteLine("\u001b]0;Sentral\u0007");
         Console.Clear();
 
-        //ServiceCollection serviceCollection = new ServiceCollection();
-        //serviceCollection.AddSingleton(provider => new DatabaseConnection(dbIP, dbDatabase, dbIP, dbUsername, dbPassword));
-
-        //serviceCollection.AddTransient<DatabaseAccess>();
-        //serviceCollection.AddTransient<DatabaseUserProcessing>();
-        // ...
-        //var serviceProvider = serviceCollection.BuildServiceProvider();
-
+        // Database dependency injections
         DatabaseConnectionManager sharedDatabaseConnection = new(dbIP, dbDatabase, dbPort, dbUsername, dbPassword);
 
         DatabaseAccess sharedDatabaseAccess = new(sharedDatabaseConnection);
@@ -62,6 +52,11 @@ internal class Program
         DatabaseUserProcessing userProcessing = new(sharedDatabaseAccess);
         DatabaseAccessLogProcessing accessProcessing = new(sharedDatabaseAccess);
         DatabaseAlarmLogProcessing alarmLogProcessing = new(sharedDatabaseAccess);
+
+        DatabaseService databaseService = new(userProcessing, accessProcessing, alarmLogProcessing);
+
+        TcpConnectionManager tcpConnection = new(8000, databaseService);
+        tcpConnection.Start();
 
         //uiConnection.ClassToUI += OnWriteToUI;
         //uiConnection.UIStringToClass += OnRecieveFromUI;
@@ -76,29 +71,27 @@ internal class Program
             Thread.Sleep(1000);
         }
 
-        /*
-         * TESTS
-        Console.WriteLine("Users:");
+        Console.WriteLine("All users:");
 
-        foreach (var user in userProcessing.GetUserbase())
+        foreach (var user in databaseService.GetAllUsers())
         {
             Console.WriteLine($"[{user.CardID}] {user.FirstName} {user.LastName}");
         }
 
         Console.WriteLine("\nAccess logs:");
 
-        foreach (var log in accessProcessing.GetAccessLogs(DateTime.MinValue, DateTime.MaxValue))
+        foreach (var log in databaseService.GetAccessLogs(DateTime.MinValue, DateTime.MaxValue))
         {
             Console.WriteLine($"[{log.DoorNumber}] {log.CardId}, access granted: {log.AccessGranted}");
         }
 
         Console.WriteLine("\nAlarm logs:");
 
-        foreach (var log in alarmLogProcessing.GetAlarmLogs(DateTime.MinValue, DateTime.MaxValue))
+        foreach (var log in databaseService.GetAlarmLogs(DateTime.MinValue, DateTime.MaxValue))
         {
             Console.WriteLine($"[{log.DoorNumber}] {log.AlarmType}");
         }
-        */
+
 
 
         Console.ReadKey(true);

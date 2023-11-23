@@ -23,7 +23,7 @@ public class DatabaseAlarmLogProcessing
         Dictionary<string, object> parameters = new()
         {
             {DbUserdataSchema.Parameter_DateTimeStart, start },
-            {DbUserdataSchema.Parameter_EndValidity, end }
+            {DbUserdataSchema.Parameter_DateTimeEnd, end }
         };
 
         DataTable dataTable = databaseAccess.ExecuteQuery(DbUserdataSchema.Query_GetAlarmReport, parameters);

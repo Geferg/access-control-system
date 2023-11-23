@@ -17,6 +17,6 @@ public class AccessRequest : IRequest
 
     public AccessRequest()
     {
-        RequestType = SentralLibrary.TcpRequestConstants.RequestAccess;
+        RequestType = TcpRequestConstants.RequestAccess;
     }
 }

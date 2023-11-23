@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 namespace SentralLibrary.Database.Processing;
 public class DatabaseUserProcessing
 {
-    //TODO split up schema
+    //TODO split up schema (partially done)
     private readonly DatabaseAccess databaseAccess;
 
     public DatabaseUserProcessing(DatabaseAccess databaseAccess)

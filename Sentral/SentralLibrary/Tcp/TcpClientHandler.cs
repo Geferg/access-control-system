@@ -1,4 +1,5 @@
-﻿using SentralLibrary.Tcp.TcpRequests;
+﻿using SentralLibrary.Services;
+using SentralLibrary.Tcp.TcpRequests;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,18 +8,20 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace SentralLibrary.Tcp;
-public class TcpClientHandler
+public class TcpClientHandler : IClientManager
 {
     public delegate void ClientDisconnectedHandler(TcpClientData clientData);
     public event ClientDisconnectedHandler? ClientDisconnected;
 
     private readonly TcpRequestProcessor requestProcessor;
     private readonly TcpResponseProcessor responseProcessor;
+    private readonly TcpConnectionManager connectionManager;
 
-    public TcpClientHandler(TcpRequestProcessor requestProcessor, TcpResponseProcessor responseProcessor)
+    public TcpClientHandler(TcpConnectionManager connectionManager, DatabaseService databaseService)
     {
-        this.requestProcessor = requestProcessor;
-        this.responseProcessor = responseProcessor;
+        this.connectionManager = connectionManager;
+        requestProcessor = new(this, databaseService);
+        responseProcessor = new();
     }
 
     public async Task HandleClientAsync(TcpClientData clientData, CancellationToken cancellationToken)
@@ -44,7 +47,11 @@ public class TcpClientHandler
         finally
         {
             clientData.TcpClient.Close();
-            ClientDisconnected?.Invoke(clientData);
         }
+    }
+
+    public bool IsDuplicateClientId(int clientId)
+    {
+        return connectionManager.IsDuplicateClientId(clientId);
     }
 }

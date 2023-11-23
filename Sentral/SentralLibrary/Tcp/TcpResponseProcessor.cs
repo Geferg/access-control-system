@@ -9,6 +9,12 @@ namespace SentralLibrary.Tcp;
 public class TcpResponseProcessor
 {
 
+
+    public TcpResponseProcessor()
+    {
+
+    }
+
     public void SendResponse(TcpClientData clientData, Response respose)
     {
 

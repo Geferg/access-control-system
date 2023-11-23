@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using SentralLibrary.Services;
 using SentralLibrary.Tcp.TcpRequests;
 using System;
 using System.Collections.Generic;
@@ -11,10 +12,12 @@ namespace SentralLibrary.Tcp;
 public class TcpRequestProcessor
 {
     private readonly IClientManager clientManager;
+    private readonly IDatabaseService databaseService;
 
-    public TcpRequestProcessor(IClientManager clientManager)
+    public TcpRequestProcessor(IClientManager clientManager, IDatabaseService databaseService)
     {
         this.clientManager = clientManager;
+        this.databaseService = databaseService;
     }
 
     public Response ProcessClientRequest(TcpClientData clientData, string requestString)
@@ -73,27 +76,27 @@ public class TcpRequestProcessor
 
     private Response HandleAccessRequest(TcpClientData clientData, AccessRequest? request)
     {
-        return HandleUnknownRequest();
         if (request == null)
         {
 
         }
 
+        return HandleUnknownRequest();
     }
 
     private Response HandleAlarmReportRequest(TcpClientData clientData, AlarmReportRequest? request)
     {
-        return HandleUnknownRequest();
         if (request == null)
         {
 
         }
 
+        return HandleUnknownRequest();
     }
 
     private Response HandleUnknownRequest()
     {
-        return new(TcpRequestConstants.RequestInvalid, TcpRequestConstants.StatusFail, "request does not match any known patterns")
+        return new(TcpRequestConstants.RequestInvalid, TcpRequestConstants.StatusFail, "request does not match any known patterns");
     }
 
 }

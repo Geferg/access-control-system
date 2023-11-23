@@ -23,6 +23,7 @@ using System.Threading.Tasks;
 namespace SentralLibrary;
 public class TcpConnectionOld
 {
+    /*
     public TcpConnectionOld(int port)
     {
         listener = new(IPAddress.Any, port);
@@ -30,6 +31,7 @@ public class TcpConnectionOld
     }
 
     // ========================= CONNECTIONS ========================= //
+    
     private readonly TcpListener listener;
     private readonly List<TcpClientData> clients;
 
@@ -288,5 +290,5 @@ public class TcpConnectionOld
     {
         TypeNameHandling = TypeNameHandling.Auto
     };
-
+    */
 }
