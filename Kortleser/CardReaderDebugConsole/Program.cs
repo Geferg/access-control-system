@@ -19,23 +19,66 @@ using System.Net;
 namespace CardReaderDebugConsole;
 internal class Program
 {
-    private static SerialConnectionManager? serialConnection;
+    //private static SerialConnectionManager? serialConnection;
     private static TcpConnectionManager tcpConnection = new("127.0.0.1", 8000);
     private static int accessPointNumber;
     private static DoorStateManager? doorStateManager;
-
-    private static DateTime lastTimeClosed = DateTime.Now;
-    private static DateTime lastTimeLocked = DateTime.Now;
 
     static async Task Main(string[] args)
     {
         Console.WriteLine("\u001b]0;Kortleser\u0007");
         Console.Clear();
 
+        SerialConnectionManager serialConnection;
 
-        InitializeSerialConnection();
+        while (true)
+        {
+            while (SerialPort.GetPortNames().Length == 0)
+            {
+                Console.WriteLine("no com ports available, retrying");
+                Thread.Sleep(2000);
+            }
 
-        Console.WriteLine($"Connected to serial port {serialConnection!.Port}");
+            string[] ports = SerialPort.GetPortNames();
+
+            Console.WriteLine("select a port:");
+            foreach (var port in ports)
+            {
+                Console.WriteLine(port);
+            }
+
+            Console.Write("> ");
+            string? selectedPort = Console.ReadLine()?.Trim().ToUpper();
+
+            if (string.IsNullOrEmpty(selectedPort) || Array.IndexOf(ports, selectedPort) == -1)
+            {
+                Console.WriteLine("invalid com port, retrying");
+                continue;
+            }
+
+            try
+            {
+                serialConnection = new SerialConnectionManager(selectedPort);
+            }
+            catch (Exception)
+            {
+                Console.WriteLine("Could not initialize serial port, retrying");
+                continue;
+            }
+
+            try
+            {
+                serialConnection.OpenConnection();
+                Console.WriteLine($"Connected to serial port {serialConnection.Port}");
+                break;
+            }
+            catch (Exception)
+            {
+                Console.WriteLine($"Could not connect to serial port {serialConnection!.Port}, retrying");
+                continue;
+            }
+        }
+
 
         while (!tcpConnection.Connected)
         {
@@ -59,7 +102,7 @@ internal class Program
 
         await AuthorizeTcpConnection(tcpProcessing);
 
-        doorStateManager = new(serialProcessing, tcpProcessing);
+        doorStateManager = new(serialProcessing, tcpProcessing, accessPointNumber);
 
         while (true)
         {
@@ -118,57 +161,7 @@ internal class Program
         }
     }
 
-    private static void InitializeSerialConnection()
-    {
-        while (true)
-        {
-            while (SerialPort.GetPortNames().Length == 0)
-            {
-                Console.WriteLine("no com ports available, retrying");
-                Thread.Sleep(2000);
-            }
-
-            string[] ports = SerialPort.GetPortNames();
-
-            Console.WriteLine("select a port:");
-            foreach (var port in ports)
-            {
-                Console.WriteLine(port);
-            }
-
-            Console.Write("> ");
-            string? selectedPort = Console.ReadLine()?.Trim().ToUpper();
-
-            if (string.IsNullOrEmpty(selectedPort) || Array.IndexOf(ports, selectedPort) == -1)
-            {
-                Console.WriteLine("invalid com port, retrying");
-                continue;
-            }
-
-            try
-            {
-                serialConnection = new SerialConnectionManager(selectedPort);
-            }
-            catch (Exception)
-            {
-                Console.WriteLine("Could not initialize serial port, retrying");
-                continue;
-            }
-
-            try
-            {
-                serialConnection.OpenConnection();
-                return;
-            }
-            catch (Exception)
-            {
-                Console.WriteLine($"Could not connect to serial port {serialConnection!.Port}, retrying");
-                continue;
-            }
-        }
-    }
-
-    // OLD METHODS
+    // ========================= INPUT HANDLERS =========================
 
     private static int GetValidatedNumberInput(string prompt, int minValue, int maxValue)
     {
