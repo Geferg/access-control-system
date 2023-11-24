@@ -7,6 +7,7 @@ using System.Text.RegularExpressions;
 using Microsoft.Extensions.DependencyInjection;
 using SentralLibrary.Console;
 using SentralLibrary.Database;
+using SentralLibrary.Database.Config;
 using SentralLibrary.Database.DataClasses;
 using SentralLibrary.Database.Processing;
 using SentralLibrary.Database.Services;
@@ -40,7 +41,9 @@ internal class Program
         Console.Clear();
 
         // Database dependency injections
-        DatabaseConnectionManager sharedDatabaseConnection = new(dbIP, dbDatabase, dbPort, dbUsername, dbPassword);
+        DatabaseConnectionManager sharedDatabaseConnection = new(DatabaseCredentials.dbIP,
+            DatabaseCredentials.dbDatabase, DatabaseCredentials.dbPort, DatabaseCredentials.dbUsername,
+            DatabaseCredentials.dbPassword);
 
         DatabaseAccess sharedDatabaseAccess = new(sharedDatabaseConnection);
 

@@ -1,4 +1,5 @@
-﻿using SentralLibrary.Database.DataClasses;
+﻿using SentralLibrary.Database.Config;
+using SentralLibrary.Database.DataClasses;
 using System;
 using System.Collections.Generic;
 using System.Data;
