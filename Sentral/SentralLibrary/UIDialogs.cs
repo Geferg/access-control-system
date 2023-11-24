@@ -5,13 +5,14 @@ using System.Linq;
 using System.Net.Mail;
 using System.Text;
 using System.Threading.Tasks;
+using SentralLibrary.Database;
 using SentralLibrary.Database.DataClasses;
+using SentralLibrary.Tcp;
 using SentralLibrary.Tcp.TcpRequests;
 
 namespace SentralLibrary;
 public class UIDialogs
 {
-    //TODO use data classes
     private readonly UIConnection connection;
 
     public UIDialogs(UIConnection connection)
@@ -38,6 +39,40 @@ public class UIDialogs
         WriteLine("");
     }
 
+    public void ShowTcpStatus(TcpConnectionManager tcpConnection)
+    {
+        WriteLine("TCP System Details");
+        WriteLine(new string('-', 50));
+        WriteLine($"  Authorized Connections   : {tcpConnection.GetAuthorizedClientCount()}");
+        WriteLine($"  Unauthorized Connections : {tcpConnection.GetUnauthorizedClientCount()}");
+
+        foreach (var id in tcpConnection.GetClientIds())
+        {
+            WriteLine($"  Connected Client ID      : {id}");
+        }
+
+        WriteLine(new string('-', 50));
+        WriteLine("");
+    }
+
+    public void ShowDatabaseStatus(DatabaseConnectionManager databaseConnection)
+    {
+        if (databaseConnection.TestConnection())
+        {
+            WriteLine("Connection to Database SUCCESSFUL");
+        }
+        else
+        {
+            WriteLine("Connection to Database FAILED");
+        }
+
+        WriteLine(new string('-', 50));
+        WriteLine($"  Database Name : {databaseConnection.DatabaseName}");
+        WriteLine($"  IP Address    : {databaseConnection.HostIp}");
+        WriteLine($"  Port          : {databaseConnection.HostPort}");
+        WriteLine(new string('-', 50));
+        WriteLine("");
+    }
 
     public void ShowUsers(List<UserSimpleData> users)
     {

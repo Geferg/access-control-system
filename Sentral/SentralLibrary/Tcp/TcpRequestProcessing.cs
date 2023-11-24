@@ -13,7 +13,6 @@ using System.Threading.Tasks;
 namespace SentralLibrary.Tcp;
 public class TcpRequestProcessing
 {
-    //TODO maybe raise events for when requests are handled, maybe
     private readonly IClientManager clientManager;
     private readonly IDatabaseService databaseService;
 

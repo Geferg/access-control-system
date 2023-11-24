@@ -35,8 +35,6 @@ internal class Program
     private const string missingInDbMessage = "user not found in database";
     private const string failureInDbMessage = "could not perform operation in database";
 
-    //private static readonly DatabaseConnectionOld dbConnection = new(dbIP, dbPort, dbUsername, dbPassword, dbDatabase);
-    //private static readonly TcpConnectionOld tcpServer = new(8000);
     private static readonly UIConnection uiConnection = new();
     private static readonly UIDialogs dialogs = new(uiConnection);
 
@@ -66,12 +64,13 @@ internal class Program
             Thread.Sleep(1000);
         }
 
+        // Attach events for ui communication
         uiConnection.ClassToUI += (message) => Console.Write(message);
         uiConnection.UIStringToClass += () => Console.ReadLine();
         uiConnection.UIKeyToClass += () => Console.ReadKey(true);
 
+        // Main user loop
         dialogs.ListCommands();
-
         while (true)
         {
             Console.Write("> ");
@@ -85,7 +84,8 @@ internal class Program
             switch (command)
             {
                 case "clear":
-                    HandleClearCommand();
+                    Console.Clear();
+                    dialogs.ListCommands();
                     break;
 
                 case "show":
@@ -120,44 +120,7 @@ internal class Program
 
     }
 
-    // CONNECTION COMMANDS
-
-    private static void HandleDatabaseDetailsCommand(DatabaseConnectionManager connection)
-    {
-        if (connection.TestConnection())
-        {
-            Console.WriteLine("Connection to Database SUCCESSFUL");
-        }
-        else
-        {
-            Console.WriteLine("Connection to Database FAILED");
-        }
-
-        Console.WriteLine(new string('-', 50));
-        Console.WriteLine($"  Database Name : {connection.DatabaseName}");
-        Console.WriteLine($"  IP Address    : {connection.HostIp}");
-        Console.WriteLine($"  Port          : {connection.HostPort}");
-        Console.WriteLine(new string('-', 50));
-        Console.WriteLine("");
-    }
-
-    private static void HandleSystemDetailsCommand(TcpConnectionManager connection)
-    {
-        Console.WriteLine("TCP System Details");
-        Console.WriteLine(new string('-', 50));
-        Console.WriteLine($"  Authorized Connections   : {connection.GetAuthorizedClientCount()}");
-        Console.WriteLine($"  Unauthorized Connections : {connection.GetUnauthorizedClientCount()}");
-
-        foreach (var id in connection.GetClientIds())
-        {
-            Console.WriteLine($"  Connected Client ID      : {id}");
-        }
-
-        Console.WriteLine(new string('-', 50));
-        Console.WriteLine("");
-    }
-
-    // DATABASE INTERRACTION COMMANDS
+    // DECODES COMMANDS
     private static void FindPatternOnCommandAndHandle(DatabaseService databaseService, string command)
     {
         string? cardId = GetNumbersFromCommand(command);
@@ -193,10 +156,15 @@ internal class Program
         }
     }
 
-    private static void HandleClearCommand()
+    // COMMAND HANDLERS
+    private static void HandleDatabaseDetailsCommand(DatabaseConnectionManager connection)
     {
-        Console.Clear();
-        dialogs.ListCommands();
+        dialogs.ShowDatabaseStatus(connection);
+    }
+
+    private static void HandleSystemDetailsCommand(TcpConnectionManager connection)
+    {
+        dialogs.ShowTcpStatus(connection);
     }
 
     private static void HandleShowCommand(DatabaseService databaseService)
@@ -214,7 +182,7 @@ internal class Program
         }
         else
         {
-            Console.WriteLine(missingInDbMessage + "\n");
+            Console.WriteLine("user not found in database\n");
         }
     }
 
@@ -240,14 +208,14 @@ internal class Program
         UserDetailedData? selectedUser = databaseService.GetUserById(cardId);
         if (selectedUser == null)
         {
-            Console.WriteLine(missingInDbMessage);
+            Console.WriteLine("user not found in database\n");
         }
         else
         {
             UserDetailedData newUser = dialogs.EditUser(selectedUser);
             if (!databaseService.EditUser(cardId, newUser))
             {
-                Console.WriteLine(failureInDbMessage);
+                Console.WriteLine("could not perform operation in database");
             }
         }
     }
@@ -354,5 +322,4 @@ internal class Program
             return null;
         }
     }
-
 }
