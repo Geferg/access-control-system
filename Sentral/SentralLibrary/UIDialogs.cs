@@ -5,12 +5,14 @@ using System.Linq;
 using System.Net.Mail;
 using System.Text;
 using System.Threading.Tasks;
+using SentralLibrary.Database;
 using SentralLibrary.Database.DataClasses;
+using SentralLibrary.Tcp;
+using SentralLibrary.Tcp.TcpRequests;
 
 namespace SentralLibrary;
 public class UIDialogs
 {
-    //TODO use data classes
     private readonly UIConnection connection;
 
     public UIDialogs(UIConnection connection)
@@ -19,36 +21,99 @@ public class UIDialogs
     }
 
     // SERVE UI
-    public void ShowUsers(List<(string id, string firstName, string lastName)> users)
+    public void ListCommands()
     {
-        foreach (var (id, firstName, lastName) in users)
-        {
-            WriteLine($"[{id}] {firstName} {lastName}");
-        }
+        WriteLine("Available Commands");
+        WriteLine("  clear        - Clears the console screen.");
+        WriteLine("  database     - Displays the current status of the database.");
+        WriteLine("  system       - Displays the status of card readers in the system.");
+        WriteLine("  show         - Lists all registered users.");
+        WriteLine("  add [ID]     - Adds a new user with the specified card ID.");
+        WriteLine("  show [ID]    - Displays details about a specific user by card ID.");
+        WriteLine("  edit [ID]    - Modifies data for an existing user by card ID.");
+        WriteLine("  remove [ID]  - Removes an existing user by card ID.");
+        WriteLine("  access       - Lists all access attempts within a specified date range.");
+        WriteLine("  suspicious   - Lists all users with 10 or more unsuccessful access attempts.");
+        WriteLine("  alarm        - Displays all alarms within a specified time range.");
+        WriteLine("  alarm [Door] - Shows alarms for a specific door within a specified time range.");
         WriteLine("");
+    }
+
+    public void ShowTcpStatus(TcpConnectionManager tcpConnection)
+    {
+        WriteLine("TCP System Details");
+        WriteLine(new string('-', 50));
+        WriteLine($"  Authorized Connections   : {tcpConnection.GetAuthorizedClientCount()}");
+        WriteLine($"  Unauthorized Connections : {tcpConnection.GetUnauthorizedClientCount()}");
+
+        foreach (var id in tcpConnection.GetClientIds())
+        {
+            WriteLine($"  Connected Client ID      : {id}");
+        }
+
+        WriteLine(new string('-', 50));
+        WriteLine("");
+    }
+
+    public void ShowDatabaseStatus(DatabaseConnectionManager databaseConnection)
+    {
+        if (databaseConnection.TestConnection())
+        {
+            WriteLine("Connection to Database SUCCESSFUL");
+        }
+        else
+        {
+            WriteLine("Connection to Database FAILED");
+        }
+
+        WriteLine(new string('-', 50));
+        WriteLine($"  Database Name : {databaseConnection.DatabaseName}");
+        WriteLine($"  IP Address    : {databaseConnection.HostIp}");
+        WriteLine($"  Port          : {databaseConnection.HostPort}");
+        WriteLine(new string('-', 50));
+        WriteLine("");
+    }
+
+    public void ShowUsers(List<UserSimpleData> users)
+    {
+        WriteLine("User List:");
+        WriteLine(new string('-', 50));
+        foreach (var user in users.OrderBy(u => u.CardID).ToList())
+        {
+            WriteLine($"  ID: {user.CardID} - {user.FirstName} {user.LastName}");
+        }
+        WriteLine(new string('-', 50));
+        WriteLine("");
+
     }
 
     public UserDetailedData? MakeUser(string cardId)
     {
-        WriteLine("adding user, fill in data below\n");
+        WriteLine("Adding New User - Please Fill in the Data Below");
+        WriteLine(new string('-', 50));
 
-        string firstName = GetNameInput("first name");
-        string lastName = GetNameInput("last name");
-        string email = GetEmailInput("email");
+        string firstName = GetNameInput("First Name");
+        string lastName = GetNameInput("Last Name");
+        string email = GetEmailInput("Email");
 
         UserDetailedData newUser = new()
         {
             FirstName = firstName,
             LastName = lastName,
-            Email = email
+            Email = email,
+            CardID = cardId
         };
 
+        WriteLine($"New User Creation");
+        WriteLine(new string('-', 50));
+        WriteLine($"  First Name      : {newUser.FirstName}");
+        WriteLine($"  Last Name       : {newUser.LastName}");
+        WriteLine($"  Email           : {newUser.Email}");
+        WriteLine($"  Card ID         : {newUser.CardID}");
+        WriteLine($"  Validity Period : {newUser.StartValidityTime} - {newUser.EndValidityTime}");
+        WriteLine($"  Card PIN        : {newUser.CardPin}");
+        WriteLine(new string('-', 50));
         WriteLine("");
-        WriteLine($"name: {newUser.FirstName} {newUser.LastName}");
-        WriteLine($"email: {newUser.Email}");
-        WriteLine($"card id: {newUser.CardID}");
-        WriteLine($"card pin: {newUser.CardPin}");
-        WriteLine($"validity period: {newUser.StartValidityTime} - {newUser.EndValidityTime}\n");
 
         if (!UserConfirm("confirm addition of user?"))
         {
@@ -60,13 +125,15 @@ public class UIDialogs
 
     public void ShowUser(UserDetailedData user)
     {
-        WriteLine($"     first name: {user.FirstName}");
-        WriteLine($"      last name: {user.LastName}");
-        WriteLine($"          email: {user.Email}");
-        WriteLine($"        card id: {user.CardID}");
-        WriteLine($"validity period: {user.StartValidityTime} - {user.EndValidityTime}");
-        WriteLine($"       card pin: {user.CardPin}");
-
+        WriteLine($"User Details for {user.FirstName} {user.LastName}");
+        WriteLine(new string('-', 50));
+        WriteLine($"  First Name      : {user.FirstName}");
+        WriteLine($"  Last Name       : {user.LastName}");
+        WriteLine($"  Email           : {user.Email}");
+        WriteLine($"  Card ID         : {user.CardID}");
+        WriteLine($"  Validity Period : {user.StartValidityTime} - {user.EndValidityTime}");
+        WriteLine($"  Card PIN        : {user.CardPin}");
+        WriteLine(new string('-', 50));
         WriteLine("");
     }
 
@@ -75,48 +142,21 @@ public class UIDialogs
         return UserConfirm($"are you sure you want to delete [{user.CardID}] {user.FirstName} {user.LastName}");
     }
 
-    public bool ExitProgramConfirmation()
-    {
-        if (!UserConfirm("are you sure you want to exit?"))
-        {
-            return false;
-        }
-        WriteLine("exiting...");
-        return true;
-    }
-
-    public void ListCommands()
-    {
-        WriteLine("commands:");
-        WriteLine("clear - clear the console");
-        WriteLine("exit - close the program");
-        WriteLine("database - shows status of database");
-        WriteLine("system - shows status of card readers");
-        WriteLine("show - lists all users");
-        WriteLine("add [card id] - add new user with a card id");
-        WriteLine("show [card id] - details about a specific user");
-        WriteLine("edit [card id]- change data of existing user");
-        WriteLine("remove [card id] - remove existing user");
-        WriteLine("accesslog - lists all access attempts between two dates");
-        WriteLine("suspicious - lists all suspicious users...");
-        WriteLine("door log...");
-        WriteLine("alarm log...");
-        WriteLine("");
-    }
-
     public UserDetailedData EditUser(UserDetailedData user)
     {
-        WriteLine($"editing user {user.CardID}...");
+        WriteLine($"Editing User - Card ID: {user.CardID}");
+        WriteLine(new string('-', 50));
 
-        WriteLine($"1. first name: {user.FirstName}");
-        WriteLine($"2. last name: {user.LastName}");
-        WriteLine($"3. email: {user.Email}");
-        WriteLine($"4. validity start: {user.StartValidityTime}");
-        WriteLine($"5. validity end: {user.EndValidityTime}");
-        WriteLine($"6. card pin: {user.CardPin}");
-        WriteLine($"0. cancel");
+        WriteLine($"1. First Name       : {user.FirstName}");
+        WriteLine($"2. Last Name        : {user.LastName}");
+        WriteLine($"3. Email            : {user.Email}");
+        WriteLine($"4. Validity Start   : {user.StartValidityTime}");
+        WriteLine($"5. Validity End     : {user.EndValidityTime}");
+        WriteLine($"6. Card PIN         : {user.CardPin}");
+        WriteLine("0. Cancel");
 
-        WriteLine("press a number key\n");
+        WriteLine(new string('-', 50));
+        WriteLine("Please press a number key to select an option:");
         Write("> ");
 
         bool ongoingDialog = true;
@@ -181,62 +221,99 @@ public class UIDialogs
         return user;
     }
 
-    public void ShowAccessLogs(List<(string id, bool approved, DateTime time, int doorNumber)> logs)
+    public void ShowSuspiciousUserIds(List<string> ids)
     {
-        if(logs.Count == 0)
+        ids.Sort();
+
+        if (ids.Count == 0)
         {
-            WriteLine("no logs found");
+            WriteLine("No suspicious users found.");
             return;
         }
-        WriteLine("access logs:");
-        foreach (var (id, approved, time, doorNumber) in logs)
+
+        WriteLine("Suspicious Users:");
+        WriteLine(new string('-', 50)); // Separator for clarity
+
+        foreach (var id in ids)
         {
-            string approvedMessage = "not approved";
-            if (approved)
-            {
-                approvedMessage = "approved";
-            }
-            WriteLine($"[{id}] was {approvedMessage} at door {doorNumber} {time}");
+            WriteLine($"  User ID: [{id}]");
         }
+
+        WriteLine(new string('-', 50));
         WriteLine("");
     }
 
-    public void ShowAlarmLogs(List<(DateTime time, int doorNumber, string alarmType)> logs)
+    public void ShowAccessLogs(List<AccessLogData> logs)
     {
+        logs = logs.OrderBy(l => l.Time).ToList();
+
         if (logs.Count == 0)
         {
-            WriteLine("no logs found");
+            WriteLine("No access logs found.");
             return;
         }
-        WriteLine("alarm logs:");
-        foreach (var (time, doorNumber, alarmType) in logs)
+
+        WriteLine("Access Logs:");
+        WriteLine(new string('-', 50));
+
+        foreach (var log in logs)
         {
-            WriteLine($"{alarmType} at door {doorNumber} {time}");
+            string accessStatus = log.AccessGranted ? "Approved" : "Not Approved";
+            string dateTimeFormatted = log.Time.ToString("yyyy-MM-dd HH:mm:ss");
+
+            WriteLine($"[{dateTimeFormatted}] Card ID {log.CardId} attempted access at Door {log.DoorNumber}: {accessStatus}");
         }
+
+        WriteLine(new string('-', 50));
+        WriteLine("");
+    }
+
+    public void ShowAlarmLogs(List<AlarmLogData> logs)
+    {
+        logs = logs.OrderBy(l => l.Time).ToList();
+
+        if (logs.Count == 0)
+        {
+            WriteLine("No alarm logs found.");
+            return;
+        }
+
+        WriteLine("Alarm Logs:");
+        WriteLine(new string('-', 50));
+
+        foreach (var log in logs)
+        {
+            string dateTimeFormatted = log.Time.ToString("yyyy-MM-dd HH:mm:ss");
+            WriteLine($"[{dateTimeFormatted}] Alarm: {log.AlarmType} at Door {log.DoorNumber}");
+        }
+
+        WriteLine(new string('-', 50));
         WriteLine("");
     }
 
     // SPECIAL
     private bool UserConfirm(string message = "confirm")
     {
-        WriteLine($"{message} (y/n)");
+        WriteLine($"{message} (Y/N)");
 
         Write("> ");
-        char response = ReadKey().KeyChar;
+        char response = char.ToLowerInvariant(ReadKey().KeyChar);
+        WriteLine("");
 
         while (response != 'y' && response != 'n')
         {
-            response = ReadKey().KeyChar;
+            Write("Please enter 'Y' for Yes or 'N' for No: ");
+            response = char.ToLowerInvariant(ReadKey().KeyChar);
+            WriteLine("");
         }
 
         if (response == 'y')
         {
-            Write("y");
-            WriteLine("");
+            WriteLine("Confirmation received.");
             return true;
         }
-        Write("n");
-        WriteLine("\ncanceled");
+
+        WriteLine("Operation canceled.");
 
         WriteLine("");
         return false;
@@ -246,11 +323,7 @@ public class UIDialogs
     private string ReadLine()
     {
         string? line = connection.GetStringFromUI();
-        if (line == null)
-        {
-            line = "";
-        }
-        return line;
+        return line ?? "";
     }
 
     private ConsoleKeyInfo ReadKey()
@@ -276,10 +349,10 @@ public class UIDialogs
     // INPUT JANITORS
     public DateTime GetDateTime(int minYear, int maxYear)
     {
-        int year = GetValidatedNumberInput("year", minYear, maxYear);
-        int month = GetValidatedNumberInput("month", 1, 12);
-        int day = GetValidatedNumberInput("day", 1, DateTime.DaysInMonth(year, month));
-        int hour = GetValidatedNumberInput("time (hour)", 0, 23);
+        int year = GetValidatedNumberInput("Year (YYYY)", minYear, maxYear);
+        int month = GetValidatedNumberInput("Month (MM)", 1, 12);
+        int day = GetValidatedNumberInput("Day (DD)", 1, DateTime.DaysInMonth(year, month));
+        int hour = GetValidatedNumberInput("Time (Hour, 0-23)", 0, 23);
         DateTime newStartTime = new(year, month, day, hour, 0, 0);
 
         return newStartTime;
@@ -299,19 +372,19 @@ public class UIDialogs
             switch (validation)
             {
                 case InputValidation.IsEmpty:
-                    WriteLine("Input cannot be empty\n");
+                    WriteLine($"Error: Input cannot be empty. Please try again.\n");
                     break;
 
                 case InputValidation.IncorrectFormat:
-                    WriteLine("Input must be a number\n");
+                    WriteLine($"Error: Input must be a number. Please try again.\n");
                     break;
 
                 case InputValidation.OutsideRange:
-                    WriteLine($"Input must be between {minValue} and {maxValue}\n");
+                    WriteLine($"Error: Input must be between {minValue} and {maxValue}. Please try again.\n");
                     break;
 
                 case InputValidation.IncorrectLength:
-                    WriteLine("Input has incorrect length\n");
+                    WriteLine($"Error: Input has incorrect length. Please try again.\n");
                     break;
             }
         }
@@ -334,11 +407,11 @@ public class UIDialogs
             switch (validation)
             {
                 case InputValidation.IsEmpty:
-                    WriteLine("name cannot be empty\n");
+                    WriteLine("Error: Name cannot be empty. Please try again.\n");
                     break;
 
                 case InputValidation.IncorrectFormat:
-                    WriteLine("name can only contain letters\n");
+                    WriteLine("Error: Name can only contain letters. Please try again.\n");
                     break;
             }
         }
@@ -361,19 +434,19 @@ public class UIDialogs
             switch (validation)
             {
                 case InputValidation.IsEmpty:
-                    WriteLine("card id cannot be empty\n");
+                    WriteLine("Error: Card ID cannot be empty. Please try again.\n");
                     break;
 
                 case InputValidation.IncorrectFormat:
-                    WriteLine("card id must be a number\n");
+                    WriteLine("Error: Card ID must be a number. Please try again.\n");
                     break;
 
                 case InputValidation.OutsideRange:
-                    WriteLine("card id must be between 0000 and 9999\n");
+                    WriteLine("Error: Card ID must be between 0000 and 9999. Please try again.\n");
                     break;
 
                 case InputValidation.IncorrectLength:
-                    WriteLine("card id must be of length 4\n");
+                    WriteLine("Error: Card ID must have a length of 4 digits. Please try again.\n");
                     break;
             }
         }
@@ -396,11 +469,11 @@ public class UIDialogs
             switch (validation)
             {
                 case InputValidation.IsEmpty:
-                    WriteLine("email cannot be empty\n");
+                    WriteLine("Error: Email cannot be empty. Please try again.\n");
                     break;
 
                 case InputValidation.IncorrectFormat:
-                    WriteLine("invalid email\n");
+                    WriteLine("Error: Invalid email format. Please try again.\n");
                     break;
             }
         }

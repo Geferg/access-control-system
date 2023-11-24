@@ -19,8 +19,10 @@ using System.Net;
 namespace CardReaderDebugConsole;
 internal class Program
 {
-    //private static SerialConnectionManager? serialConnection;
-    private static TcpConnectionManager tcpConnection = new("127.0.0.1", 8000);
+    // LOOPBACK IP!
+    private const string tcpIP = "127.0.0.1";
+
+    private static readonly TcpConnectionManager tcpConnection = new(tcpIP, 8000);
     private static int accessPointNumber;
     private static DoorStateManager? doorStateManager;
 

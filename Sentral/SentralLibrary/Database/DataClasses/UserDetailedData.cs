@@ -44,7 +44,7 @@ public class UserDetailedData
     {
         CardPin = GeneratePin();
         StartValidityTime = DateTime.MinValue;
-        EndValidityTime = DateTime.MinValue;
+        EndValidityTime = DateTime.MaxValue;
     }
 
     private string GeneratePin()
