@@ -5,7 +5,7 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SentralLibrary.Tcp;
+namespace SentralLibrary.Tcp.DataClasses;
 public class TcpClientData
 {
     public TcpClient TcpClient { get; set; }

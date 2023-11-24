@@ -10,12 +10,12 @@ using SentralLibrary.Database.DataClasses;
 using SentralLibrary.Tcp;
 using SentralLibrary.Tcp.TcpRequests;
 
-namespace SentralLibrary;
-public class UIDialogs
+namespace SentralLibrary.Console;
+public class ConsoleDialogs
 {
-    private readonly UIConnection connection;
+    private readonly ConsoleConnectionManager connection;
 
-    public UIDialogs(UIConnection connection)
+    public ConsoleDialogs(ConsoleConnectionManager connection)
     {
         this.connection = connection;
     }
@@ -200,7 +200,7 @@ public class UIDialogs
                     WriteLine("5");
                     DateTime newEndTime = GetDateTime(1900, 2100);
 
-                    user.EndValidityTime =  newEndTime;
+                    user.EndValidityTime = newEndTime;
                     ongoingDialog = false;
                     break;
 

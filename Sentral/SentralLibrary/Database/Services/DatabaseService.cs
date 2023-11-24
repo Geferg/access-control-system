@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SentralLibrary.Services;
+namespace SentralLibrary.Database.Services;
 public class DatabaseService : IDatabaseService
 {
     private readonly DatabaseUserProcessing userProcessing;

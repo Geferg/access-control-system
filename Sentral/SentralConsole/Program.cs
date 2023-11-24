@@ -5,11 +5,11 @@ using System.Net.Sockets;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using Microsoft.Extensions.DependencyInjection;
-using SentralLibrary;
+using SentralLibrary.Console;
 using SentralLibrary.Database;
 using SentralLibrary.Database.DataClasses;
 using SentralLibrary.Database.Processing;
-using SentralLibrary.Services;
+using SentralLibrary.Database.Services;
 using SentralLibrary.Tcp;
 
 namespace SentralConsole;
@@ -31,12 +31,8 @@ internal class Program
     private const string dbPassword = "Ha1FinDagIDag!";
     private const string dbDatabase = "599146";
 
-    // UI DIALOG MESSAGES
-    private const string missingInDbMessage = "user not found in database";
-    private const string failureInDbMessage = "could not perform operation in database";
-
-    private static readonly UIConnection uiConnection = new();
-    private static readonly UIDialogs dialogs = new(uiConnection);
+    private static readonly ConsoleConnectionManager uiConnection = new();
+    private static readonly ConsoleDialogs dialogs = new(uiConnection);
 
     static void Main(string[] args)
     {
@@ -226,7 +222,7 @@ internal class Program
 
         if (userToRemove == null || userToRemove.CardID == null)
         {
-            Console.WriteLine(missingInDbMessage + "\n");
+            Console.WriteLine("user not found in database\n");
         }
         else if (dialogs.DeleteUserConfirmation(userToRemove))
         {
@@ -277,7 +273,7 @@ internal class Program
 
         if (number == null)
         {
-            Console.WriteLine(missingInDbMessage + "\n");
+            Console.WriteLine("user not found in database\n");
             return;
         }
         int doorNumber = Convert.ToInt32(number);

@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SentralLibrary.Services;
+namespace SentralLibrary.Database.Services;
 public interface IDatabaseService
 {
     UserDetailedData? GetUserById(string id);

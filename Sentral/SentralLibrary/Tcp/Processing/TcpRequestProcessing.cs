@@ -1,7 +1,8 @@
 ﻿using Newtonsoft.Json;
 using SentralLibrary.Database;
 using SentralLibrary.Database.DataClasses;
-using SentralLibrary.Services;
+using SentralLibrary.Database.Services;
+using SentralLibrary.Tcp.DataClasses;
 using SentralLibrary.Tcp.TcpRequests;
 using System;
 using System.Collections.Generic;
@@ -10,7 +11,7 @@ using System.Net.NetworkInformation;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SentralLibrary.Tcp;
+namespace SentralLibrary.Tcp.Processing;
 public class TcpRequestProcessing
 {
     private readonly IClientManager clientManager;
@@ -26,7 +27,7 @@ public class TcpRequestProcessing
     {
         IRequest? request = JsonConvert.DeserializeObject<Request>(requestString);
 
-        if (request == null )
+        if (request == null)
         {
             return new(TcpRequestConstants.RequestInvalid, TcpRequestConstants.StatusFail, "request does not match any known patterns");
         }
@@ -66,7 +67,7 @@ public class TcpRequestProcessing
             response.Message = "client id is outside range (1 - 99)";
             response.Status = TcpRequestConstants.StatusNotAccepted;
         }
-        else if(clientManager.IsDuplicateClientId(request.ClientId))
+        else if (clientManager.IsDuplicateClientId(request.ClientId))
         {
             response.Message = $"client id already exists ({request.ClientId})";
             response.Status = TcpRequestConstants.StatusNotAccepted;
@@ -107,12 +108,12 @@ public class TcpRequestProcessing
             validTime = user.StartValidityTime < request.Time && request.Time < user.EndValidityTime;
         }
 
-        if(!accessGranted)
+        if (!accessGranted)
         {
             response.Status = TcpRequestConstants.StatusNotAccepted;
             response.Message = "card id and pin code not accepted";
         }
-        else if(!validTime)
+        else if (!validTime)
         {
             response.Status = TcpRequestConstants.StatusNotAccepted;
             response.Message = "card is invalid";
