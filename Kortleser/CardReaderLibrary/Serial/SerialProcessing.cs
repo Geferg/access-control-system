@@ -57,7 +57,7 @@ public class SerialProcessing
 
     public async Task<bool> ChangeDigitalOutputs(int pin, bool value)
     {
-        if ((pin < 0 || 7 <= pin) && pin != 9)
+        if ((pin < 0 || 7 < pin) && pin != 9)
         {
             return false;
         }

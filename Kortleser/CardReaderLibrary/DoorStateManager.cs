@@ -11,6 +11,8 @@ using System.Threading.Tasks;
 namespace CardReaderLibrary;
 public class DoorStateManager
 {
+    private int accessPointNumber;
+
     private const int doorOpenTimeoutThreshold = 15;
     private const int doorBreachLevelThreshold = 500;
     private const int lockPin = 5;
@@ -20,12 +22,13 @@ public class DoorStateManager
     private readonly SerialProcessing serialProcessing;
     private readonly TcpProcessing tcpProcessing;
 
-    public bool IsOpen { get; private set; }
-    public bool IsLocked { get; private set; }
-    public int BreachLevel { get; private set; }
+    private DoorState doorState;
 
+    public int BreachLevel { get; private set; }
     public bool IsBreached { get; private set; }
     public bool IsTimeout { get; private set; }
+    public bool IsLocked { get; private set; }
+    public bool IsOpened { get; private set; }
 
     private DateTime LastTimeClosed { get; set; }
     private DateTime LastTimeUnlocked { get; set; }
@@ -36,13 +39,13 @@ public class DoorStateManager
         this.serialProcessing = serialProcessing;
         this.tcpProcessing = tcpProcessing;
         _ = serialProcessing.ChangeNode(nodeNumber);
+        _ = LockDoor();
 
         serialProcessing.DataReceived += OnHardwareMessageReceived;
 
-        IsOpen = false;
-        IsLocked = false;
+        accessPointNumber = nodeNumber;
+
         HasBeenOpenedAfterUnlock = false;
-        BreachLevel = 0;
         LastTimeClosed = DateTime.Now;
         LastTimeUnlocked = DateTime.Now;
     }
@@ -52,8 +55,7 @@ public class DoorStateManager
         await serialProcessing.ChangeDigitalOutputs(lockPin, false);
         IsLocked = false;
         HasBeenOpenedAfterUnlock = false;
-        //LastTimeUnlocked = time;
-        //TODO update unlock time
+        LastTimeUnlocked = DateTime.Now;
     }
 
     public async Task LockDoor()
@@ -65,7 +67,7 @@ public class DoorStateManager
     private async Task DoorOpened(DateTime time)
     {
         await serialProcessing.ChangeDigitalOutputs(openPin, true);
-        IsOpen = true;
+        IsOpened = true;
         HasBeenOpenedAfterUnlock = true;
 
         if (LastTimeClosed.AddSeconds(doorOpenTimeoutThreshold) < time && !IsTimeout)
@@ -82,9 +84,10 @@ public class DoorStateManager
         {
             await LockDoor();
         }
-        IsOpen = false;
+        IsOpened = false;
         LastTimeClosed = time;
         IsTimeout = false;
+        LastTimeClosed = DateTime.Now;
     }
 
     private async Task SetBreachLevel(int breachLevel, DateTime time)
@@ -112,7 +115,7 @@ public class DoorStateManager
         }
         else
         {
-            Console.WriteLine(breachResponse.Message);
+            //Console.WriteLine(breachResponse.Message);
         }
     }
 
@@ -126,7 +129,7 @@ public class DoorStateManager
         }
         else
         {
-            Console.WriteLine(timeoutResponse.Message);
+            //Console.WriteLine(timeoutResponse.Message);
         }
     }
 
@@ -142,37 +145,29 @@ public class DoorStateManager
         }
     }
 
-    private async Task GetTimeNow()
-    {
-        await serialProcessing.ForceMessage();
-    }
-
     private async void OnHardwareMessageReceived(string message)
     {
-        var (locked, open, alarm, breachLevel, time) = SerialConnectionManager.ExtractState(message);
+        doorState = SerialConnectionManager.ExtractState(message);
 
-        if (open)
+        if (doorState.Node != accessPointNumber)
+        {
+            _ = serialProcessing.ChangeNode(accessPointNumber);
+        }
+
+        if (doorState.IsOpened)
         {
             if (!IsLocked)
             {
-                await DoorOpened(time);
+                await DoorOpened(doorState.Time);
             }
         }
         else
         {
-            await DoorClosed(time);
+            await DoorClosed(doorState.Time);
         }
 
-        await SetBreachLevel(breachLevel, time);
+        await SetBreachLevel(doorState.BreachLevel, doorState.Time);
         await CheckAlarms();
-
-        //Console.WriteLine($"Received (hardware): {message}");
-        //Console.WriteLine($"\nLocked: {locked}");
-        //Console.WriteLine($"Open: {open}");
-        //Console.WriteLine($"Alarm: {alarm}");
-        //Console.WriteLine($"Breach State: {breachLevel}");
-        //Console.WriteLine($"Time: {time}");
-
     }
 
 }

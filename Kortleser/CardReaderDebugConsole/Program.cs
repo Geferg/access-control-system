@@ -19,8 +19,9 @@ using System.Net;
 namespace CardReaderDebugConsole;
 internal class Program
 {
-    // LOOPBACK IP!
+    // LOOPBACK IP FOR TESTING ONLY!
     private const string tcpIP = "127.0.0.1";
+    const int RetryInterval = 2000;
 
     private static readonly TcpConnectionManager tcpConnection = new(tcpIP, 8000);
     private static int accessPointNumber;
@@ -35,49 +36,26 @@ internal class Program
 
         while (true)
         {
-            while (SerialPort.GetPortNames().Length == 0)
-            {
-                Console.WriteLine("no com ports available, retrying");
-                Thread.Sleep(2000);
-            }
-
+            WaitForAvailablePort();
             string[] ports = SerialPort.GetPortNames();
 
-            Console.WriteLine("select a port:");
-            foreach (var port in ports)
+            string? selectedPort = SelectPort(ports);
+            if (string.IsNullOrEmpty(selectedPort))
             {
-                Console.WriteLine(port);
-            }
-
-            Console.Write("> ");
-            string? selectedPort = Console.ReadLine()?.Trim().ToUpper();
-
-            if (string.IsNullOrEmpty(selectedPort) || Array.IndexOf(ports, selectedPort) == -1)
-            {
-                Console.WriteLine("invalid com port, retrying");
+                Console.WriteLine("Invalid COM port, retrying");
                 continue;
             }
 
-            try
-            {
-                serialConnection = new SerialConnectionManager(selectedPort);
-            }
-            catch (Exception)
+            if (!TryInitializeSerialConnection(selectedPort, out serialConnection))
             {
                 Console.WriteLine("Could not initialize serial port, retrying");
                 continue;
             }
 
-            try
+            if (TryOpenSerialConnection(serialConnection))
             {
-                serialConnection.OpenConnection();
                 Console.WriteLine($"Connected to serial port {serialConnection.Port}");
                 break;
-            }
-            catch (Exception)
-            {
-                Console.WriteLine($"Could not connect to serial port {serialConnection!.Port}, retrying");
-                continue;
             }
         }
 
@@ -121,7 +99,58 @@ internal class Program
         }
     }
 
-    // NEW METHODS
+    private static void WaitForAvailablePort()
+    {
+        while (SerialPort.GetPortNames().Length == 0)
+        {
+            Console.WriteLine("No COM ports available, retrying...");
+            Thread.Sleep(RetryInterval);
+        }
+    }
+
+    private static string? SelectPort(string[] ports)
+    {
+        Console.WriteLine("Select a port:");
+        foreach (var port in ports)
+        {
+            Console.WriteLine(port);
+        }
+
+        Console.Write("> ");
+        string? selectedPort = Console.ReadLine()?.Trim().ToUpper();
+
+        return Array.IndexOf(ports, selectedPort) != -1 ? selectedPort : null;
+    }
+
+    private static bool TryInitializeSerialConnection(string portName, out SerialConnectionManager serialConnection)
+    {
+        try
+        {
+            serialConnection = new SerialConnectionManager(portName);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error initializing serial connection: {ex.Message}");
+            serialConnection = new();
+            return false;
+        }
+    }
+
+    private static bool TryOpenSerialConnection(SerialConnectionManager serialConnection)
+    {
+        try
+        {
+            serialConnection.OpenConnection();
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Could not connect to serial port {serialConnection.Port}: {ex.Message}");
+            return false;
+        }
+    }
+
 
     private static async Task<bool> CheckUserAccess(string cardId, string cardPin, TcpProcessing tcpProcessing)
     {
