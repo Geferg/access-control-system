@@ -23,6 +23,11 @@ public class SerialConnectionManager
     public event DataReceivedHandler? DataReceived;
     public event EventHandler<string>? LogMessage;
 
+    public SerialConnectionManager()
+    {
+
+    }
+
     public SerialConnectionManager(string port)
     {
         Port = port;
@@ -99,7 +104,7 @@ public class SerialConnectionManager
         return result;
     }
 
-    public static (bool locked, bool open, bool alarm, int breachState, DateTime time) ExtractState(string message)
+    public static DoorState ExtractState(string message)
     {
         const string pattern = @"([A-Z])(\d+)";
         const string dateFormat = "yyyyMMdd";
@@ -114,6 +119,7 @@ public class SerialConnectionManager
             dataBetweenLetters[letters] = number;
         }
 
+        int nodeNumber = int.Parse(dataBetweenLetters['A']);
         bool isLocked = dataBetweenLetters['D'][5] == '1';
         bool isOpen = dataBetweenLetters['D'][6] == '1';
         bool isAlarm = dataBetweenLetters['D'][7] == '1';
@@ -122,7 +128,17 @@ public class SerialConnectionManager
         string time = dataBetweenLetters['C'];
         DateTime isDateTime = DateTime.ParseExact(date + time, dateFormat + timeFormat, CultureInfo.InvariantCulture);
 
-        return (isLocked, isOpen, isAlarm, isBreachState, isDateTime);
+        DoorState state = new()
+        {
+            Node = nodeNumber,
+            IsOpened = isOpen,
+            IsLocked = isLocked,
+            IsAlarm = isAlarm,
+            BreachLevel = isBreachState,
+            Time = isDateTime
+        };
+
+        return state;
     }
 
     public async Task SendCommandAsync(string command)

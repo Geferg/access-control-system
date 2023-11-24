@@ -24,13 +24,6 @@ internal class Program
     private static readonly Regex addRegex = new(@"^add \d{4}");
     private static readonly Regex alarmRegex = new(@"^alarm \d{1,3}");
 
-    // DATABASE CONNECTION STRINGS
-    //? move to static class
-    private const string dbIP = "129.151.221.119";
-    private const string dbPort = "5432";
-    private const string dbUsername = "599146";
-    private const string dbPassword = "Ha1FinDagIDag!";
-    private const string dbDatabase = "599146";
 
     private static readonly ConsoleConnectionManager uiConnection = new();
     private static readonly ConsoleDialogs dialogs = new(uiConnection);
