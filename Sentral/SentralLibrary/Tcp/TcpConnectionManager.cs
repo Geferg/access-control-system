@@ -56,7 +56,7 @@ public class TcpConnectionManager
     public List<int> GetClientIds()
     {
         List<int> result = new();
-        foreach (var client in clients)
+        foreach (var client in clients.Where(c => c.IsAuthenticated))
         {
             result.Add(client.ClientId);
         }
@@ -68,46 +68,39 @@ public class TcpConnectionManager
     {
         while (!cancellationToken.IsCancellationRequested)
         {
+            try
+        {
             TcpClient newClient = await listener.AcceptTcpClientAsync(cancellationToken);
             TcpClientData client = new(newClient);
 
-            try
+            // Handle each client in a separate task
+            _ = Task.Run(async () =>
             {
-                clients.Add(client);
-                await clientHandler.HandleClientAsync(client, cancellationToken);
-                clients.Remove(client);
-            }
-            catch (ObjectDisposedException)
-            {
-
-            }
-            catch (SocketException)
-            {
-
-            }
-            finally
-            {
-                clients.Remove(client);
-            }
+                try
+                {
+                    clients.Add(client);
+                    await clientHandler.HandleClientAsync(client, cancellationToken);
+                }
+                catch (ObjectDisposedException)
+                {
+                    // Handle specific exceptions if necessary
+                }
+                catch (SocketException)
+                {
+                    // Handle specific exceptions if necessary
+                }
+                finally
+                {
+                    clients.Remove(client);
+                }
+            });
         }
-
-        /*
-        try
+        catch (Exception ex)
         {
-            while (!cancellationToken.IsCancellationRequested)
-            {
-                TcpClient newClient = await listener.AcceptTcpClientAsync(cancellationToken);
-                TcpClientData client = new(newClient);
-                clients.Add(client);
-                await clientHandler.HandleClientAsync(client, cancellationToken);
-                clients.Remove(client);
-            }
+            // Log or handle the exception from AcceptTcpClientAsync
+            // Consider if you need to break the loop or just log and continue
         }
-        catch (ObjectDisposedException)
-        {
-            //TODO consider handling listener stopped
         }
-        */
     }
 
     public bool IsDuplicateClientId(int clientId)

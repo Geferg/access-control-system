@@ -70,36 +70,6 @@ internal class Program
         uiConnection.UIStringToClass += () => Console.ReadLine();
         uiConnection.UIKeyToClass += () => Console.ReadKey(true);
 
-        /*
-        Console.WriteLine("Kristian:");
-        var me = databaseService.GetUserById("0000");
-        Console.WriteLine($"[{me?.CardID}] {me?.FirstName}, pin: {me?.CardPin}");
-
-        Console.WriteLine("\nAll users:");
-
-        foreach (var user in databaseService.GetAllUsers())
-        {
-            Console.WriteLine($"[{user.CardID}] {user.FirstName} {user.LastName}");
-        }
-
-        Console.WriteLine("\nAccess logs:");
-
-        foreach (var log in databaseService.GetAccessLogs(DateTime.MinValue, DateTime.MaxValue).OrderBy(l => l.Time))
-        {
-            Console.WriteLine($"[{log.DoorNumber}] {log.CardId}, access granted: {log.AccessGranted}");
-        }
-
-        Console.WriteLine("\nAlarm logs:");
-
-        foreach (var log in databaseService.GetAlarmLogs(DateTime.MinValue, DateTime.MaxValue).OrderBy(l => l.Time))
-        {
-            Console.WriteLine($"[{log.DoorNumber}] {log.AlarmType}");
-        }
-
-        Console.ReadKey(true);
-        */
-
-
         dialogs.ListCommands();
 
         while (true)
