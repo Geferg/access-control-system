@@ -124,32 +124,36 @@ internal class Program
 
     private static void HandleDatabaseDetailsCommand(DatabaseConnectionManager connection)
     {
-        if(connection.TestConnection())
+        if (connection.TestConnection())
         {
-            Console.WriteLine("connected to database");
-            Console.WriteLine($"  Database: {connection.DatabaseName}");
-            Console.WriteLine($"IP address: {connection.HostIp}");
-            Console.WriteLine($"      Port: {connection.HostPort}");
+            Console.WriteLine("Connection to Database SUCCESSFUL");
         }
         else
         {
-            Console.WriteLine("failed to connect to database");
-            Console.WriteLine($"  Database: {connection.DatabaseName}");
-            Console.WriteLine($"IP address: {connection.HostIp}");
-            Console.WriteLine($"      Port: {connection.HostPort}");
+            Console.WriteLine("Connection to Database FAILED");
         }
+
+        Console.WriteLine(new string('-', 50));
+        Console.WriteLine($"  Database Name : {connection.DatabaseName}");
+        Console.WriteLine($"  IP Address    : {connection.HostIp}");
+        Console.WriteLine($"  Port          : {connection.HostPort}");
+        Console.WriteLine(new string('-', 50));
         Console.WriteLine("");
     }
 
     private static void HandleSystemDetailsCommand(TcpConnectionManager connection)
     {
-        Console.WriteLine("tcp system details");
-        Console.WriteLine($"  autorized connections: {connection.GetAuthorizedClientCount()}");
-        Console.WriteLine($"unauthorized connetions: {connection.GetUnauthorizedClientCount()}");
+        Console.WriteLine("TCP System Details");
+        Console.WriteLine(new string('-', 50));
+        Console.WriteLine($"  Authorized Connections   : {connection.GetAuthorizedClientCount()}");
+        Console.WriteLine($"  Unauthorized Connections : {connection.GetUnauthorizedClientCount()}");
+
         foreach (var id in connection.GetClientIds())
         {
-            Console.WriteLine($"      connected with id: {id}");
+            Console.WriteLine($"  Connected Client ID      : {id}");
         }
+
+        Console.WriteLine(new string('-', 50));
         Console.WriteLine("");
     }
 
@@ -272,7 +276,7 @@ internal class Program
 
         if (start > end)
         {
-            Console.WriteLine("start date cannot be after end date");
+            Console.WriteLine("start date cannot be after end date\n");
             return;
         }
 
@@ -290,7 +294,7 @@ internal class Program
 
         if (start > end)
         {
-            Console.WriteLine("start date cannot be after end date");
+            Console.WriteLine("start date cannot be after end date\n");
             return;
         }
 
@@ -317,7 +321,7 @@ internal class Program
 
         if (start > end)
         {
-            Console.WriteLine("start date cannot be after end date");
+            Console.WriteLine("start date cannot be after end date\n");
             return;
         }
 

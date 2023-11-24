@@ -167,11 +167,11 @@ public class DoorStateManager
         await CheckAlarms();
 
         //Console.WriteLine($"Received (hardware): {message}");
-        Console.WriteLine($"\nLocked: {locked}");
-        Console.WriteLine($"Open: {open}");
-        Console.WriteLine($"Alarm: {alarm}");
-        Console.WriteLine($"Breach State: {breachLevel}");
-        Console.WriteLine($"Time: {time}");
+        //Console.WriteLine($"\nLocked: {locked}");
+        //Console.WriteLine($"Open: {open}");
+        //Console.WriteLine($"Alarm: {alarm}");
+        //Console.WriteLine($"Breach State: {breachLevel}");
+        //Console.WriteLine($"Time: {time}");
 
     }
 

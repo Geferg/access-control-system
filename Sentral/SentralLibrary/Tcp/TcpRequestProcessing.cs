@@ -98,17 +98,30 @@ public class TcpRequestProcessing
             return HandleClientNotValidated();
         }
 
-        bool accessGranted = databaseService.ValidateUser(request.CardId, request.Pin);
+        UserDetailedData? user = databaseService.GetUserById(request.CardId);
 
-        if (accessGranted)
+        bool accessGranted = databaseService.ValidateUser(request.CardId, request.Pin);
+        bool validTime = false;
+
+        if (user != null)
         {
-            response.Status = TcpRequestConstants.StatusAccepted;
-            response.Message = "card id and pin code accepted";
+            validTime = user.StartValidityTime < request.Time && request.Time < user.EndValidityTime;
         }
-        else
+
+        if(!accessGranted)
         {
             response.Status = TcpRequestConstants.StatusNotAccepted;
             response.Message = "card id and pin code not accepted";
+        }
+        else if(!validTime)
+        {
+            response.Status = TcpRequestConstants.StatusNotAccepted;
+            response.Message = "card is invalid";
+        }
+        else
+        {
+            response.Status = TcpRequestConstants.StatusAccepted;
+            response.Message = "card id and pin code accepted";
         }
 
         AccessLogData accessLogData = new()
