@@ -24,6 +24,7 @@ public class ConsoleDialogs
     public void ListCommands()
     {
         WriteLine("Available Commands");
+        WriteLine("  exit         - Exits the application");
         WriteLine("  clear        - Clears the console screen.");
         WriteLine("  database     - Displays the current status of the database.");
         WriteLine("  system       - Displays the status of card readers in the system.");

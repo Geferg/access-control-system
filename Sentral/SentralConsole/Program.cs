@@ -75,6 +75,10 @@ internal class Program
 
             switch (command)
             {
+                case "exit":
+                    Environment.Exit(0);
+                    break;
+
                 case "clear":
                     Console.Clear();
                     dialogs.ListCommands();
